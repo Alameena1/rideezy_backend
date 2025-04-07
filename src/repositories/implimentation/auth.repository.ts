@@ -1,32 +1,24 @@
-import UserModel from "../../models/user.model";
+import UserModel, { IUser } from "../../models/user.model";
+import { IAuthRepository } from "../interface/user/iauthRepository";
 
-interface IUser {
-  fullName: string;
-  email: string;
-  password?: string;
-  phoneNumber?: string;
-}
-
-class UserRepository {
-  static async createUser(userData: IUser) {
-    return await UserModel.create(userData);
+class AuthRepository implements IAuthRepository {
+  async createUser(userData: Partial<IUser>): Promise<IUser> {
+    try {
+      const user = await UserModel.create(userData);
+      return user;
+    } catch (error) {
+      throw new Error(`Failed to create user: ${(error as Error).message}`);
+    }
   }
 
-  static async findUserByEmail(email: string) {
-    return await UserModel.findOne({ email });
-  }
-
-  static async findUserById(userId: string) {
-    return await UserModel.findById(userId);
-  }
-
-  static async updateUser(userId: string, updatedData: Partial<IUser>) {
-    return await UserModel.findByIdAndUpdate(userId, updatedData, { new: true });
-  }
-
-  static async updateUserProfile(userId: string, updatedData: Partial<IUser>) {
-    return await UserModel.findByIdAndUpdate(userId, updatedData, { new: true });
+  async findUserByEmail(email: string): Promise<IUser | null> {
+    try {
+      const user = await UserModel.findOne({ email });
+      return user;
+    } catch (error) {
+      throw new Error(`Failed to find user by email: ${(error as Error).message}`);
+    }
   }
 }
 
-export default UserRepository;
+export default new AuthRepository();

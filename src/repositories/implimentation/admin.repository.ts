@@ -22,7 +22,7 @@ export class AdminRepository implements IAdminRepository {
   public async getAllUsers(): Promise<any[]> {
     try {
       const users = await UserModel.find().select("-password");
-      console.log("users", users);
+      console.log("usersdsds", users);
       return users;
     } catch (error) {
       throw new Error("Failed to fetch users from the database");

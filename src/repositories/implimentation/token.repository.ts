@@ -1,61 +1,36 @@
-import mongoose from "mongoose";
+import TokenModel from "../../models/token.model";
+import { ITokenRepository } from "../interface/user/itokenRepository";
 
-const TokenSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
-  token: { type: String, required: true },
-  expiresAt: { type: Date, required: true },
-});
-
-TokenSchema.index({ expiresAt: 1 });
-
-const TokenModel = mongoose.model("Token", TokenSchema);
-
-class TokenRepository {
- 
-  static async replaceToken(userId: string, newToken: string) {
-  
-    const updatedToken = await TokenModel.findOneAndUpdate(
-      { userId }, 
-      { 
-        token: newToken, 
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
-      },
-      { upsert: true, new: true }
-    );
-  
-    return updatedToken;
-  }
-  
-
-
-  static async findToken(token: string) {
-  
-    let storedToken = await TokenModel.findOne({ token, expiresAt: { $gt: new Date() } });
-  
-    if (!storedToken) {
-      console.log(await TokenModel.find({})); 
-      return null;
+class TokenRepository implements ITokenRepository {
+  async findToken(refreshToken: string) {
+    try {
+      const token = await TokenModel.findOne({ refreshToken });
+      return token;
+    } catch (error) {
+      throw new Error(`Failed to find token: ${(error as Error).message}`);
     }
-  
-    return storedToken;
   }
-  
 
-
-  static async deleteToken(token: string) {
-    console.log("🗑 Deleting token:", token);
-  
-    const deleted = await TokenModel.deleteOne({ token });
-    console.log("🛑 Token deletion result:", deleted);
-    
-    return deleted;
+  async replaceToken(userId: string, refreshToken: string) {
+    try {
+      const token = await TokenModel.findOneAndUpdate(
+        { userId },
+        { refreshToken, updatedAt: new Date() },
+        { upsert: true, new: true }
+      );
+      return token;
+    } catch (error) {
+      throw new Error(`Failed to replace token: ${(error as Error).message}`);
+    }
   }
-  
 
-  
-  static async deleteUserTokens(userId: string) {
-    return TokenModel.deleteMany({ userId });
+  async deleteToken(refreshToken: string) {
+    try {
+      await TokenModel.deleteOne({ refreshToken });
+    } catch (error) {
+      throw new Error(`Failed to delete token: ${(error as Error).message}`);
+    }
   }
 }
 
-export default TokenRepository;
+export default new TokenRepository();
