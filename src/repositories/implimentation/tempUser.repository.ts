@@ -1,17 +1,11 @@
+import { injectable } from "inversify";
 import TempUserModel from "../../models/tempUser.model";
 import { ITempUserRepository } from "../interface/user/itempUserRepository";
+import { ITempUser } from "../interface/user/itempUserRepository"
 
-interface ITempUser {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  password: string;
-  otp: string;
-  otpExpiresAt: Date;
-}
-
+@injectable()
 class TempUserRepository implements ITempUserRepository {
-  async findTempUserByEmail(email: string) {
+  async findTempUserByEmail(email: string): Promise<ITempUser | null> {
     try {
       const tempUser = await TempUserModel.findOne({ email });
       return tempUser;
@@ -20,20 +14,23 @@ class TempUserRepository implements ITempUserRepository {
     }
   }
 
-  async upsertTempUser(userData: ITempUser) {
+  async upsertTempUser(userData: ITempUser): Promise<ITempUser> {
     try {
       const tempUser = await TempUserModel.findOneAndUpdate(
         { email: userData.email },
         userData,
         { upsert: true, new: true }
       );
+      if (!tempUser) {
+        throw new Error("Failed to upsert temp user");
+      }
       return tempUser;
     } catch (error) {
       throw new Error(`Failed to upsert temp user: ${(error as Error).message}`);
     }
   }
 
-  async updateTempUserOTP(email: string, otp: string, otpExpiresAt: Date) {
+  async updateTempUserOTP(email: string, otp: string, otpExpiresAt: Date): Promise<ITempUser> {
     try {
       const tempUser = await TempUserModel.findOneAndUpdate(
         { email },
@@ -49,7 +46,7 @@ class TempUserRepository implements ITempUserRepository {
     }
   }
 
-  async deleteTempUser(email: string) {
+  async deleteTempUser(email: string): Promise<void> {
     try {
       await TempUserModel.deleteOne({ email });
     } catch (error) {
@@ -58,4 +55,4 @@ class TempUserRepository implements ITempUserRepository {
   }
 }
 
-export default new TempUserRepository();
+export default TempUserRepository;

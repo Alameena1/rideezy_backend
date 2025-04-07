@@ -1,6 +1,8 @@
+import { injectable } from "inversify";
 import TokenModel from "../../models/token.model";
 import { ITokenRepository } from "../interface/user/itokenRepository";
 
+@injectable()
 class TokenRepository implements ITokenRepository {
   async findToken(refreshToken: string) {
     try {
@@ -33,4 +35,4 @@ class TokenRepository implements ITokenRepository {
   }
 }
 
-export default new TokenRepository();
+export default TokenRepository; 

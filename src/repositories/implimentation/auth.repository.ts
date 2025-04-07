@@ -1,6 +1,8 @@
+import { injectable } from "inversify";
 import UserModel, { IUser } from "../../models/user.model";
 import { IAuthRepository } from "../interface/user/iauthRepository";
 
+@injectable()
 class AuthRepository implements IAuthRepository {
   async createUser(userData: Partial<IUser>): Promise<IUser> {
     try {
@@ -21,4 +23,4 @@ class AuthRepository implements IAuthRepository {
   }
 }
 
-export default new AuthRepository();
+export default AuthRepository;

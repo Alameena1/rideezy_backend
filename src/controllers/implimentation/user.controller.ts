@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import UserService from "../../services/implementation/user.service";
+import { IUserController } from "../interface/user/interface";
 
 interface AuthenticatedRequest extends Request {
   user?: { userId: string; email: string };
 }
-
-export class UserController {
+export class UserController implements IUserController {
   private userService: UserService;
 
   constructor(userService: UserService) {

@@ -1,17 +1,19 @@
-import AuthRepository from "../../repositories/implimentation/auth.repository";
-import TokenRepository from "../../repositories/implimentation/token.repository";
-import TempUserRepository from "../../repositories/implimentation/tempUser.repository";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../di/types";
+import { IAuthService, IGoogleAuthUser } from "../interfaces/auth/iauthService";
+import { IAuthRepository } from "../../repositories/interface/user/iauthRepository";
+import { ITokenRepository } from "../../repositories/interface/user/itokenRepository";
+import { ITempUserRepository } from "../../repositories/interface/user/itempUserRepository";
 import PasswordUtil from "../../helpers/password.util";
 import { sendOTP } from "../../helpers/sendOTP.util";
-import { IAuthService, IGoogleAuthUser } from "../interfaces/auth/iauthService";
-// Removed IUser import to avoid confusion
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../helpers/jwt.util'; 
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../helpers/jwt.util";
 
+@injectable()
 export default class AuthService implements IAuthService {
   constructor(
-    private authRepository = AuthRepository,
-    private tokenRepository = TokenRepository,
-    private tempUserRepository = TempUserRepository
+    @inject(TYPES.IAuthRepository) private authRepository: IAuthRepository,
+    @inject(TYPES.ITokenRepository) private tokenRepository: ITokenRepository,
+    @inject(TYPES.ITempUserRepository) private tempUserRepository: ITempUserRepository // Corrected injection
   ) {}
 
   async signup(userData: any) {

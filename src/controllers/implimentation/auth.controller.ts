@@ -1,11 +1,14 @@
 import { Request, Response, NextFunction } from "express";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../di/types";
+import { IAuthController } from "../interface/auth/interface";
 import AuthService from "../../services/implementation/auth.service";
-import { IUser } from "../../models/user.model";
 
-export class AuthController {
+@injectable()
+export class AuthController implements IAuthController {
   private authService: AuthService;
 
-  constructor(authService: AuthService) {
+  constructor(@inject(TYPES.IAuthService) authService: AuthService) {
     this.authService = authService;
   }
 
@@ -49,8 +52,6 @@ export class AuthController {
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
-      console.log(email)
-      console.log(password)
       if (!email || !password) {
         res.status(400).json({ success: false, message: "Email and password are required" });
         return;
