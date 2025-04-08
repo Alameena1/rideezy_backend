@@ -1,4 +1,3 @@
-// user service
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { IUserRepository } from "../../repositories/interface/user/iuserRepository";

@@ -1,23 +1,44 @@
+
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
 import { IAuthService, IGoogleAuthUser } from "../interfaces/auth/iauthService";
 import { IAuthRepository } from "../../repositories/interface/user/iauthRepository";
 import { ITokenRepository } from "../../repositories/interface/user/itokenRepository";
 import { ITempUserRepository } from "../../repositories/interface/user/itempUserRepository";
+import { ITempUserInput } from "../../repositories/interface/user/itempUserRepository"; 
 import PasswordUtil from "../../helpers/password.util";
 import { sendOTP } from "../../helpers/sendOTP.util";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../helpers/jwt.util";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../../helpers/jwt.util";
 
 @injectable()
 export default class AuthService implements IAuthService {
   constructor(
     @inject(TYPES.IAuthRepository) private authRepository: IAuthRepository,
     @inject(TYPES.ITokenRepository) private tokenRepository: ITokenRepository,
-    @inject(TYPES.ITempUserRepository) private tempUserRepository: ITempUserRepository // Corrected injection
+    @inject(TYPES.ITempUserRepository)
+    private tempUserRepository: ITempUserRepository
   ) {}
 
-  async signup(userData: any) {
-    const existingUser = await this.authRepository.findUserByEmail(userData.email);
+  async signup(userData: ITempUserInput) {
+   
+    if (
+      !userData.fullName ||
+      !userData.email ||
+      !userData.password ||
+      userData.password.trim() === ""
+    ) {
+      throw new Error(
+        "Full name, email, and a non-empty password are required."
+      );
+    }
+
+    const existingUser = await this.authRepository.findUserByEmail(
+      userData.email
+    );
     if (existingUser) {
       throw new Error("User already exists.");
     }
@@ -25,15 +46,16 @@ export default class AuthService implements IAuthService {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this.tempUserRepository.upsertTempUser({
+    const tempUserData = {
       fullName: userData.fullName,
       email: userData.email,
       phoneNumber: userData.phoneNumber || "",
-      password: userData.password || "",
+      password: userData.password,
       otp,
       otpExpiresAt,
-    });
+    };
 
+    await this.tempUserRepository.upsertTempUser(tempUserData);
     await sendOTP(userData.email, otp);
     return { success: true, message: "OTP sent. Verify before registration." };
   }
@@ -48,28 +70,33 @@ export default class AuthService implements IAuthService {
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await this.tempUserRepository.updateTempUserOTP(email, otp, otpExpiresAt);
-
     await sendOTP(email, otp);
     return { success: true, message: "OTP resent successfully." };
   }
 
-  async verifyOTP(email: string, otp: string) {
-    const tempUser = await this.tempUserRepository.findTempUserByEmail(email);
-    if (!tempUser || new Date() > tempUser.otpExpiresAt || tempUser.otp !== otp) {
-      throw new Error("Invalid or expired OTP.");
-    }
 
-    const hashedPassword = await PasswordUtil.hashPassword(tempUser.password);
-    const newUser = await this.authRepository.createUser({
-      fullName: tempUser.fullName,
-      email: tempUser.email,
-      phoneNumber: tempUser.phoneNumber,
-      password: hashedPassword,
-    });
+async verifyOTP(email: string, otp: string) {
+  const tempUser = await this.tempUserRepository.findTempUserByEmail(email);
 
-    await this.tempUserRepository.deleteTempUser(email);
-    return { success: true, message: "User registered successfully", user: newUser };
+  if (!tempUser || !tempUser.otp || !tempUser.otpExpiresAt || new Date() > tempUser.otpExpiresAt || tempUser.otp !== otp) {
+    throw new Error("Invalid or expired OTP.");
   }
+
+  if (!tempUser.password || tempUser.password.trim() === "") {
+    throw new Error("No valid password found for registration.");
+  }
+
+  const hashedPassword = await PasswordUtil.hashPassword(tempUser.password);
+  const newUser = await this.authRepository.createUser({
+    fullName: tempUser.fullName,
+    email: tempUser.email,
+    phoneNumber: tempUser.phoneNumber,
+    password: hashedPassword,
+  });
+
+  await this.tempUserRepository.deleteTempUser(email);
+  return { success: true, message: "User registered successfully", user: newUser };
+}
 
   async login(email: string, password: string) {
     const user = await this.authRepository.findUserByEmail(email);
@@ -80,7 +107,10 @@ export default class AuthService implements IAuthService {
       throw new Error("Your account has been blocked. Contact support.");
     }
 
-    const isPasswordValid = await PasswordUtil.comparePasswords(password, user.password);
+    const isPasswordValid = await PasswordUtil.comparePasswords(
+      password,
+      user.password
+    );
     if (!isPasswordValid) {
       throw new Error("Invalid email or password");
     }

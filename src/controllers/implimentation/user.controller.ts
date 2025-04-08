@@ -1,4 +1,3 @@
-// user controller
 import { Request, Response, NextFunction } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";

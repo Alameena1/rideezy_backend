@@ -1,24 +1,30 @@
 import { injectable } from "inversify";
 import UserModel, { IUser } from "../../models/user.model";
 import { IAuthRepository } from "../interface/user/iauthRepository";
+import { BaseRepository } from "../base/base.repository";
 
 @injectable()
-class AuthRepository implements IAuthRepository {
+export class AuthRepository extends BaseRepository<IUser> implements IAuthRepository {
+  constructor() {
+    super(UserModel);
+  }
+
   async createUser(userData: Partial<IUser>): Promise<IUser> {
-    try {
-      const user = await UserModel.create(userData);
-      return user;
-    } catch (error) {
-      throw new Error(`Failed to create user: ${(error as Error).message}`);
-    }
+    return this.create(userData);
   }
 
   async findUserByEmail(email: string): Promise<IUser | null> {
     try {
-      const user = await UserModel.findOne({ email });
+      const user = await this.model
+        .findOne({ email })
+        .select("+password") 
+        .lean()
+        .exec();
+      console.log("Found user:", user); 
       return user;
     } catch (error) {
-      throw new Error(`Failed to find user by email: ${(error as Error).message}`);
+      console.error("Find user error:", (error as Error).message);
+      throw new Error(`Failed to find user: ${(error as Error).message}`);
     }
   }
 }

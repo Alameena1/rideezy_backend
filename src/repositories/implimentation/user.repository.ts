@@ -1,26 +1,21 @@
-// user repository
+// repositories/implementation/user.repository.ts
 import { injectable } from "inversify";
 import UserModel, { IUser } from "../../models/user.model";
 import { IUserRepository } from "../interface/user/iuserRepository";
+import { BaseRepository } from "../base/base.repository";
 
 @injectable()
-class UserRepository implements IUserRepository {
-  async findUserById(userId: string): Promise<IUser | null> { // Fixed typo
-    try {
-      const user = await UserModel.findById(userId).select("-password");
-      return user;
-    } catch (error) {
-      throw new Error(`Failed to find user by ID: ${(error as Error).message}`);
-    }
+export class UserRepository extends BaseRepository<IUser> implements IUserRepository {
+  constructor() {
+    super(UserModel);
   }
 
-  async updateUserProfile(userId: string, updatedData: Partial<IUser>): Promise<IUser | null> {
-    try {
-      const user = await UserModel.findByIdAndUpdate(userId, updatedData, { new: true });
-      return user;
-    } catch (error) {
-      throw new Error(`Failed to update user profile: ${(error as Error).message}`);
-    }
+  async findUserById(userId: string): Promise<any> {
+    return this.findById(userId);
+  }
+
+  async updateUserProfile(userId: string, updatedData: Partial<IUser>): Promise<any> {
+    return this.updateById(userId, updatedData);
   }
 }
 
