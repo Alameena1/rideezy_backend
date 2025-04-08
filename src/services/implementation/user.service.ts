@@ -1,9 +1,17 @@
-import UserRepository from "../../repositories/implimentation/user.repository";
+// user service
+import { inject, injectable } from "inversify";
+import { TYPES } from "../../di/types";
+import { IUserRepository } from "../../repositories/interface/user/iuserRepository";
 import { IUserService } from "../interfaces/user/iuserService";
 import { IUser } from "../../models/user.model";
 
+@injectable()
 export default class UserService implements IUserService {
-  constructor(private userRepository = UserRepository) {}
+  private userRepository: IUserRepository;
+
+  constructor(@inject(TYPES.IUserRepository) userRepository: IUserRepository) {
+    this.userRepository = userRepository;
+  }
 
   async getProfile(userId: string): Promise<IUser> {
     const user = await this.userRepository.findUserById(userId);

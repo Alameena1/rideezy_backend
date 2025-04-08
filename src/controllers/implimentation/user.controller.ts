@@ -1,14 +1,19 @@
+// user controller
 import { Request, Response, NextFunction } from "express";
-import UserService from "../../services/implementation/user.service";
+import { inject, injectable } from "inversify";
+import { TYPES } from "../../di/types";
+import { IUserService } from "../../services/interfaces/user/iuserService";
 import { IUserController } from "../interface/user/interface";
 
 interface AuthenticatedRequest extends Request {
   user?: { userId: string; email: string };
 }
-export class UserController implements IUserController {
-  private userService: UserService;
 
-  constructor(userService: UserService) {
+@injectable()
+export class UserController implements IUserController {
+  private userService: IUserService;
+
+  constructor(@inject(TYPES.IUserService) userService: IUserService) {
     this.userService = userService;
   }
 

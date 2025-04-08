@@ -1,8 +1,11 @@
+// user repository
+import { injectable } from "inversify";
 import UserModel, { IUser } from "../../models/user.model";
 import { IUserRepository } from "../interface/user/iuserRepository";
 
+@injectable()
 class UserRepository implements IUserRepository {
-  async findUserById(userId: string): Promise<IUser | null> {
+  async findUserById(userId: string): Promise<IUser | null> { // Fixed typo
     try {
       const user = await UserModel.findById(userId).select("-password");
       return user;
@@ -21,4 +24,4 @@ class UserRepository implements IUserRepository {
   }
 }
 
-export default new UserRepository();
+export default UserRepository;

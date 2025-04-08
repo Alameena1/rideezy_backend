@@ -8,4 +8,7 @@ export const TYPES = {
   IAuthRepository: Symbol.for("IAuthRepository"),
   ITokenRepository: Symbol.for("ITokenRepository"),
   ITempUserRepository: Symbol.for("ITempUserRepository"),
+  IUserController: Symbol.for("IUserController"),
+  IUserService: Symbol.for("IUserService"),
+  IUserRepository: Symbol.for("IUserRepository"),
 };

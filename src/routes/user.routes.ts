@@ -1,11 +1,12 @@
+
 import { Router } from "express";
-import { UserController } from "../controllers/implimentation/user.controller";
-import UserService from "../services/implementation/user.service";
+import container from "../di/container";
+import { TYPES } from "../di/types";
+import { IUserController } from "../controllers/interface/user/interface";
 import authMiddleware from "../middlewares/auth.middleware";
 
-const userService = new UserService();
-const userController = new UserController(userService);
 const router = Router();
+const userController = container.get<IUserController>(TYPES.IUserController);
 
 router.get("/profile", authMiddleware, userController.getProfile.bind(userController));
 router.put("/profile", authMiddleware, userController.updateProfile.bind(userController));
