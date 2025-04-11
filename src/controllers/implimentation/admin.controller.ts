@@ -73,10 +73,13 @@ export class AdminController implements IAdminController {
   };
 
   toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
+   
     const { userId } = req.params;
     const { status } = req.body;
+     
     try {
       await this.adminService.toggleUserStatus(userId, status);
+      console.log("status",status)
       res.status(200).json({ message: `User status updated to ${status}` });
     } catch (error) {
       res.status(500).json({ message: "Failed to update user status" });

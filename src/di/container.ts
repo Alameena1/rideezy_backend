@@ -29,6 +29,13 @@ import { UserController } from "../controllers/implimentation/user.controller";
 import UserService from "../services/implementation/user.service";
 import UserRepository from "../repositories/implimentation/user.repository";
 
+import { IVehicleController } from "../controllers/interface/vehicle/ivehicleController";
+import { IVehicleService } from "../services/interfaces/vehicle/ivehicleService";
+import { IVehicleRepository } from "../repositories/interface/vehicle/ivehicleRepository";
+import { VehicleController } from "../controllers/implimentation/vehicle.controller";
+import VehicleService from "../services/implementation/vehicle.service";
+import VehicleRepository from "../repositories/implimentation/vehicle.repository";
+
 const container = new Container();
 
 
@@ -46,4 +53,10 @@ container.bind<ITempUserRepository>(TYPES.ITempUserRepository).to(TempUserReposi
 container.bind<IUserController>(TYPES.IUserController).to(UserController).inSingletonScope();
 container.bind<IUserService>(TYPES.IUserService).to(UserService).inSingletonScope();
 container.bind<IUserRepository>(TYPES.IUserRepository).to(UserRepository).inSingletonScope();
+
+container.bind<IVehicleController>(TYPES.IVehicleController).to(VehicleController).inSingletonScope();
+container.bind<IVehicleService>(TYPES.IVehicleService).to(VehicleService).inSingletonScope();
+container.bind<IVehicleRepository>(TYPES.IVehicleRepository).to(VehicleRepository).inSingletonScope();
+
+
 export default container;

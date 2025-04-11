@@ -1,3 +1,4 @@
+// src/repositories/base/base.repository.ts
 import { injectable } from "inversify";
 import mongoose, { Model, Document, FilterQuery } from "mongoose";
 
@@ -9,7 +10,7 @@ export abstract class BaseRepository<T extends Document> {
     this.model = model;
   }
 
-  async create(data: Partial<T>): Promise<any> {
+  async create(data: Partial<T>): Promise<T> {
     try {
       const document = await this.model.create(data);
       return document;
@@ -18,7 +19,7 @@ export abstract class BaseRepository<T extends Document> {
     }
   }
 
-  async findById(id: string): Promise<any> {
+  async findById(id: string): Promise<T | null> {
     try {
       const document = await this.model.findById(id).select("-password");
       return document;
@@ -27,7 +28,7 @@ export abstract class BaseRepository<T extends Document> {
     }
   }
 
-  async findOne(query: FilterQuery<T>): Promise<any> {
+  async findOne(query: FilterQuery<T>): Promise<T | null> {
     try {
       const document = await this.model.findOne(query).select("-password");
       return document;
@@ -36,7 +37,7 @@ export abstract class BaseRepository<T extends Document> {
     }
   }
 
-  async updateById(id: string, data: Partial<T>): Promise<any> {
+  async updateById(id: string, data: Partial<T>): Promise<T | null> {
     try {
       const document = await this.model.findByIdAndUpdate(id, data, { new: true, runValidators: true });
       return document;

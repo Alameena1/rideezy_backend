@@ -20,7 +20,6 @@ export class AuthRepository extends BaseRepository<IUser> implements IAuthReposi
         .select("+password") 
         .lean()
         .exec();
-      console.log("Found user:", user); 
       return user;
     } catch (error) {
       console.error("Find user error:", (error as Error).message);

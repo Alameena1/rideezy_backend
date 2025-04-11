@@ -1,4 +1,3 @@
-// src/services/interfaces/admin/interface.ts
 export interface IAdminService {
   authenticateAdmin(email: string, password: string): Promise<{
     accessToken: string;

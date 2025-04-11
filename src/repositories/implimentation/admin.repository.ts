@@ -33,12 +33,15 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
   }
 
   public async updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
-    try {
-      const user = await this.findById(userId);
+ 
+    try {  
+      console.log("userId",userId)
+      const user = await this.findById(userId);   
+    
       if (!user) {
         throw new Error("User not found");
       }
-      await this.updateById(userId, { status } as any); // Type assertion due to partial update
+      await this.updateById(userId, { status } as any); 
     } catch (error) {
       throw new Error("Failed to update user status");
     }

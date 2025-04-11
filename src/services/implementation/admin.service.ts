@@ -31,6 +31,6 @@ export class AdminService implements IAdminService {
   }
 
   async toggleUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
-    await this.adminRepository.updateUserStatus(userId, status);
+    await this.adminRepository.updateUserStatus(userId, status)
   }
 }

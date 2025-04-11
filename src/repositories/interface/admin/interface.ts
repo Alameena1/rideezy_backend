@@ -1,4 +1,3 @@
-// src/repositories/interface/admin/interface.ts
 export interface IAdminRepository {
   getAdminCredentials(): {
     email: string;

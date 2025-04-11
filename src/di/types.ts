@@ -1,5 +1,4 @@
 export const TYPES = {
-
   IAdminController: Symbol.for("IAdminController"),
   IAdminService: Symbol.for("IAdminService"),
   IAdminRepository: Symbol.for("IAdminRepository"),
@@ -11,4 +10,7 @@ export const TYPES = {
   IUserController: Symbol.for("IUserController"),
   IUserService: Symbol.for("IUserService"),
   IUserRepository: Symbol.for("IUserRepository"),
+  IVehicleController: Symbol.for("IVehicleController"),
+  IVehicleService: Symbol.for("IVehicleService"),
+  IVehicleRepository: Symbol.for("IVehicleRepository"),
 };

@@ -14,7 +14,7 @@ export interface IUser extends Document {
   status?: "Active" | "Blocked";
   createdAt?: Date;
   updatedAt?: Date;
-  _id: any; // Can be refined with Types.ObjectId if needed
+  _id: any; 
 }
 
 const UserSchema = new Schema<IUser>(

@@ -25,7 +25,6 @@ const adminAuthMiddleware: RequestHandler = (req, res, next): void => {
     const authHeader = req.headers.authorization;
     const tokenFromCookie = req.cookies?.accessToken; 
     const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : tokenFromCookie;
-
     if (!token) {
       res.status(401).json({ message: "Admin authorization token missing" });
       return;
