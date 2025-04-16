@@ -43,7 +43,7 @@ container.bind<IAdminController>(TYPES.IAdminController).to(AdminController).inS
 container.bind<IAdminService>(TYPES.IAdminService).to(AdminService).inSingletonScope();
 container.bind<IAdminRepository>(TYPES.IAdminRepository).to(AdminRepository).inSingletonScope();
 
--
+
 container.bind<IAuthController>(TYPES.IAuthController).to(AuthController).inSingletonScope();
 container.bind<IAuthService>(TYPES.IAuthService).to(AuthService).inSingletonScope();
 container.bind<IAuthRepository>(TYPES.IAuthRepository).to(AuthRepository).inSingletonScope();

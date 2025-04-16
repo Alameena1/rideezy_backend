@@ -1,10 +1,9 @@
-// src/services/implementation/vehicle.service.ts
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { IVehicle } from "../../models/vehicle.modal";
 import { IVehicleRepository } from "../../repositories/interface/vehicle/ivehicleRepository";
 import { IVehicleService } from "../interfaces/vehicle/ivehicleService";
-import { Types } from "mongoose"; // Import Types for ObjectId
+import { Types } from "mongoose"; 
 
 @injectable()
 export default class VehicleService implements IVehicleService {
@@ -15,14 +14,11 @@ export default class VehicleService implements IVehicleService {
   }
 
   async addVehicle(userId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle> {
-    if (!userId) {
-      throw new Error("User ID is required");
-    }
-
-    const userObjectId = new Types.ObjectId(userId); // Convert string to ObjectId
+    console.log("dyfgdscdsfdisuyfi")
+    const userObjectId = new Types.ObjectId(userId);
     const vehicle = {
       ...vehicleData,
-      user: userObjectId, // Use ObjectId for the user field
+      user: userObjectId,
     };
     return this.vehicleRepository.createVehicle(vehicle);
   }

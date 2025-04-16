@@ -20,6 +20,7 @@ if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
 }
 
 const adminAuthMiddleware: RequestHandler = (req, res, next): void => {
+  console.log("fivdsifgdibfpiwbfihwbfiyhwedbfiwdbfpihwevf")
   try {
 
     const authHeader = req.headers.authorization;

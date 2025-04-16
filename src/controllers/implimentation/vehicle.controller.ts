@@ -20,18 +20,21 @@ export class VehicleController implements IVehicleController {
     try {
       const userId = req.user?.userId;
       const vehicleData = req.body;
-
+  
       if (!userId) {
         res.status(401).json({ success: false, message: "Unauthorized" });
         return;
       }
-
-      const { vehicleName, vehicleType, licensePlate } = vehicleData;
-      if (!vehicleName || !vehicleType || !licensePlate) {
-        res.status(400).json({ success: false, message: "Missing required fields: vehicleName, vehicleType, or licensePlate" });
+  
+      const { vehicleName, vehicleType, licensePlate, vehicleImage, documentImage } = vehicleData;
+      if (!vehicleName || !vehicleType || !licensePlate || !vehicleImage || !documentImage) {
+        res.status(400).json({
+          success: false,
+          message: "Missing required fields: vehicleName, vehicleType, licensePlate, vehicleImage, or documentImage",
+        });
         return;
       }
-
+  
       const newVehicle = await this.vehicleService.addVehicle(userId, vehicleData);
       res.status(201).json({ success: true, message: "Vehicle added successfully", data: newVehicle });
     } catch (error) {

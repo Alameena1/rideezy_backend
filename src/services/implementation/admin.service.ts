@@ -31,6 +31,14 @@ export class AdminService implements IAdminService {
   }
 
   async toggleUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
-    await this.adminRepository.updateUserStatus(userId, status)
+    await this.adminRepository.updateUserStatus(userId, status);
+  }
+
+  async getAllVehicles(): Promise<any[]> {
+    return this.adminRepository.getAllVehicles();
+  }
+
+  async updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void> {
+    await this.adminRepository.updateVehicleStatus(vehicleId, status, note);
   }
 }

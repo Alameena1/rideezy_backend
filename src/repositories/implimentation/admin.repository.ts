@@ -1,6 +1,6 @@
-// repositories/implementation/admin.repository.ts
 import { injectable } from "inversify";
 import UserModel from "../../models/user.model";
+import VehicleModel from "../../models/vehicle.modal"
 import { IAdminRepository } from "../interface/admin/interface";
 import { BaseRepository } from "../base/base.repository";
 
@@ -25,7 +25,6 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
   public async getAllUsers(): Promise<any[]> {
     try {
       const users = await this.model.find().select("-password");
-      console.log("usersdsds", users);
       return users;
     } catch (error) {
       throw new Error("Failed to fetch users from the database");
@@ -33,17 +32,35 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
   }
 
   public async updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
- 
-    try {  
-      console.log("userId",userId)
-      const user = await this.findById(userId);   
-    
+    try {
+      const user = await this.findById(userId);
       if (!user) {
         throw new Error("User not found");
       }
-      await this.updateById(userId, { status } as any); 
+      await this.updateById(userId, { status } as any);
     } catch (error) {
       throw new Error("Failed to update user status");
+    }
+  }
+
+  public async getAllVehicles(): Promise<any[]> {
+    try {
+      const vehicles = await VehicleModel.find(); // Fetch all vehicles
+      return vehicles;
+    } catch (error) {
+      throw new Error("Failed to fetch vehicles from the database");
+    }
+  }
+
+  public async updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void> {
+    try {
+      const vehicle = await VehicleModel.findById(vehicleId);
+      if (!vehicle) {
+        throw new Error("Vehicle not found");
+      }
+      await VehicleModel.findByIdAndUpdate(vehicleId, { status, note }, { new: true });
+    } catch (error) {
+      throw new Error("Failed to update vehicle status");
     }
   }
 }

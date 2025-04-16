@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
 import vehicleRoutes from "./routes/vehicle.routes";
+import { errorMiddleware } from "./middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
@@ -35,6 +36,8 @@ app.use("/api/user", userRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 
+
+app.use(errorMiddleware);
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

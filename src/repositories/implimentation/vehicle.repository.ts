@@ -1,9 +1,8 @@
-// src/repositories/implimentation/vehicle.repository.ts
 import { injectable } from "inversify";
 import { IVehicle } from "../../models/vehicle.modal";
 import { IVehicleRepository } from "../interface/vehicle/ivehicleRepository";
 import { BaseRepository } from "../base/base.repository";
-import VehicleModel from "../../models/vehicle.modal"; // Import your Mongoose model
+import VehicleModel from "../../models/vehicle.modal"; 
 
 @injectable()
 export class VehicleRepository extends BaseRepository<IVehicle> implements IVehicleRepository {
@@ -12,7 +11,7 @@ export class VehicleRepository extends BaseRepository<IVehicle> implements IVehi
   }
 
   async createVehicle(vehicleData: Partial<IVehicle>): Promise<IVehicle> {
-    return this.create(vehicleData) as Promise<IVehicle>; // Cast to IVehicle
+    return this.create(vehicleData) as Promise<IVehicle>;
   }
 
   async findVehiclesByUserId(userId: string): Promise<IVehicle[]> {
@@ -20,7 +19,7 @@ export class VehicleRepository extends BaseRepository<IVehicle> implements IVehi
   } 
 
   async findById(vehicleId: string): Promise<IVehicle | null> {
-    return super.findById(vehicleId); // Delegate to BaseRepository.findById
+    return super.findById(vehicleId); 
   }
 
   async updateVehicle(vehicleId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle> {

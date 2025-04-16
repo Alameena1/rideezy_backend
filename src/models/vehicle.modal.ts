@@ -2,15 +2,15 @@ import { Schema, model, Document, Types } from "mongoose";
 import { IUser } from "./user.model";
 
 export interface IVehicle extends Document {
-  user: Types.ObjectId | IUser;         
-  vehicleName: string;             
-  vehicleType: string;                
-  licensePlate: string;            
-  color?: string;                                         
-  insuranceNumber?: string;          
-  vehicleImage?: string;             
-  documentImage?: string;            
-  status: "Pending" | "Approved" | "Rejected"; 
+  user: Types.ObjectId | IUser;
+  vehicleName: string;
+  vehicleType: string;
+  licensePlate: string;
+  color?: string;
+  insuranceNumber?: string;
+  vehicleImage: string; // Changed to required
+  documentImage: string; // Changed to required
+  status: "Pending" | "Approved" | "Rejected";
   createdAt?: Date;
   updatedAt?: Date;
   _id: any;
@@ -20,7 +20,7 @@ const VehicleSchema = new Schema<IVehicle>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      ref: "User",          
+      ref: "User",
       required: true,
     },
     vehicleName: {
@@ -37,7 +37,7 @@ const VehicleSchema = new Schema<IVehicle>(
     licensePlate: {
       type: String,
       required: true,
-      unique: true,       
+      unique: true,
       trim: true,
     },
     color: {
@@ -49,17 +49,19 @@ const VehicleSchema = new Schema<IVehicle>(
       trim: true,
     },
     vehicleImage: {
-      type: String,        
+      type: String,
+      required: true,
       trim: true,
     },
     documentImage: {
-      type: String,       
+      type: String,
+      required: true,
       trim: true,
     },
     status: {
       type: String,
       enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",  
+      default: "Pending",
     },
   },
   { timestamps: true }
