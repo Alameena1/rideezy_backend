@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
 export const errorMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error("defhsdhfhgyd",err.stack);
   let statusCode = err.status || 500;
   let message = err.message || "Internal Server Error";
 

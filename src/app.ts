@@ -33,9 +33,9 @@ connectDB();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
-app.use("/admin", adminRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 
+app.use("/admin", adminRoutes);
 
 app.use(errorMiddleware);
 app.listen(PORT, () => {

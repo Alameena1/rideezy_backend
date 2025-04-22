@@ -100,6 +100,8 @@ async verifyOTP(email: string, otp: string) {
 
   async login(email: string, password: string) {
     const user = await this.authRepository.findUserByEmail(email);
+    console.log("ijijijj",user)
+
     if (!user || !user.password) {
       throw new Error("Invalid email or password");
     }

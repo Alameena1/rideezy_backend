@@ -52,11 +52,13 @@ export class AuthController implements IAuthController {
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
+   console.log("email and password",email, password)
       if (!email || !password) {
         res.status(400).json({ success: false, message: "Email and password are required" });
         return;
       }
-      const tokens = await this.authService.login(email, password);
+      const tokens = await this.authService.login(email, password); 
+        
       res.status(200).json({ success: true, message: "Login successful", ...tokens });
     } catch (error) {
       next(error);
