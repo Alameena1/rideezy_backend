@@ -9,6 +9,11 @@ const vehicleController = container.get<IVehicleController>(TYPES.IVehicleContro
 
 router.post("/", authMiddleware, vehicleController.addVehicle.bind(vehicleController));
 router.get("/", authMiddleware, vehicleController.getVehicles.bind(vehicleController));
+
+
 router.put("/:id", authMiddleware, vehicleController.updateVehicle.bind(vehicleController)); 
+
+
+router.delete("/:id", authMiddleware, vehicleController.deleteVehicle.bind(vehicleController));
 
 export default router;

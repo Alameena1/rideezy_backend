@@ -46,4 +46,21 @@ export default class VehicleService implements IVehicleService {
     const updatedVehicle = await this.vehicleRepository.updateVehicle(vehicleId, vehicleData);
     return updatedVehicle;
   }
+
+  async deleteVehicle(userId: string, vehicleId: string): Promise<void> {
+    if(!userId) {
+      throw new Error("User Id is required");
+    }
+
+    if(!vehicleId) {
+      throw new Error("Vehicle Id is required")
+    }
+
+    const existingVehicle = await this.vehicleRepository.findById(vehicleId);
+    if(!existingVehicle || existingVehicle.user.toString() !== userId) {
+      throw new Error("vehicle not found or unotherized to delete");
+    }
+
+    await this.vehicleRepository.deleteVehicle(vehicleId)
+  }
 }

@@ -29,6 +29,12 @@ export class VehicleRepository extends BaseRepository<IVehicle> implements IVehi
     }
     return updatedVehicle;
   }
+  async deleteVehicle(vehicleId: string): Promise<void> {
+    const success = await this.deleteById(vehicleId);
+    if (!success) {
+      throw new Error("vehicle not found")
+    }
+  }
 }
 
 export default VehicleRepository;

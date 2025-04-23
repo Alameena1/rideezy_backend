@@ -80,4 +80,26 @@ export class VehicleController implements IVehicleController {
       next(error);
     }
   }
+
+  async deleteVehicle(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const vehicleId = req.params.id;
+
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+
+      if (!vehicleId) {
+        res.status(400).json({ success: false, message: "Vehicle ID is required" });
+        return;
+      }
+
+      await this.vehicleService.deleteVehicle(userId, vehicleId);
+      res.status(200).json({ success: true, message: "Vehicle deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

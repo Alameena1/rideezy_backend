@@ -9,6 +9,8 @@ const router = Router();
 const userController = container.get<IUserController>(TYPES.IUserController);
 
 router.get("/profile", authMiddleware, userController.getProfile.bind(userController));
+
+
 router.put("/profile", authMiddleware, userController.updateProfile.bind(userController));
 
 export default router;
