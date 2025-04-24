@@ -21,8 +21,9 @@ if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
 
 const adminAuthMiddleware: RequestHandler = (req, res, next): void => {
   try {
+    console.log("req.cookies",req.cookies)
     const authHeader = req.headers.authorization;
-    const tokenFromCookie = req.cookies?.accessToken;
+    const tokenFromCookie = req.cookies?.adminAuthToken;
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.split(" ")[1]
       : tokenFromCookie;

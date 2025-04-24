@@ -3,6 +3,7 @@ import { IAdminRepository } from "../../repositories/interface/admin/interface";
 import { generateAccessToken, generateRefreshToken } from "../../helpers/jwt.util";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
+import bcrypt from "bcrypt"; 
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -13,17 +14,24 @@ export class AdminService implements IAdminService {
   }
 
   async authenticateAdmin(email: string, password: string): Promise<{
+   
     accessToken: string;
     refreshToken: string;
   }> {
-    const { email: adminEmail, password: adminPassword } = this.adminRepository.getAdminCredentials();
-    if (email === adminEmail && password === adminPassword) {
-      const refreshToken = generateRefreshToken(email);
-      const accessToken = generateAccessToken(email);
-      return { accessToken, refreshToken };
-    } else {
+    const admin = this.adminRepository.getAdminCredentials();  
+       console.log("uierjfuwhg8e",admin)
+
+    if (!admin ) {
       throw new Error("Invalid credentials");
     }
+
+    const accessToken = generateAccessToken(email);
+    const refreshToken = generateRefreshToken(email);
+
+    // Save refresh token if using rotation (optional)
+    await this.saveRefreshToken(email, refreshToken);
+
+    return { accessToken, refreshToken };
   }
 
   async getAllUsers(): Promise<any[]> {
@@ -40,5 +48,17 @@ export class AdminService implements IAdminService {
 
   async updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void> {
     await this.adminRepository.updateVehicleStatus(vehicleId, status, note);
+  }
+
+  async saveRefreshToken(email: string, refreshToken: string): Promise<void> {
+    // Implement database storage (e.g., MongoDB)
+    // Example: await this.adminRepository.saveRefreshToken(email, refreshToken);
+    console.log(`Saving refresh token for ${email}: ${refreshToken}`);
+  }
+
+  async invalidateRefreshToken(email: string, refreshToken: string): Promise<void> {
+    // Implement database invalidation (e.g., MongoDB)
+    // Example: await this.adminRepository.invalidateRefreshToken(email, refreshToken);
+    console.log(`Invalidating refresh token for ${email}: ${refreshToken}`);
   }
 }
