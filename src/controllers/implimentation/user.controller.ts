@@ -1,25 +1,33 @@
 import { Request, Response, NextFunction } from "express";
-import UserService from "../../services/implementation/user.service";
+import { inject, injectable } from "inversify";
+import { TYPES } from "../../di/types";
+import { IUserService } from "../../services/interfaces/user/iuserService";
+import { IUserController } from "../interface/user/interface";
 
 interface AuthenticatedRequest extends Request {
   user?: { userId: string; email: string };
 }
 
-export class UserController {
-  private userService: UserService;
+@injectable()
+export class UserController implements IUserController {
+  private userService: IUserService;
 
-  constructor(userService: UserService) {
+  constructor(@inject(TYPES.IUserService) userService: IUserService) {
     this.userService = userService;
   }
 
   async getProfile(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
+      
       if (!userId) {
+     
         res.status(401).json({ success: false, message: "Unauthorized" });
         return;
       }
-      const user = await this.userService.getProfile(userId);
+      const user = await this.userService.getProfile(userId);   
+      console.log("Fetching profile for userId:", userId);
+      console.log("User data returned:", user);
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       next(error);

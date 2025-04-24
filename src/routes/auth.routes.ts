@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { AuthController } from "../controllers/implimentation/auth.controller";
-import AuthService from "../services/implementation/auth.service";
+import container from "../di/container"; 
+import { IAuthController } from "../controllers/interface/auth/interface"; 
+import { TYPES } from "../di/types"; 
 
-const authService = new AuthService();
-const authController = new AuthController(authService);
 const router = Router();
+
+
+const authController = container.get<IAuthController>(TYPES.IAuthController);
 
 router.post("/signup", authController.signup.bind(authController));
 router.post("/resend-otp", authController.resendOTP.bind(authController));

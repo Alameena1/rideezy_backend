@@ -1,36 +1,34 @@
+// repositories/implementation/token.repository.ts
+import { injectable } from "inversify";
 import TokenModel from "../../models/token.model";
 import { ITokenRepository } from "../interface/user/itokenRepository";
+import { BaseRepository } from "../base/base.repository";
 
-class TokenRepository implements ITokenRepository {
+@injectable()
+export class TokenRepository extends BaseRepository<any> implements ITokenRepository {
+  constructor() {
+    super(TokenModel);
+  }
+
   async findToken(refreshToken: string) {
-    try {
-      const token = await TokenModel.findOne({ refreshToken });
-      return token;
-    } catch (error) {
-      throw new Error(`Failed to find token: ${(error as Error).message}`);
-    }
+    return this.findOne({ refreshToken });
   }
 
   async replaceToken(userId: string, refreshToken: string) {
-    try {
-      const token = await TokenModel.findOneAndUpdate(
-        { userId },
-        { refreshToken, updatedAt: new Date() },
-        { upsert: true, new: true }
-      );
-      return token;
-    } catch (error) {
-      throw new Error(`Failed to replace token: ${(error as Error).message}`);
-    }
+    return this.model.findOneAndUpdate(
+      { userId },
+      { refreshToken, updatedAt: new Date() },
+      { upsert: true, new: true }
+    );
   }
 
   async deleteToken(refreshToken: string) {
     try {
-      await TokenModel.deleteOne({ refreshToken });
+      await this.model.deleteOne({ refreshToken });
     } catch (error) {
       throw new Error(`Failed to delete token: ${(error as Error).message}`);
     }
   }
 }
 
-export default new TokenRepository();
+export default TokenRepository;

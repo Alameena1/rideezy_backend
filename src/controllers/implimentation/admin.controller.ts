@@ -73,13 +73,37 @@ export class AdminController implements IAdminController {
   };
 
   toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
+   
     const { userId } = req.params;
     const { status } = req.body;
+     
     try {
       await this.adminService.toggleUserStatus(userId, status);
+      console.log("status",status)
       res.status(200).json({ message: `User status updated to ${status}` });
     } catch (error) {
       res.status(500).json({ message: "Failed to update user status" });
+    }
+  };
+  getVehicles = async (req: Request, res: Response): Promise<void> => {
+    try {
+      console.log("Fetching vehicles..."); // Add this for debugging
+      const vehicles = await this.adminService.getAllVehicles();
+      console.log("Vehicles fetched:", vehicles); // Add this to log the data
+      res.status(200).json({ message: "Vehicles retrieved successfully", vehicles });
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
+      res.status(500).json({ message: "Failed to retrieve vehicles" });
+    }
+  };
+  updateVehicleStatus = async (req: Request, res: Response): Promise<void> => {
+    const { vehicleId } = req.params;
+    const { status, note } = req.body;
+    try {
+      await this.adminService.updateVehicleStatus(vehicleId, status, note);
+      res.status(200).json({ message: `Vehicle status updated to ${status}` });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update vehicle status" });
     }
   };
 }

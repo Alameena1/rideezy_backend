@@ -1,4 +1,3 @@
-
 import { Request, Response } from "express";
 
 export interface IAdminController {
@@ -6,4 +5,6 @@ export interface IAdminController {
   refreshToken(req: Request, res: Response): Promise<void>;
   getUsers(req: Request, res: Response): Promise<void>;
   toggleUserStatus(req: Request, res: Response): Promise<void>;
+  getVehicles(req: Request, res: Response): Promise<void>;
+  updateVehicleStatus(req: Request, res: Response): Promise<void>; // Add this line
 }

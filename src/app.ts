@@ -4,6 +4,8 @@ import connectDB from "./config/dbconfig";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
+import vehicleRoutes from "./routes/vehicle.routes";
+import { errorMiddleware } from "./middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
@@ -23,6 +25,7 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); 
 
 const PORT = process.env.PORT || 5000;
 
@@ -30,8 +33,11 @@ connectDB();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/vehicles", vehicleRoutes);
+
 app.use("/admin", adminRoutes);
 
+app.use(errorMiddleware);
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

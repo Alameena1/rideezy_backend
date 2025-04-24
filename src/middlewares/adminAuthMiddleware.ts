@@ -21,11 +21,11 @@ if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
 
 const adminAuthMiddleware: RequestHandler = (req, res, next): void => {
   try {
-
     const authHeader = req.headers.authorization;
-    const tokenFromCookie = req.cookies?.accessToken; 
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : tokenFromCookie;
-
+    const tokenFromCookie = req.cookies?.accessToken;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : tokenFromCookie;
     if (!token) {
       res.status(401).json({ message: "Admin authorization token missing" });
       return;
@@ -37,11 +37,13 @@ const adminAuthMiddleware: RequestHandler = (req, res, next): void => {
       [key: string]: any;
     };
 
-    req.admin = decoded; 
+    req.admin = decoded;
     next();
   } catch (error) {
     if (error instanceof TokenExpiredError) {
-      res.status(401).json({ message: "Admin access token expired, please refresh" });
+      res
+        .status(401)
+        .json({ message: "Admin access token expired, please refresh" });
       return;
     } else if (error instanceof JsonWebTokenError) {
       res.status(401).json({ message: "Invalid admin token" });

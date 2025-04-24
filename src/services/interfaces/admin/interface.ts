@@ -1,4 +1,3 @@
-// src/services/interfaces/admin/interface.ts
 export interface IAdminService {
   authenticateAdmin(email: string, password: string): Promise<{
     accessToken: string;
@@ -6,4 +5,6 @@ export interface IAdminService {
   }>;
   getAllUsers(): Promise<any[]>;
   toggleUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void>;
+  getAllVehicles(): Promise<any[]>;
+  updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void>; // Add this line
 }
