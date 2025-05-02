@@ -5,6 +5,8 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
 import vehicleRoutes from "./routes/vehicle.routes";
+import rideRoutes from "./routes/ride.routes";
+import routeRoutes from "./routes/route.routes"; // Import new route file
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -14,30 +16,36 @@ dotenv.config();
 
 const app = express();
 
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const corsOptions = {
+  origin: "http://localhost:3000",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200,
+};
 
+// Apply CORS middleware first
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+// Other middleware
 app.use(cookieParser());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.urlencoded({ extended: true }));
 
-const PORT = process.env.PORT || 5000;
-
-connectDB();
-
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
-
+app.use("/api/rides", rideRoutes);
 app.use("/admin", adminRoutes);
-
+app.use("/api/route", routeRoutes); 
 app.use(errorMiddleware);
+
+const PORT = 3001;
+
+connectDB();
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

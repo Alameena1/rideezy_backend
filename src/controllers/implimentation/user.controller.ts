@@ -26,8 +26,7 @@ export class UserController implements IUserController {
         return;
       }
       const user = await this.userService.getProfile(userId);   
-      console.log("Fetching profile for userId:", userId);
-      console.log("User data returned:", user);
+  
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       next(error);

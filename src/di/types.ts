@@ -13,4 +13,7 @@ export const TYPES = {
   IVehicleController: Symbol.for("IVehicleController"),
   IVehicleService: Symbol.for("IVehicleService"),
   IVehicleRepository: Symbol.for("IVehicleRepository"),
+  IRideController: Symbol.for("IRideController"),
+  IRideService: Symbol.for("IRideService"),
+  IRideRepository: Symbol.for("IRideRepository"),
 };
