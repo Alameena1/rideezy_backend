@@ -5,7 +5,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
 
 const authMiddleware: RequestHandler = (req, res, next) => {
   try {
-    console.log("ride come in middle")
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       res

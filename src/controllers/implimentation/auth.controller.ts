@@ -52,16 +52,18 @@ export class AuthController implements IAuthController {
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
-   console.log("email and password",email, password)
       if (!email || !password) {
         res.status(400).json({ success: false, message: "Email and password are required" });
         return;
       }
-      const tokens = await this.authService.login(email, password); 
-        
+      const tokens = await this.authService.login(email, password);
       res.status(200).json({ success: true, message: "Login successful", ...tokens });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      if (error.message === "Your account has been blocked. Contact support.") {
+        res.status(403).json({ success: false, message: error.message });
+        return;
+      }
+      res.status(401).json({ success: false, message: "Invalid email or password" });
     }
   }
 

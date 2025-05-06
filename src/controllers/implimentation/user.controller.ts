@@ -19,14 +19,11 @@ export class UserController implements IUserController {
   async getProfile(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
-      
       if (!userId) {
-     
         res.status(401).json({ success: false, message: "Unauthorized" });
         return;
       }
-      const user = await this.userService.getProfile(userId);   
-  
+      const user = await this.userService.getProfile(userId);
       res.status(200).json({ success: true, data: user });
     } catch (error) {
       next(error);
@@ -41,8 +38,21 @@ export class UserController implements IUserController {
         res.status(401).json({ success: false, message: "Unauthorized" });
         return;
       }
+
+      // Validate govId if provided
+      if (updatedData.govId) {
+        if (!updatedData.govId.idNumber) {
+          res.status(400).json({ success: false, message: "Government ID number is required" });
+          return;
+        }
+      }
+
       const updatedUser = await this.userService.updateProfile(userId, updatedData);
-      res.status(200).json({ success: true, message: "Profile updated successfully", user: updatedUser });
+      res.status(200).json({
+        success: true,
+        message: "Profile updated successfully",
+        user: updatedUser,
+      });
     } catch (error) {
       next(error);
     }

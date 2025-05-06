@@ -1,45 +1,96 @@
+// src/services/implementation/admin.service.ts
 import { IAdminService } from "../interfaces/admin/interface";
 import { IAdminRepository } from "../../repositories/interface/admin/interface";
 import { generateAccessToken, generateRefreshToken } from "../../helpers/jwt.util";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
-import bcrypt from "bcrypt"; 
+import bcrypt from "bcrypt";
+import { IUser } from "../../models/user.model";
 
 @injectable()
 export class AdminService implements IAdminService {
   private adminRepository: IAdminRepository;
+  private ADMIN_EMAIL: string = "alameena8841@gmail.com";
+  private ADMIN_PASSWORD_HASH!: string;
+  private refreshTokens: Map<string, string> = new Map();
 
   constructor(@inject(TYPES.IAdminRepository) adminRepository: IAdminRepository) {
     this.adminRepository = adminRepository;
+    this.initializeAdminCredentials();
+  }
+
+  private async initializeAdminCredentials() {
+    try {
+      const plainPassword = "Al@12345";
+      this.ADMIN_PASSWORD_HASH = await bcrypt.hash(plainPassword, 10);
+      console.log("Admin credentials initialized:", {
+        email: this.ADMIN_EMAIL,
+        passwordHash: this.ADMIN_PASSWORD_HASH,
+      });
+    } catch (error) {
+      console.error("Error initializing admin credentials:", error);
+      throw new Error("Failed to initialize admin credentials");
+    }
   }
 
   async authenticateAdmin(email: string, password: string): Promise<{
-   
     accessToken: string;
     refreshToken: string;
   }> {
-    const admin = this.adminRepository.getAdminCredentials();  
-       console.log("uierjfuwhg8e",admin)
-
-    if (!admin ) {
-      throw new Error("Invalid credentials");
+    if (!email || !password) {
+      throw new Error("Email and password are required");
     }
 
-    const accessToken = generateAccessToken(email);
-    const refreshToken = generateRefreshToken(email);
+    try {
+      if (email.trim().toLowerCase() !== this.ADMIN_EMAIL.trim().toLowerCase()) {
+        console.log("Email does not match admin email:", email, this.ADMIN_EMAIL);
+        throw new Error("Invalid credentials");
+      }
 
-    // Save refresh token if using rotation (optional)
-    await this.saveRefreshToken(email, refreshToken);
+      const passwordMatch = await bcrypt.compare(password, this.ADMIN_PASSWORD_HASH);
+      if (!passwordMatch) {
+        console.log("Password does not match");
+        throw new Error("Invalid credentials");
+      }
 
-    return { accessToken, refreshToken };
+      console.log("Generating access token for email:", email);
+      const accessToken = generateAccessToken(email, email);
+      const refreshToken = generateRefreshToken(email);
+      console.log("Generated access token:", accessToken);
+
+      await this.saveRefreshToken(email, refreshToken);
+
+      return { accessToken, refreshToken };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in authenticateAdmin:", error.message, error.stack);
+        throw error;
+      }
+      console.error("Non-Error thrown in authenticateAdmin:", error);
+      throw new Error("Unknown authentication error");
+    }
+  }
+
+  async saveRefreshToken(email: string, refreshToken: string): Promise<void> {
+    this.refreshTokens.set(refreshToken, email);
+    console.log(`Saved refresh token for ${email}: ${refreshToken}`);
+  }
+
+  async invalidateRefreshToken(email: string, refreshToken: string): Promise<void> {
+    if (this.refreshTokens.has(refreshToken)) {
+      this.refreshTokens.delete(refreshToken);
+      console.log(`Invalidated refresh token for ${email}: ${refreshToken}`);
+    } else {
+      console.log(`Refresh token not found for ${email}: ${refreshToken}`);
+    }
   }
 
   async getAllUsers(): Promise<any[]> {
     return this.adminRepository.getAllUsers();
   }
 
-  async toggleUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
-    await this.adminRepository.updateUserStatus(userId, status);
+  async updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
+    await this.adminRepository.updateUserStatus(userId, status); // Renamed to match IAdminRepository
   }
 
   async getAllVehicles(): Promise<any[]> {
@@ -50,15 +101,29 @@ export class AdminService implements IAdminService {
     await this.adminRepository.updateVehicleStatus(vehicleId, status, note);
   }
 
-  async saveRefreshToken(email: string, refreshToken: string): Promise<void> {
-    // Implement database storage (e.g., MongoDB)
-    // Example: await this.adminRepository.saveRefreshToken(email, refreshToken);
-    console.log(`Saving refresh token for ${email}: ${refreshToken}`);
-  }
+  async verifyGovId(userId: string, status: "Verified" | "Rejected"): Promise<IUser> {
+    const user = await this.adminRepository.findUserById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-  async invalidateRefreshToken(email: string, refreshToken: string): Promise<void> {
-    // Implement database invalidation (e.g., MongoDB)
-    // Example: await this.adminRepository.invalidateRefreshToken(email, refreshToken);
-    console.log(`Invalidating refresh token for ${email}: ${refreshToken}`);
+    if (!user.govId) {
+      throw new Error("Government ID not submitted by user");
+    }
+
+    const updatedUser = await this.adminRepository.updateUser(userId, {
+      govId: {
+        ...user.govId,
+        verificationStatus: status,
+      },
+    });
+
+    if (!updatedUser) {
+      throw new Error("Failed to update government ID status");
+    }
+
+    return updatedUser;
   }
 }
+
+export default AdminService;

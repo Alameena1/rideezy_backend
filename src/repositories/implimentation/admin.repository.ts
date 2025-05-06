@@ -1,25 +1,14 @@
+// src/repositories/implementation/admin.repository.ts
 import { injectable } from "inversify";
-import UserModel from "../../models/user.model";
-import VehicleModel from "../../models/vehicle.modal"
+import UserModel, { IUser } from "../../models/user.model";
+import VehicleModel from "../../models/vehicle.modal";
 import { IAdminRepository } from "../interface/admin/interface";
 import { BaseRepository } from "../base/base.repository";
 
 @injectable()
 export class AdminRepository extends BaseRepository<any> implements IAdminRepository {
-  private adminEmail: string;
-  private adminPassword: string;
-
   constructor() {
-    super(UserModel); // Using UserModel for user-related operations
-    this.adminEmail = process.env.ADMIN_EMAIL as string;
-    this.adminPassword = process.env.ADMIN_PASSWORD as string;
-  }
-
-  public getAdminCredentials(): { email: string; password: string } {
-    return {
-      email: this.adminEmail,
-      password: this.adminPassword,
-    };
+    super(UserModel);
   }
 
   public async getAllUsers(): Promise<any[]> {
@@ -45,7 +34,7 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
 
   public async getAllVehicles(): Promise<any[]> {
     try {
-      const vehicles = await VehicleModel.find(); // Fetch all vehicles
+      const vehicles = await VehicleModel.find();
       return vehicles;
     } catch (error) {
       throw new Error("Failed to fetch vehicles from the database");
@@ -61,6 +50,27 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
       await VehicleModel.findByIdAndUpdate(vehicleId, { status, note }, { new: true });
     } catch (error) {
       throw new Error("Failed to update vehicle status");
+    }
+  }
+
+  public async findUserById(userId: string): Promise<IUser | null> {
+    try {
+      const user = await UserModel.findById(userId).select("-password").lean().exec();
+      return user;
+    } catch (error) {
+      throw new Error(`Failed to find user: ${(error as Error).message}`);
+    }
+  }
+
+  public async updateUser(userId: string, updatedData: Partial<IUser>): Promise<IUser | null> {
+    try {
+      const updatedUser = await UserModel.findByIdAndUpdate(userId, updatedData, { new: true })
+        .select("-password")
+        .lean()
+        .exec();
+      return updatedUser;
+    } catch (error) {
+      throw new Error(`Failed to update user: ${(error as Error).message}`);
     }
   }
 }

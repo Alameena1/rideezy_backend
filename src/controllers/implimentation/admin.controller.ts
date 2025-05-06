@@ -1,10 +1,14 @@
+// src/controllers/implementation/admin.controller.ts
 import { Request, Response } from "express";
 import { IAdminService } from "../../services/interfaces/admin/interface";
 import { IAdminController } from "../interface/admin/interface";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
-import jwt from "jsonwebtoken";
-import { generateAccessToken } from "../../helpers/jwt.util";
+import { generateAccessToken, verifyRefreshToken } from "../../helpers/jwt.util";
+
+interface AuthenticatedRequest extends Request {
+  user?: { userId: string; email: string; role?: string };
+}
 
 @injectable()
 export class AdminController implements IAdminController {
@@ -16,9 +20,16 @@ export class AdminController implements IAdminController {
 
   adminLogin = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
+    console.log("Request body:", req.body);
+
+    if (!email || !password) {
+      res.status(400).json({ message: "Email and password are required" });
+      return;
+    }
+
     try {
       const { accessToken, refreshToken } = await this.adminService.authenticateAdmin(email, password);
-    console.log("eouyfgb",accessToken)
+      console.log("Tokens generated:", accessToken, refreshToken);
 
       res.cookie("adminAuthToken", accessToken, {
         httpOnly: true,
@@ -37,8 +48,18 @@ export class AdminController implements IAdminController {
       });
 
       res.status(200).json({ message: "Login successful" });
-    } catch (error) {
-      res.status(401).json({ message: "Invalid credentials" });
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error("Authentication error:", err.message);
+      if (err.message === "Email and password are required") {
+        res.status(400).json({ message: "Email and password are required" });
+        return;
+      }
+      if (err.message === "Invalid credentials") {
+        res.status(401).json({ message: "Invalid email or password" });
+        return;
+      }
+      res.status(500).json({ message: "Server error" });
     }
   };
 
@@ -50,8 +71,8 @@ export class AdminController implements IAdminController {
     }
 
     try {
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { email: string };
-      const newAccessToken = generateAccessToken(decoded.email);
+      const decoded = verifyRefreshToken(refreshToken);
+      const newAccessToken = generateAccessToken(decoded.userId, decoded.userId);
 
       res.cookie("adminAuthToken", newAccessToken, {
         httpOnly: true,
@@ -71,9 +92,8 @@ export class AdminController implements IAdminController {
     const refreshToken = req.cookies.refreshToken;
     if (refreshToken) {
       try {
-        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { email: string };
-        // If using refresh token rotation with a database, invalidate the refresh token
-        await this.adminService.invalidateRefreshToken?.(decoded.email, refreshToken);
+        const decoded = verifyRefreshToken(refreshToken);
+        await this.adminService.invalidateRefreshToken?.(decoded.userId, refreshToken);
       } catch (error) {
         console.error("Error verifying refresh token during logout:", error);
       }
@@ -84,7 +104,7 @@ export class AdminController implements IAdminController {
     res.status(200).json({ message: "Logged out successfully" });
   };
 
-  getUsers = async (req: Request, res: Response): Promise<void> => {
+  getUsers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const users = await this.adminService.getAllUsers();
       res.status(200).json({ message: "Users retrieved successfully", users });
@@ -93,18 +113,18 @@ export class AdminController implements IAdminController {
     }
   };
 
-  toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
+  updateUserStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const { userId } = req.params;
     const { status } = req.body;
     try {
-      await this.adminService.toggleUserStatus(userId, status);
+      await this.adminService.updateUserStatus(userId, status); // Renamed to match AdminService
       res.status(200).json({ message: `User status updated to ${status}` });
     } catch (error) {
       res.status(500).json({ message: "Failed to update user status" });
     }
   };
 
-  getVehicles = async (req: Request, res: Response): Promise<void> => {
+  getVehicles = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const vehicles = await this.adminService.getAllVehicles();
       res.status(200).json({ message: "Vehicles retrieved successfully", vehicles });
@@ -113,7 +133,7 @@ export class AdminController implements IAdminController {
     }
   };
 
-  updateVehicleStatus = async (req: Request, res: Response): Promise<void> => {
+  updateVehicleStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const { vehicleId } = req.params;
     const { status, note } = req.body;
     try {
@@ -121,6 +141,26 @@ export class AdminController implements IAdminController {
       res.status(200).json({ message: `Vehicle status updated to ${status}` });
     } catch (error) {
       res.status(500).json({ message: "Failed to update vehicle status" });
+    }
+  };
+
+  verifyGovId = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const { userId, status } = req.body;
+
+      if (!userId || !status || !["Verified", "Rejected"].includes(status)) {
+        res.status(400).json({ success: false, message: "Invalid userId or status" });
+        return;
+      }
+
+      const updatedUser = await this.adminService.verifyGovId(userId, status);
+      res.status(200).json({
+        success: true,
+        message: `Government ID ${status.toLowerCase()} successfully`,
+        user: updatedUser,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
     }
   };
 }

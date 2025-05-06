@@ -1,3 +1,4 @@
+// src/routes/admin.routes.ts
 import { Router, RequestHandler } from "express";
 import container from "../di/container";
 import { TYPES } from "../di/types";
@@ -12,9 +13,11 @@ router.get("/vehicles", adminAuthMiddleware, adminController.getVehicles.bind(ad
 
 router.post("/login", adminController.adminLogin.bind(adminController) as RequestHandler);
 router.post("/refresh", adminController.refreshToken.bind(adminController) as RequestHandler);
-router.post("/logout", adminController.logout.bind(adminController) as RequestHandler); // Add logout route
+router.post("/logout", adminController.logout.bind(adminController) as RequestHandler);
 
-router.patch("/users/:userId/status", adminAuthMiddleware, adminController.toggleUserStatus.bind(adminController) as RequestHandler);
+router.patch("/users/:userId/status", adminAuthMiddleware, adminController.updateUserStatus.bind(adminController) as RequestHandler);
 router.patch("/vehicles/:vehicleId/status", adminAuthMiddleware, adminController.updateVehicleStatus.bind(adminController) as RequestHandler);
+
+router.post("/verify-gov-id", adminAuthMiddleware, adminController.verifyGovId.bind(adminController) as RequestHandler);
 
 export default router;

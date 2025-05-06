@@ -12,9 +12,14 @@ export interface IUser extends Document {
   Country?: string;
   gender?: string;
   status?: "Active" | "Blocked";
+  govId?: {
+    idNumber: string;
+    verificationStatus: "Pending" | "Verified" | "Rejected";
+    documentUrl?: string;
+  };
   createdAt?: Date;
   updatedAt?: Date;
-  _id: any; 
+  _id: any;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -30,6 +35,15 @@ const UserSchema = new Schema<IUser>(
     Country: { type: String },
     gender: { type: String },
     status: { type: String, enum: ["Active", "Blocked"], default: "Active" },
+    govId: {
+      idNumber: { type: String },
+      verificationStatus: {
+        type: String,
+        enum: ["Pending", "Verified", "Rejected"],
+        default: "Pending",
+      },
+      documentUrl: { type: String }, 
+    },
   },
   { timestamps: true }
 );

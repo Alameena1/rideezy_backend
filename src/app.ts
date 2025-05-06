@@ -1,3 +1,4 @@
+// src/index.ts
 import "reflect-metadata";
 import express from "express";
 import connectDB from "./config/dbconfig";
@@ -6,7 +7,7 @@ import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
 import vehicleRoutes from "./routes/vehicle.routes";
 import rideRoutes from "./routes/ride.routes";
-import routeRoutes from "./routes/route.routes"; // Import new route file
+import routeRoutes from "./routes/route.routes";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -39,7 +40,9 @@ app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/rides", rideRoutes);
 app.use("/admin", adminRoutes);
-app.use("/api/route", routeRoutes); 
+app.use("/api/route", routeRoutes);
+
+// Error handling middleware
 app.use(errorMiddleware);
 
 const PORT = 3001;
