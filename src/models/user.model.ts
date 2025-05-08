@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface IUser extends Document {
   fullName: string;
@@ -17,6 +17,16 @@ export interface IUser extends Document {
     verificationStatus: "Pending" | "Verified" | "Rejected";
     documentUrl?: string;
   };
+  subscription?: {
+    planId: Types.ObjectId;
+    startDate: Date;
+    endDate: Date;
+  };
+  monthlyRideCount: number;
+  lastRideReset: Date;
+  vehicles: Array<{
+    vehicleId: Types.ObjectId;
+  }>;
   createdAt?: Date;
   updatedAt?: Date;
   _id: any;
@@ -42,8 +52,20 @@ const UserSchema = new Schema<IUser>(
         enum: ["Pending", "Verified", "Rejected"],
         default: "Pending",
       },
-      documentUrl: { type: String }, 
+      documentUrl: { type: String },
     },
+    subscription: {
+      planId: { type: Schema.Types.ObjectId, ref: "SubscriptionPlan" },
+      startDate: { type: Date },
+      endDate: { type: Date },
+    },
+    monthlyRideCount: { type: Number, default: 0 },
+    lastRideReset: { type: Date, default: Date.now },
+    vehicles: [
+      {
+        vehicleId: { type: Schema.Types.ObjectId, ref: "Vehicle" },
+      },
+    ],
   },
   { timestamps: true }
 );

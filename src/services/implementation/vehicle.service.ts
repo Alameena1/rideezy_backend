@@ -3,23 +3,43 @@ import { TYPES } from "../../di/types";
 import { IVehicle } from "../../models/vehicle.modal";
 import { IVehicleRepository } from "../../repositories/interface/vehicle/ivehicleRepository";
 import { IVehicleService } from "../interfaces/vehicle/ivehicleService";
-import { Types } from "mongoose"; 
+import { ISubscriptionService } from "../interfaces/subscription/isubscriptionService";
+import { Types } from "mongoose";
+import  UserModel  from "../../models/user.model";
 
 @injectable()
 export default class VehicleService implements IVehicleService {
   private vehicleRepository: IVehicleRepository;
+  private subscriptionService: ISubscriptionService;
 
-  constructor(@inject(TYPES.IVehicleRepository) vehicleRepository: IVehicleRepository) {
+  constructor(
+    @inject(TYPES.IVehicleRepository) vehicleRepository: IVehicleRepository,
+    @inject(TYPES.ISubscriptionService) subscriptionService: ISubscriptionService
+  ) {
     this.vehicleRepository = vehicleRepository;
+    this.subscriptionService = subscriptionService;
   }
 
   async addVehicle(userId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle> {
+    // Check if user can register a vehicle
+    const canRegister = await this.subscriptionService.canRegisterVehicle(userId);
+    if (!canRegister) {
+      throw new Error("Vehicle registration limit exceeded. Maximum 2 vehicles allowed.");
+    }
+
     const userObjectId = new Types.ObjectId(userId);
     const vehicle = {
       ...vehicleData,
       user: userObjectId,
     };
-    return this.vehicleRepository.createVehicle(vehicle);
+    const createdVehicle = await this.vehicleRepository.createVehicle(vehicle);
+
+    // Update user's vehicles array
+    await UserModel.findByIdAndUpdate(userId, {
+      $push: { vehicles: { vehicleId: createdVehicle._id } },
+    });
+
+    return createdVehicle;
   }
 
   async getUserVehicles(userId: string): Promise<IVehicle[]> {
@@ -60,5 +80,10 @@ export default class VehicleService implements IVehicleService {
     }
 
     await this.vehicleRepository.deleteVehicle(vehicleId);
+
+    // Remove vehicle from user's vehicles array
+    await UserModel.findByIdAndUpdate(userId, {
+      $pull: { vehicles: { vehicleId: new Types.ObjectId(vehicleId) } },
+    });
   }
 }

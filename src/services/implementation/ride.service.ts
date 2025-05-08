@@ -3,6 +3,7 @@ import { TYPES } from '../../di/types';
 import { IRideService } from '../interfaces/ride/irideService';
 import { IRideRepository } from '../../repositories/interface/ride/irideRepository';
 import { IVehicleRepository } from '../../repositories/interface/vehicle/ivehicleRepository';
+import { ISubscriptionService } from '../interfaces/subscription/isubscriptionService';
 import { config } from '../../config/dbconfig';
 import { CreateRideDto } from '../../dtos/create-ride.dto';
 import { IRide } from '../../models/ride.model';
@@ -12,16 +13,25 @@ import { Types } from 'mongoose';
 export class RideService implements IRideService {
   private rideRepo: IRideRepository;
   private vehicleRepo: IVehicleRepository;
+  private subscriptionService: ISubscriptionService;
 
   constructor(
     @inject(TYPES.IRideRepository) rideRepository: IRideRepository,
-    @inject(TYPES.IVehicleRepository) vehicleRepository: IVehicleRepository
+    @inject(TYPES.IVehicleRepository) vehicleRepository: IVehicleRepository,
+    @inject(TYPES.ISubscriptionService) subscriptionService: ISubscriptionService
   ) {
     this.rideRepo = rideRepository;
     this.vehicleRepo = vehicleRepository;
+    this.subscriptionService = subscriptionService;
   }
 
   async startRide(dto: CreateRideDto): Promise<IRide> {
+    // Check if user can book a ride
+    const canBook = await this.subscriptionService.canBookRide(dto.driverId!);
+    if (!canBook) {
+      throw new Error("Ride limit exceeded. Please subscribe to book more rides.");
+    }
+
     const userObjectId = new Types.ObjectId(dto.driverId!);
 
     // Fetch and validate vehicle
@@ -70,7 +80,6 @@ export class RideService implements IRideService {
       routeGeometry: dto.routeGeometry,
     };
 
-   
     const ride = await this.rideRepo.createRide(rideData);
     return ride;
   }

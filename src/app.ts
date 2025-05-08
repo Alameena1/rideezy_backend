@@ -1,4 +1,3 @@
-// src/index.ts
 import "reflect-metadata";
 import express from "express";
 import connectDB from "./config/dbconfig";
@@ -8,6 +7,7 @@ import adminRoutes from "./routes/admin.routes";
 import vehicleRoutes from "./routes/vehicle.routes";
 import rideRoutes from "./routes/ride.routes";
 import routeRoutes from "./routes/route.routes";
+import subscriptionRoutes from "./routes/subscription.routes";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -41,6 +41,7 @@ app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/rides", rideRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/route", routeRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
 
 // Error handling middleware
 app.use(errorMiddleware);

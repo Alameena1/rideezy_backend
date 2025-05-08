@@ -26,7 +26,7 @@ const adminAuthMiddleware: RequestHandler = (req: Request, res: Response, next: 
     console.log("Extracted token from cookie:", token);
 
     if (!token) {
-      console.log("No token found in cookie");
+      console.log("No token found in cookie"  );
       res.status(401).json({ message: "Admin authorization token missing" });
       return;
     }

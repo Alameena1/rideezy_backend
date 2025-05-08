@@ -1,4 +1,3 @@
-// src/di/container.ts
 import { Container } from "inversify";
 import { TYPES } from "./types";
 
@@ -46,6 +45,14 @@ import { IRideController } from '../controllers/interface/ride/irideController';
 import { IRideService } from '../services/interfaces/ride/irideService';
 import { IRideRepository } from '../repositories/interface/ride/irideRepository';
 
+// Subscription
+import { SubscriptionController } from "../controllers/implimentation/SubscriptionController";
+import { SubscriptionService } from "../services/implementation/subscriptionService";
+import { SubscriptionRepository } from "../repositories/implimentation/subscriptionRepository";
+import { ISubscriptionController } from "../controllers/interface/subscription/isubscriptionController";
+import { ISubscriptionService } from "../services/interfaces/subscription/isubscriptionService";
+import { ISubscriptionRepository } from "../repositories/interface/subscription/isubscriptionRepository";
+
 const container = new Container();
 
 // Admin bindings
@@ -74,5 +81,10 @@ container.bind<IVehicleRepository>(TYPES.IVehicleRepository).to(VehicleRepositor
 container.bind<IRideController>(TYPES.IRideController).to(RideController).inSingletonScope();
 container.bind<IRideService>(TYPES.IRideService).to(RideService).inSingletonScope();
 container.bind<IRideRepository>(TYPES.IRideRepository).to(RideRepository).inSingletonScope();
+
+// Subscription bindings
+container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController).inSingletonScope();
+container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService).inSingletonScope();
+container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(SubscriptionRepository).inSingletonScope();
 
 export default container;

@@ -16,4 +16,7 @@ export const TYPES = {
   IRideController: Symbol.for("IRideController"),
   IRideService: Symbol.for("IRideService"),
   IRideRepository: Symbol.for("IRideRepository"),
+  ISubscriptionRepository: Symbol.for("ISubscriptionRepository"),
+  ISubscriptionService: Symbol.for("ISubscriptionService"),
+  ISubscriptionController: Symbol.for("ISubscriptionController"),
 };
