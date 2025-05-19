@@ -26,7 +26,6 @@ export class RideService implements IRideService {
   }
 
   async startRide(dto: CreateRideDto): Promise<IRide> {
-    // Check if user can book a ride
     const canBook = await this.subscriptionService.canBookRide(dto.driverId!);
     if (!canBook) {
       throw new Error("Ride limit exceeded. Please subscribe to book more rides.");
@@ -34,7 +33,6 @@ export class RideService implements IRideService {
 
     const userObjectId = new Types.ObjectId(dto.driverId!);
 
-    // Fetch and validate vehicle
     const vehicle = await this.vehicleRepo.findById(dto.vehicleId);
     if (!vehicle) {
       throw new Error('Selected vehicle not found');
@@ -59,7 +57,6 @@ export class RideService implements IRideService {
       throw new Error('Invalid cost per person provided');
     }
 
-    // Create ride object
     const rideData: Partial<IRide> = {
       rideId: `RIDE_${Date.now()}`,
       driverId: dto.driverId!,

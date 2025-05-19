@@ -15,4 +15,4 @@ export const CreateRideSchema = z.object({
   routeGeometry: z.string().min(1, 'routeGeometry is required'),
 });
 
-export type CreateRideDto = z.infer<typeof CreateRideSchema>;  
+export type CreateRideDto = z.infer<typeof CreateRideSchema>;  ``

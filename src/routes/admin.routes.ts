@@ -20,4 +20,10 @@ router.patch("/vehicles/:vehicleId/status", adminAuthMiddleware, adminController
 
 router.post("/verify-gov-id", adminAuthMiddleware, adminController.verifyGovId.bind(adminController) as RequestHandler);
 
+router.post("/subscriptions", adminAuthMiddleware, adminController.createSubscriptionPlan.bind(adminController) as RequestHandler);
+router.get("/subscriptions", adminAuthMiddleware, adminController.getSubscriptionPlans.bind(adminController) as RequestHandler);
+router.patch("/subscriptions/:planId", adminAuthMiddleware, adminController.updateSubscriptionPlan.bind(adminController) as RequestHandler);
+router.delete("/subscriptions/:planId", adminAuthMiddleware, adminController.deleteSubscriptionPlan.bind(adminController) as RequestHandler);
+router.patch("/subscriptions/:planId/status", adminAuthMiddleware, adminController.updateSubscriptionPlanStatus.bind(adminController) as RequestHandler);
+
 export default router;

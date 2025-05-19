@@ -1,10 +1,9 @@
-import { ISubscriptionPlan } from "../../../models/SubscriptionPlan";
-import { IUser } from "../../../models/user.model";
-
 export interface ISubscriptionService {
-  getAllPlans(): Promise<ISubscriptionPlan[]>;
-  subscribeUser(userId: string, planId: string): Promise<IUser>;
-  isSubscribed(userId: string): Promise<boolean>;
-  canBookRide(userId: string): Promise<boolean>;
+  getAllPlans(): Promise<any[]>;
+  subscribeUser(userId: string, planId: string): Promise<any>;
+ isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscription?: any }>; 
   canRegisterVehicle(userId: string): Promise<boolean>;
+  canBookRide(userId: string): Promise<boolean>; 
+  createPaymentOrder(planId: string): Promise<any>;
+  verifyAndSubscribe(userId: string, planId: string, paymentId: string, orderId: string, signature: string): Promise<any>;
 }

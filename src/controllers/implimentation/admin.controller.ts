@@ -5,6 +5,7 @@ import { IAdminController } from "../interface/admin/interface";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
 import { generateAccessToken, verifyRefreshToken } from "../../helpers/jwt.util";
+import { ISubscriptionPlan } from "../../models/SubscriptionPlan";
 
 interface AuthenticatedRequest extends Request {
   user?: { userId: string; email: string; role?: string };
@@ -163,4 +164,63 @@ export class AdminController implements IAdminController {
       res.status(500).json({ success: false, message: (error as Error).message });
     }
   };
+
+  async createSubscriptionPlan(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const planData: Partial<ISubscriptionPlan> = req.body;
+      if (!planData.name || !planData.durationMonths || !planData.price || !planData.description) {
+        res.status(400).json({ success: false, message: "All plan fields are required" });
+        return;
+      }
+      const plan = await this.adminService.createSubscriptionPlan(planData);
+      res.status(201).json({ success: true, message: "Subscription plan created", plan });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async updateSubscriptionPlan(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { planId } = req.params;
+      const planData: Partial<ISubscriptionPlan> = req.body;
+      const plan = await this.adminService.updateSubscriptionPlan(planId, planData);
+      res.status(200).json({ success: true, message: "Subscription plan updated", plan });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async deleteSubscriptionPlan(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { planId } = req.params;
+      await this.adminService.deleteSubscriptionPlan(planId);
+      res.status(200).json({ success: true, message: "Subscription plan deleted" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async getSubscriptionPlans(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const plans = await this.adminService.getSubscriptionPlans();
+      res.status(200).json({ success: true, plans });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async updateSubscriptionPlanStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { planId } = req.params;
+      const { status } = req.body;
+      if (!["Active", "Blocked"].includes(status)) {
+        res.status(400).json({ success: false, message: "Invalid status" });
+        return;
+      }
+      await this.adminService.updateSubscriptionPlanStatus(planId, status);
+      res.status(200).json({ success: true, message: `Plan status updated to ${status}` });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
 }

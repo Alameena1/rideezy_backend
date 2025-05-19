@@ -6,6 +6,7 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
 import bcrypt from "bcrypt";
 import { IUser } from "../../models/user.model";
+import { ISubscriptionPlan } from "../../models/SubscriptionPlan";
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -123,6 +124,25 @@ export class AdminService implements IAdminService {
     }
 
     return updatedUser;
+  }
+  async createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
+    return await this.adminRepository.createSubscriptionPlan(planData);
+  }
+
+  async updateSubscriptionPlan(planId: string, planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
+    return await this.adminRepository.updateSubscriptionPlan(planId, planData);
+  }
+
+  async deleteSubscriptionPlan(planId: string): Promise<void> {
+    await this.adminRepository.deleteSubscriptionPlan(planId);
+  }
+
+  async getSubscriptionPlans(): Promise<ISubscriptionPlan[]> {
+    return await this.adminRepository.getSubscriptionPlans();
+  }
+
+  async updateSubscriptionPlanStatus(planId: string, status: "Active" | "Blocked"): Promise<void> {
+    await this.adminRepository.updateSubscriptionPlanStatus(planId, status);
   }
 }
 

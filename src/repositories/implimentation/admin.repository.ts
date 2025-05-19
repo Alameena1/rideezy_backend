@@ -4,6 +4,7 @@ import UserModel, { IUser } from "../../models/user.model";
 import VehicleModel from "../../models/vehicle.modal";
 import { IAdminRepository } from "../interface/admin/interface";
 import { BaseRepository } from "../base/base.repository";
+import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/SubscriptionPlan";
 
 @injectable()
 export class AdminRepository extends BaseRepository<any> implements IAdminRepository {
@@ -71,6 +72,57 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
       return updatedUser;
     } catch (error) {
       throw new Error(`Failed to update user: ${(error as Error).message}`);
+    }
+  }
+
+  async createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
+    try {
+      const plan = await SubscriptionPlanModel.create(planData);
+      return plan;
+    } catch (error) {
+      throw new Error(`Failed to create subscription plan: ${(error as Error).message}`);
+    }
+  }
+
+  async updateSubscriptionPlan(planId: string, planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
+    try {
+      const plan = await SubscriptionPlanModel.findByIdAndUpdate(planId, planData, { new: true });
+      if (!plan) {
+        throw new Error("Subscription plan not found");
+      }
+      return plan;
+    } catch (error) {
+      throw new Error(`Failed to update subscription plan: ${(error as Error).message}`);
+    }
+  }
+
+  async deleteSubscriptionPlan(planId: string): Promise<void> {
+    try {
+      const plan = await SubscriptionPlanModel.findByIdAndDelete(planId);
+      if (!plan) {
+        throw new Error("Subscription plan not found");
+      }
+    } catch (error) {
+      throw new Error(`Failed to delete subscription plan: ${(error as Error).message}`);
+    }
+  }
+
+  async getSubscriptionPlans(): Promise<ISubscriptionPlan[]> {
+    try {
+      return await SubscriptionPlanModel.find().exec();
+    } catch (error) {
+      throw new Error(`Failed to fetch subscription plans: ${(error as Error).message}`);
+    }
+  }
+
+  async updateSubscriptionPlanStatus(planId: string, status: "Active" | "Blocked"): Promise<void> {
+    try {
+      const plan = await SubscriptionPlanModel.findByIdAndUpdate(planId, { status }, { new: true });
+      if (!plan) {
+        throw new Error("Subscription plan not found");
+      }
+    } catch (error) {
+      throw new Error(`Failed to update subscription plan status: ${(error as Error).message}`);
     }
   }
 }

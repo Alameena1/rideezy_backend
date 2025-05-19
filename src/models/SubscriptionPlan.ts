@@ -1,3 +1,4 @@
+// src/models/SubscriptionPlan.ts
 import { Schema, model, Document } from "mongoose";
 
 export interface ISubscriptionPlan extends Document {
@@ -5,6 +6,7 @@ export interface ISubscriptionPlan extends Document {
   durationMonths: number;
   price: number;
   description: string;
+  status: "Active" | "Blocked";
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -15,6 +17,11 @@ const SubscriptionPlanSchema: Schema = new Schema<ISubscriptionPlan>(
     durationMonths: { type: Number, required: true },
     price: { type: Number, required: true },
     description: { type: String, required: true },
+    status: { 
+      type: String, 
+      enum: ["Active", "Blocked"], 
+      default: "Active" 
+    },
   },
   { timestamps: true }
 );

@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "seed:plans": "ts-node src/seeders/seedSubscriptionPlans.ts",
     "build": "tsc",
     "start": "npm run build && node dist/app.js",
     "dev": "nodemon --exec ts-node src/app.ts"
@@ -17,11 +16,13 @@
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "express": "^4.21.2",
     "inversify": "^7.5.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
     "nodemailer": "^6.10.0",
+    "razorpay": "^2.9.6",
     "reflect-metadata": "^0.2.2",
     "twilio": "^5.5.0",
     "zod": "^3.24.3"
