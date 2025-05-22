@@ -1,4 +1,3 @@
-// src/repositories/base/base.repository.ts
 import { injectable } from "inversify";
 import mongoose, { Model, Document, FilterQuery } from "mongoose";
 
@@ -13,7 +12,7 @@ export abstract class BaseRepository<T extends Document> {
   async create(data: Partial<T>): Promise<T> {
     try {
       const document = await this.model.create(data);
-      return document;
+      return document as T; // Ensure the return type matches T
     } catch (error) {
       throw new Error(`Failed to create document: ${(error as Error).message}`);
     }
@@ -21,17 +20,26 @@ export abstract class BaseRepository<T extends Document> {
 
   async findById(id: string): Promise<T | null> {
     try {
-      const document = await this.model.findById(id).select("-password");
-      return document;
+      const document = await this.model.findById(id).select("-password").lean().exec();
+      return document as T | null; // Cast to T | null
     } catch (error) {
       throw new Error(`Failed to find document by ID: ${(error as Error).message}`);
     }
   }
 
+  async find(query: FilterQuery<T>): Promise<T[]> {
+    try {
+      const documents = await this.model.find(query).select("-password").lean().exec();
+      return documents as T[]; // Cast to T[]
+    } catch (error) {
+      throw new Error(`Failed to find documents: ${(error as Error).message}`);
+    }
+  }
+
   async findOne(query: FilterQuery<T>): Promise<T | null> {
     try {
-      const document = await this.model.findOne(query).select("-password");
-      return document;
+      const document = await this.model.findOne(query).select("-password").lean().exec();
+      return document as T | null; // Cast to T | null
     } catch (error) {
       throw new Error(`Failed to find document: ${(error as Error).message}`);
     }
@@ -39,8 +47,17 @@ export abstract class BaseRepository<T extends Document> {
 
   async updateById(id: string, data: Partial<T>): Promise<T | null> {
     try {
-      const document = await this.model.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-      return document;
+      const document = await this.model.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean().exec();
+      return document as T | null; // Cast to T | null
+    } catch (error) {
+      throw new Error(`Failed to update document: ${(error as Error).message}`);
+    }
+  }
+
+  async updateOne(query: FilterQuery<T>, update: Partial<T>): Promise<T | null> {
+    try {
+      const document = await this.model.findOneAndUpdate(query, update, { new: true, runValidators: true }).lean().exec();
+      return document as T | null; // Cast to T | null
     } catch (error) {
       throw new Error(`Failed to update document: ${(error as Error).message}`);
     }

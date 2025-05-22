@@ -7,4 +7,5 @@ interface AuthenticatedRequest extends Request {
 export interface IRideController {
   startRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
   getRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
-}
+  joinRide(req: Request, res: Response, next: NextFunction): Promise<void>;
+} 

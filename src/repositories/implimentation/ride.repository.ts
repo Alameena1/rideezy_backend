@@ -11,11 +11,19 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
   }
 
   async createRide(ride: Partial<IRide>): Promise<IRide> {
-    const newRide = new RideModel(ride); 
-    return newRide.save(); 
+    const newRide = new RideModel(ride);
+    return newRide.save();
   }
 
+  // Explicitly implement find to match IRideRepository
   async find(query: any): Promise<IRide[]> {
-    return this.model.find(query).lean().exec();
+    return super.find(query);
   }
+
+  // Explicitly implement findOne to match IRideRepository
+  async findOne(query: any): Promise<IRide | null> {
+    return super.findOne(query);
+  }
+
+  // updateOne is inherited from BaseRepository, no need to reimplement
 }

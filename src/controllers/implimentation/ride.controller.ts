@@ -1,10 +1,10 @@
-// src/controllers/ride.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../di/types';
-import { IRideController } from '../interface/ride/irideController'; // Note the path: interface, not interfaces
+import { IRideController } from '../interface/ride/irideController';
 import { IRideService } from '../../services/interfaces/ride/irideService';
 import { CreateRideSchema, CreateRideDto } from '../../dtos/create-ride.dto';
+import { JoinRideSchema, JoinRideDto } from '../../dtos/join-ride.dto';
 
 interface AuthenticatedRequest extends Request {
   user?: { userId: string; email: string };
@@ -20,7 +20,6 @@ export class RideController implements IRideController {
 
   async startRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log("start")
       const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -45,9 +44,30 @@ export class RideController implements IRideController {
     }
   }
 
+  async joinRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
+      const validationResult = JoinRideSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        res.status(400).json({ success: false, errors: validationResult.error.errors });
+        return;
+      }
+
+      const dto: JoinRideDto = validationResult.data;
+      const ride = await this.rideService.joinRide(dto.rideId, userId, dto.pickupLocation);
+      res.status(200).json({ success: true, message: 'Joined ride successfully', data: ride });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log("ride come in the controller")
       const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -59,5 +79,5 @@ export class RideController implements IRideController {
     } catch (error) {
       next(error);
     }
-  } 
+  }
 }
