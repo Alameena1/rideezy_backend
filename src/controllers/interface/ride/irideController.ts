@@ -5,7 +5,10 @@ interface AuthenticatedRequest extends Request {
 }
 
 export interface IRideController {
-  startRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
-  getRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
+  startRide(req: Request, res: Response, next: NextFunction): Promise<void>;
   joinRide(req: Request, res: Response, next: NextFunction): Promise<void>;
-} 
+  getRides(req: Request, res: Response, next: NextFunction): Promise<void>;
+  findNearestRides(req: Request, res: Response, next: NextFunction): Promise<void>;
+  createRidePaymentOrder(req: Request, res: Response, next: NextFunction): Promise<void>;
+  verifyAndJoinRide(req: Request, res: Response, next: NextFunction): Promise<void>;
+}

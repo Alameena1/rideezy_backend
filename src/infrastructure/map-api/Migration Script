@@ -1,0 +1,20 @@
+import { RideModel } from '../../models/ride.model';
+
+async function fixPassengerCount() {
+  const rides = await RideModel.find({});
+
+  for (const ride of rides) {
+    const actualPassengerCount = ride.passengers.length;
+    if (ride.passengerCount !== actualPassengerCount) {
+      console.log(`Fixing ride ${ride.rideId}: passengerCount ${ride.passengerCount} -> ${actualPassengerCount}`);
+      await RideModel.updateOne(
+        { rideId: ride.rideId },
+        { $set: { passengerCount: actualPassengerCount } }
+      );
+    }
+  }
+
+  console.log('Passenger count migration completed.');
+}
+
+fixPassengerCount();   

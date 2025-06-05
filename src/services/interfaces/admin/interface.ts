@@ -1,4 +1,3 @@
-// src/services/interfaces/admin/interface.ts
 import { IUser } from "../../../models/user.model";
 import { ISubscriptionPlan } from "../../../models/SubscriptionPlan";
 
@@ -19,4 +18,7 @@ export interface IAdminService {
   deleteSubscriptionPlan(planId: string): Promise<void>;
   getSubscriptionPlans(): Promise<ISubscriptionPlan[]>;
   updateSubscriptionPlanStatus(planId: string, status: "Active" | "Blocked"): Promise<void>;
+  getRideDetails(rideId: string): Promise<any>;
+  updateRideStatus(rideId: string, status: "Active" | "Blocked" | "Cancelled"): Promise<void>;
+  getAllRides(): Promise<any[]>;
 }

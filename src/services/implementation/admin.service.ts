@@ -1,4 +1,3 @@
-// src/services/implementation/admin.service.ts
 import { IAdminService } from "../interfaces/admin/interface";
 import { IAdminRepository } from "../../repositories/interface/admin/interface";
 import { generateAccessToken, generateRefreshToken } from "../../helpers/jwt.util";
@@ -91,7 +90,7 @@ export class AdminService implements IAdminService {
   }
 
   async updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
-    await this.adminRepository.updateUserStatus(userId, status); // Renamed to match IAdminRepository
+    await this.adminRepository.updateUserStatus(userId, status);
   }
 
   async getAllVehicles(): Promise<any[]> {
@@ -99,6 +98,7 @@ export class AdminService implements IAdminService {
   }
 
   async updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void> {
+    console.log("from service checking vehicle rejection note",note)
     await this.adminRepository.updateVehicleStatus(vehicleId, status, note);
   }
 
@@ -125,6 +125,7 @@ export class AdminService implements IAdminService {
 
     return updatedUser;
   }
+
   async createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
     return await this.adminRepository.createSubscriptionPlan(planData);
   }
@@ -143,6 +144,18 @@ export class AdminService implements IAdminService {
 
   async updateSubscriptionPlanStatus(planId: string, status: "Active" | "Blocked"): Promise<void> {
     await this.adminRepository.updateSubscriptionPlanStatus(planId, status);
+  }
+
+  async getRideDetails(rideId: string): Promise<any> {
+    return await this.adminRepository.getRideDetails(rideId);
+  }
+
+  async updateRideStatus(rideId: string, status: "Active" | "Blocked" | "Cancelled"): Promise<void> {
+    await this.adminRepository.updateRideStatus(rideId, status);
+  }
+
+  async getAllRides(): Promise<any[]> {
+    return await this.adminRepository.getAllRides();
   }
 }
 

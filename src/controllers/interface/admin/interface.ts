@@ -1,4 +1,3 @@
-// src/controllers/interface/admin/interface.ts
 import { Request, Response } from "express";
 
 export interface IAdminController {
@@ -15,4 +14,8 @@ export interface IAdminController {
   deleteSubscriptionPlan(req: Request, res: Response): Promise<void>;
   getSubscriptionPlans(req: Request, res: Response): Promise<void>;
   updateSubscriptionPlanStatus(req: Request, res: Response): Promise<void>;
+  getRideDetails(req: Request, res: Response): Promise<void>;
+  blockRide(req: Request, res: Response): Promise<void>;
+  cancelRide(req: Request, res: Response): Promise<void>;
+  getAllRides(req: Request, res: Response): Promise<void>;
 }

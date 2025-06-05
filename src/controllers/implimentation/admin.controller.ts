@@ -1,4 +1,3 @@
-// src/controllers/implementation/admin.controller.ts
 import { Request, Response } from "express";
 import { IAdminService } from "../../services/interfaces/admin/interface";
 import { IAdminController } from "../interface/admin/interface";
@@ -118,7 +117,7 @@ export class AdminController implements IAdminController {
     const { userId } = req.params;
     const { status } = req.body;
     try {
-      await this.adminService.updateUserStatus(userId, status); // Renamed to match AdminService
+      await this.adminService.updateUserStatus(userId, status);
       res.status(200).json({ message: `User status updated to ${status}` });
     } catch (error) {
       res.status(500).json({ message: "Failed to update user status" });
@@ -172,7 +171,9 @@ export class AdminController implements IAdminController {
         res.status(400).json({ success: false, message: "All plan fields are required" });
         return;
       }
-      const plan = await this.adminService.createSubscriptionPlan(planData);
+      const plan
+
+ = await this.adminService.createSubscriptionPlan(planData);
       res.status(201).json({ success: true, message: "Subscription plan created", plan });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -219,6 +220,45 @@ export class AdminController implements IAdminController {
       }
       await this.adminService.updateSubscriptionPlanStatus(planId, status);
       res.status(200).json({ success: true, message: `Plan status updated to ${status}` });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async getRideDetails(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { rideId } = req.params;
+      const ride = await this.adminService.getRideDetails(rideId);
+      res.status(200).json({ success: true, message: "Ride details retrieved successfully", ride });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async blockRide(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { rideId } = req.params;
+      await this.adminService.updateRideStatus(rideId, "Blocked");
+      res.status(200).json({ success: true, message: "Ride blocked successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async cancelRide(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { rideId } = req.params;
+      await this.adminService.updateRideStatus(rideId, "Cancelled");
+      res.status(200).json({ success: true, message: "Ride cancelled successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async getAllRides(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const rides = await this.adminService.getAllRides();
+      res.status(200).json({ success: true, message: "Rides retrieved successfully", rides });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
     }

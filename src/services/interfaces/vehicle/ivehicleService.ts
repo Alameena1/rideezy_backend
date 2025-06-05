@@ -5,6 +5,8 @@ export interface IVehicleService {
   getUserVehicles(userId: string): Promise<IVehicle[]>;
   updateVehicle(userId: string, vehicleId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle>;
   deleteVehicle(userId: string, vehicleId: string): Promise<void>;
+  reapplyVehicle(userId: string, vehicleId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle>;
+
 }
 
 

@@ -102,4 +102,26 @@ export class VehicleController implements IVehicleController {
       next(error);
     }
   }
+  async reapplyVehicle(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const vehicleId = req.params.id;
+      const vehicleData = req.body;
+
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+
+      if (!vehicleId) {
+        res.status(400).json({ success: false, message: "Vehicle ID is required" });
+        return;
+      }
+
+      const updatedVehicle = await this.vehicleService.reapplyVehicle(userId, vehicleId, vehicleData);
+      res.status(200).json({ success: true, message: "Vehicle reapplied successfully", data: updatedVehicle });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -1,10 +1,10 @@
-// src/repositories/implementation/admin.repository.ts
 import { injectable } from "inversify";
 import UserModel, { IUser } from "../../models/user.model";
 import VehicleModel from "../../models/vehicle.modal";
 import { IAdminRepository } from "../interface/admin/interface";
 import { BaseRepository } from "../base/base.repository";
 import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/SubscriptionPlan";
+import {RideModel} from "../../models/ride.model";
 
 @injectable()
 export class AdminRepository extends BaseRepository<any> implements IAdminRepository {
@@ -123,6 +123,39 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
       }
     } catch (error) {
       throw new Error(`Failed to update subscription plan status: ${(error as Error).message}`);
+    }
+  }
+
+  async getRideDetails(rideId: string): Promise<any> {
+    try {
+      const ride = await RideModel.findById(rideId).lean().exec();
+      if (!ride) {
+        throw new Error("Ride not found");
+      }
+      return ride;
+    } catch (error) {
+      throw new Error(`Failed to fetch ride details: ${(error as Error).message}`);
+    }
+  }
+
+  async updateRideStatus(rideId: string, status: "Active" | "Blocked" | "Cancelled"): Promise<void> {
+    try {
+      const ride = await RideModel.findById(rideId);
+      if (!ride) {
+        throw new Error("Ride not found");
+      }
+      await RideModel.findByIdAndUpdate(rideId, { status }, { new: true });
+    } catch (error) {
+      throw new Error(`Failed to update ride status: ${(error as Error).message}`);
+    }
+  }
+
+  async getAllRides(): Promise<any[]> {
+    try {
+      const rides = await RideModel.find().lean().exec();
+      return rides;
+    } catch (error) {
+      throw new Error(`Failed to fetch rides: ${(error as Error).message}`);
     }
   }
 }

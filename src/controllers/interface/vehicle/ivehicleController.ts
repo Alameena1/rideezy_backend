@@ -9,4 +9,6 @@ export interface IVehicleController {
   getVehicles(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
   updateVehicle(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>; 
   deleteVehicle(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
+  reapplyVehicle(req: Request, res: Response, next: NextFunction): Promise<void>;
+
 }

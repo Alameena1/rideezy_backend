@@ -86,4 +86,30 @@ export default class VehicleService implements IVehicleService {
       $pull: { vehicles: { vehicleId: new Types.ObjectId(vehicleId) } },
     });
   }
+
+  async reapplyVehicle(userId: string, vehicleId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle> {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+    if (!vehicleId) {
+      throw new Error("Vehicle ID is required");
+    }
+
+    const existingVehicle = await this.vehicleRepository.findById(vehicleId);
+    if (!existingVehicle || existingVehicle.user.toString() !== userId) {
+      throw new Error("Vehicle not found or unauthorized to reapply");
+    }
+    if (existingVehicle.status !== "Rejected") {
+      throw new Error("Only rejected vehicles can be reapplied");
+    }
+
+    const updatedVehicle = await this.vehicleRepository.updateVehicle(vehicleId, {
+      ...vehicleData,
+      status: "Pending",
+      note: "", // Clear the rejection note
+      updatedAt: new Date(),
+    });
+
+    return updatedVehicle;
+  }
 }

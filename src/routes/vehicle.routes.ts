@@ -15,5 +15,7 @@ router.put("/:id", authMiddleware, vehicleController.updateVehicle.bind(vehicleC
 
 
 router.delete("/:id", authMiddleware, vehicleController.deleteVehicle.bind(vehicleController));
+router.post("/:id/reapply", authMiddleware, vehicleController.reapplyVehicle.bind(vehicleController));
 
-export default router;
+
+export default router;                                                                                

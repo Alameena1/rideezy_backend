@@ -11,6 +11,7 @@ export interface IVehicle extends Document {
   vehicleImage: string; // Changed to required
   documentImage: string; // Changed to required
   status: 'Pending' | 'Approved' | 'Rejected';
+  note:string;
   createdAt?: Date;
   updatedAt?: Date;
   mileage: number; // Added mileage property
@@ -63,6 +64,10 @@ const VehicleSchema = new Schema<IVehicle>(
       type: String,
       enum: ['Pending', 'Approved', 'Rejected'],
       default: 'Pending',
+    },
+    note: {
+      type: String,
+      trim: true,
     },
     mileage: {
       type: Number,
