@@ -1,10 +1,13 @@
 import { IRide } from '../../../models/ride.model';
 import { CreateRideDto } from '../../../dtos/create-ride.dto';
+import { JoinedRideDto } from '../../../dtos/joined-ride.dto';
 
 export interface IRideService {
   startRide(dto: CreateRideDto): Promise<IRide>;
   joinRide(rideId: string, passengerId: string, pickupLocation: string, dropoffLocation: string): Promise<IRide>;
   getRides(userId: string): Promise<IRide[]>;
+  getJoinedRides(passengerId: string): Promise<JoinedRideDto[]>;
+
   findNearestRides(
     userLocation: string,
     destination: string,

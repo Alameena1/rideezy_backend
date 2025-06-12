@@ -1,17 +1,17 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
-// src/models/ride.model.ts
 export interface IRide extends Document {
+  _id: Types.ObjectId; 
   rideId: string;
   driverId: string;
-  driverName: string; // Add driverName
+  driverName: string;
   vehicleId: string;
   date: Date;
   time: string;
   startPoint: string;
-  startPlaceName: string; // Add startPlaceName
+  startPlaceName: string;
   endPoint: string;
-  endPlaceName: string; // Add endPlaceName
+  endPlaceName: string;
   distanceKm: number;
   mileage: number;
   fuelPrice: number;
@@ -36,14 +36,14 @@ const rideSchema = new Schema<IRide>(
   {
     rideId: { type: String, required: true, unique: true },
     driverId: { type: String, required: true },
-    driverName: { type: String, required: true }, // Add driverName
+    driverName: { type: String, required: true },
     vehicleId: { type: String, required: true },
     date: { type: Date, required: true },
     time: { type: String, required: true },
     startPoint: { type: String, required: true },
-    startPlaceName: { type: String, required: true }, // Add startPlaceName
+    startPlaceName: { type: String, required: true },
     endPoint: { type: String, required: true },
-    endPlaceName: { type: String, required: true }, // Add endPlaceName
+    endPlaceName: { type: String, required: true },
     distanceKm: { type: Number, required: true },
     mileage: { type: Number, required: true },
     fuelPrice: { type: Number, required: true },
@@ -67,7 +67,7 @@ const rideSchema = new Schema<IRide>(
         {
           passengerId: { type: String, required: true },
           location: { type: String, required: true },
-          placeName: { type: String, required: true }, // Add placeName
+          placeName: { type: String, required: true },
         },
       ],
       required: true,
@@ -78,7 +78,7 @@ const rideSchema = new Schema<IRide>(
         {
           passengerId: { type: String, required: true },
           location: { type: String, required: true },
-          placeName: { type: String, required: true }, // Add placeName
+          placeName: { type: String, required: true },
         },
       ],
       required: true,

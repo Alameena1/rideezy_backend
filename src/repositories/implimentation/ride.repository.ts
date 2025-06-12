@@ -15,15 +15,23 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
     return newRide.save();
   }
 
-  // Explicitly implement find to match IRideRepository
   async find(query: any): Promise<IRide[]> {
     return super.find(query);
   }
 
-  // Explicitly implement findOne to match IRideRepository
   async findOne(query: any): Promise<IRide | null> {
     return super.findOne(query);
   }
 
-  // updateOne is inherited from BaseRepository, no need to reimplement
+  async updateOne(query: any, update: any): Promise<IRide | null> {
+    return super.updateOne(query, update);
+  }
+
+  async findJoinedRidesByPassengerId(passengerId: string): Promise<IRide[]> {
+    try {
+      return await RideModel.find({ 'passengers.passengerId': passengerId }).exec();
+    } catch (error) {
+      throw new Error(`Error fetching joined rides: ${(error as Error).message}`);
+    }
+  }
 }

@@ -11,4 +11,6 @@ export interface IRideController {
   findNearestRides(req: Request, res: Response, next: NextFunction): Promise<void>;
   createRidePaymentOrder(req: Request, res: Response, next: NextFunction): Promise<void>;
   verifyAndJoinRide(req: Request, res: Response, next: NextFunction): Promise<void>;
+    getJoinedRides(req: Request, res: Response, next: NextFunction): Promise<void>;
+
 }

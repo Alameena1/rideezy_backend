@@ -6,6 +6,7 @@ import { IVehicleRepository } from "../../repositories/interface/vehicle/ivehicl
 import { IUserRepository } from "../../repositories/interface/user/iuserRepository";
 import { ISubscriptionService } from "../interfaces/subscription/isubscriptionService";
 import { CreateRideDto } from "../../dtos/create-ride.dto";
+import { JoinedRideDto } from "../../dtos/joined-ride.dto";
 import { OSRMClient, RouteResponse } from "../../infrastructure/map-api/osrm.client";
 import { IRide, RideCreationData } from "../../models/ride.model";
 import axios from "axios";
@@ -38,7 +39,15 @@ export class RideService implements IRideService {
     });
   }
 
-  async startRide(dto: CreateRideDto): Promise<IRide> {
+async startRide(dto: CreateRideDto): Promise<IRide> {
+    const driver = await this.userRepo.findUserById(dto.driverId!);
+    if (!driver) {
+      throw new Error("Driver not found");
+    }
+    if (driver.govId?.verificationStatus !== "Verified") {
+      throw new Error("Driver must be verified to start a ride");
+    }
+
     const canBook = await this.subscriptionService.canBookRide(dto.driverId!);
     console.log("Ride Creation DTO:", dto);
     if (!canBook) {
@@ -60,10 +69,6 @@ export class RideService implements IRideService {
       throw new Error("Start point and end point cannot be the same");
     }
 
-    const driver = await this.userRepo.findUserById(dto.driverId!);
-    if (!driver) {
-      throw new Error("Driver not found");
-    }
     const driverName = driver.fullName;
 
     const route = await this.osrmClient.getRoute([dto.startPoint, dto.endPoint]);
@@ -120,9 +125,17 @@ export class RideService implements IRideService {
     console.log(`Saving ride with routeCoordinates: ${routeCoordinates.length} points`);
     const ride = await this.rideRepo.createRide(rideData);
     return ride;
-  }
+}
 
-  async joinRide(rideId: string, passengerId: string, pickupLocation: string, dropoffLocation: string): Promise<IRide> {
+async joinRide(rideId: string, passengerId: string, pickupLocation: string, dropoffLocation: string): Promise<IRide> {
+    const passenger = await this.userRepo.findUserById(passengerId);
+    if (!passenger) {
+      throw new Error("Passenger not found");
+    }
+    if (passenger.govId?.verificationStatus !== "Verified") {
+      throw new Error("Passenger must be verified to join a ride");
+    }
+
     const ride = await this.rideRepo.findOne({ rideId });
     if (!ride) {
       throw new Error("Ride not found");
@@ -170,10 +183,6 @@ export class RideService implements IRideService {
       throw new Error("Start point and end point cannot be the same");
     }
 
-    const passenger = await this.userRepo.findUserById(passengerId);
-    if (!passenger) {
-      throw new Error("Passenger not found");
-    }
     const passengerName = passenger.fullName;
 
     const pickupPlaceName = await this.reverseGeocode(pickupLat, pickupLng);
@@ -242,20 +251,88 @@ export class RideService implements IRideService {
         dropoffPoints,
       }
     );
+    console.log(`[${new Date().toISOString()}] Updated ride ${rideId} with pickupPoints:`, pickupPoints);
+    console.log(`[${new Date().toISOString()}] Updated ride ${rideId} with dropoffPoints:`, dropoffPoints);
 
     const updatedRide = await this.rideRepo.findOne({ rideId });
     if (!updatedRide) {
       throw new Error("Failed to retrieve updated ride");
     }
-
+    console.log(`[${new Date().toISOString()}] Final ride data for ${rideId}:`, {
+      pickupPoints: updatedRide.pickupPoints,
+      dropoffPoints: updatedRide.dropoffPoints,
+    });
     return updatedRide;
-  }
+}
 
-  async getRides(userId: string): Promise<IRide[]> {
+async getRides(userId: string): Promise<IRide[]> {
     const rides = await this.rideRepo.find({ driverId: userId });
     return rides;
   }
 
+async getJoinedRides(passengerId: string): Promise<JoinedRideDto[]> {
+  console.log(`[${new Date().toISOString()}] Fetching joined rides for passengerId: ${passengerId}`);
+  const rides = await this.rideRepo.findJoinedRidesByPassengerId(passengerId);
+
+  if (!rides || rides.length === 0) {
+    console.log(`[${new Date().toISOString()}] No joined rides found for passengerId: ${passengerId}`);
+    return [];
+  }
+
+  // Update ride status if needed
+  const currentDateTime = new Date();
+  for (const ride of rides) {
+    const rideDateStr = ride.date.toISOString().split("T")[0];
+    const rideDateTime = new Date(`${rideDateStr}T${ride.time}:00+05:30`);
+    if (currentDateTime >= rideDateTime && ride.status === "Pending") {
+      await this.rideRepo.updateOne({ rideId: ride.rideId }, { status: "Started" });
+      ride.status = "Started";
+      console.log(`[${new Date().toISOString()}] Updated ride ${ride.rideId} status to Started`);
+    }
+
+    // Ensure pickup and dropoff points exist for the passenger
+    const hasPickup = ride.pickupPoints.some(p => p.passengerId === passengerId);
+    const hasDropoff = ride.dropoffPoints.some(p => p.passengerId === passengerId);
+    if (!hasPickup || !hasDropoff) {
+      console.warn(`[${new Date().toISOString()}] Missing pickup/dropoff points for passenger ${passengerId} in ride ${ride.rideId}`);
+      // Optionally, we can attempt to fix this by re-joining the ride or logging for further investigation
+    }
+  }
+
+  console.log(`[${new Date().toISOString()}] Found ${rides.length} rides for passengerId: ${passengerId}`);
+  rides.forEach(ride => {
+    console.log(`Ride ${ride.rideId}:`);
+    console.log("Passengers:", ride.passengers);
+    console.log("Pickup Points:", ride.pickupPoints);
+    console.log("Dropoff Points:", ride.dropoffPoints);
+  });
+
+  return rides.map((ride: IRide) => ({
+    _id: ride._id.toString(),
+    rideId: ride.rideId || 'N/A',
+    driverId: ride.driverId || 'N/A',
+    driverName: ride.driverName || 'N/A',
+    vehicleId: ride.vehicleId || 'N/A',
+    date: ride.date.toISOString().split('T')[0] || 'N/A',
+    time: ride.time || 'N/A',
+    startPoint: ride.startPoint || 'N/A',
+    endPoint: ride.endPoint || 'N/A',
+    distanceKm: ride.distanceKm || 0,
+    mileage: ride.mileage || 0,
+    fuelPrice: ride.fuelPrice || 0,
+    passengerCount: ride.passengerCount || 0,
+    totalFuelCost: ride.totalFuelCost || 0,
+    costPerPerson: ride.costPerPerson || 0,
+    totalPeople: ride.totalPeople || 0,
+    passengers: ride.passengers || [],
+    pickupPoints: ride.pickupPoints || [],
+    dropoffPoints: ride.dropoffPoints || [],
+    status: ride.status || 'Pending',
+    routeGeometry: ride.routeGeometry || '',
+    paymentStatus: ride.passengers.some(p => p.passengerId === passengerId) ? "Paid" : "Pending",
+  }));
+}
+ 
   async findNearestRides(
     userLocation: string,
     destination: string,
@@ -536,55 +613,54 @@ export class RideService implements IRideService {
     }
   }
 
-async createRidePaymentOrder(rideId: string): Promise<any> {
-  const ride = await this.rideRepo.findOne({ rideId });
-  if (!ride) {
-    throw new Error("Ride not found");
+  async createRidePaymentOrder(rideId: string): Promise<any> {
+    const ride = await this.rideRepo.findOne({ rideId });
+    if (!ride) {
+      throw new Error("Ride not found");
+    }
+
+    const rideDateTime = new Date(`${ride.date.toISOString().split("T")[0]}T${ride.time}:00`);
+    const currentDateTime = new Date();
+    if (currentDateTime >= rideDateTime) {
+      await this.rideRepo.updateOne({ rideId }, { status: "Started" });
+      throw new Error("Ride has already started");
+    }
+
+    const maxCapacity = 4;
+    if (ride.passengers.length >= maxCapacity) {
+      throw new Error("Ride is full");
+    }
+
+    // Log the costPerPerson to debug
+    console.log(`Ride ${rideId} costPerPerson: ₹${ride.costPerPerson}`);
+
+    // Calculate amount in paise and round to the nearest integer
+    const amountInPaise = Math.round(ride.costPerPerson * 100);
+    if (amountInPaise < 100) {
+      throw new Error(`Amount must be at least ₹1 (100 paise), got ₹${ride.costPerPerson}`);
+    }
+
+    const timestamp = Date.now().toString().slice(-6);
+    const shortRideId = rideId.slice(-8);
+    const receipt = `ride_${shortRideId}_${timestamp}`;
+
+    const options = {
+      amount: amountInPaise,
+      currency: "INR",
+      receipt: receipt,
+    };
+
+    console.log("Creating Razorpay order for ride payment with options:", options);
+    const order = await this.razorpay.orders.create(options);
+    console.log("Razorpay order created for ride:", order);
+
+    return {
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+    };
   }
 
-  const rideDateTime = new Date(`${ride.date.toISOString().split("T")[0]}T${ride.time}:00`);
-  const currentDateTime = new Date();
-  if (currentDateTime >= rideDateTime) {
-    await this.rideRepo.updateOne({ rideId }, { status: "Started" });
-    throw new Error("Ride has already started");
-  }
-
-  const maxCapacity = 4;
-  if (ride.passengers.length >= maxCapacity) {
-    throw new Error("Ride is full");
-  }
-
-  // Log the costPerPerson to debug
-  console.log(`Ride ${rideId} costPerPerson: ₹${ride.costPerPerson}`);
-
-  // Calculate amount in paise and round to the nearest integer
-  const amountInPaise = Math.round(ride.costPerPerson * 100);
-  if (amountInPaise < 100) {
-    throw new Error(`Amount must be at least ₹1 (100 paise), got ₹${ride.costPerPerson}`);
-  }
-
-  const timestamp = Date.now().toString().slice(-6);
-  const shortRideId = rideId.slice(-8);
-  const receipt = `ride_${shortRideId}_${timestamp}`;
-
-  const options = {
-    amount: amountInPaise,
-    currency: "INR",
-    receipt: receipt,
-  };
-
-  console.log("Creating Razorpay order for ride payment with options:", options);
-  const order = await this.razorpay.orders.create(options);
-  console.log("Razorpay order created for ride:", order);
-
-  return {
-    id: order.id,
-    amount: order.amount,
-    currency: order.currency,
-  };
-}
-
-  // New method to verify payment and join the ride
   async verifyAndJoinRide(
     rideId: string,
     passengerId: string,
@@ -594,6 +670,7 @@ async createRidePaymentOrder(rideId: string): Promise<any> {
     orderId: string,
     signature: string
   ): Promise<IRide> {
+    console.log(`[${new Date().toISOString()}] Verifying payment for ride ${rideId}, passenger ${passengerId}`);
     const generatedSignature = createHmac(
       "sha256",
       process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI"
@@ -602,9 +679,13 @@ async createRidePaymentOrder(rideId: string): Promise<any> {
       .digest("hex");
 
     if (generatedSignature !== signature) {
+      console.error(`[${new Date().toISOString()}] Payment signature verification failed for ride ${rideId}`);
       throw new Error("Invalid payment signature");
     }
 
-    return await this.joinRide(rideId, passengerId, pickupLocation, dropoffLocation);
+    console.log(`[${new Date().toISOString()}] Payment verified for ride ${rideId}, joining ride...`);
+    const ride = await this.joinRide(rideId, passengerId, pickupLocation, dropoffLocation);
+    console.log(`[${new Date().toISOString()}] Successfully joined ride ${rideId} for passenger ${passengerId}`);
+    return ride;
   }
 }

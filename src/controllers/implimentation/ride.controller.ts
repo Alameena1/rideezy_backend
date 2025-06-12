@@ -81,6 +81,21 @@ export class RideController implements IRideController {
     }
   }
 
+   async getJoinedRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+
+      const rides = await this.rideService.getJoinedRides(userId);
+      res.status(200).json({ success: true, data: rides });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async findNearestRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
