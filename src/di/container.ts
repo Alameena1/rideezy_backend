@@ -53,6 +53,9 @@ import { ISubscriptionController } from "../controllers/interface/subscription/i
 import { ISubscriptionService } from "../services/interfaces/subscription/isubscriptionService";
 import { ISubscriptionRepository } from "../repositories/interface/subscription/isubscriptionRepository";
 
+
+import ResetTokenRepository from "../repositories/implimentation/resetToken.repository"; 
+
 const container = new Container();
 
 // Admin bindings
@@ -86,5 +89,8 @@ container.bind<IRideRepository>(TYPES.IRideRepository).to(RideRepository).inSing
 container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController).inSingletonScope();
 container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService).inSingletonScope();
 container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(SubscriptionRepository).inSingletonScope();
+
+
+container.bind(TYPES.IResetTokenRepository).to(ResetTokenRepository); // New
 
 export default container;

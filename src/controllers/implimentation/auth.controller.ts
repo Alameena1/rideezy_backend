@@ -115,4 +115,32 @@ export class AuthController implements IAuthController {
       next(error);
     }
   }
+
+  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        res.status(400).json({ success: false, message: "Email is required" });
+        return;
+      }
+      const response = await this.authService.forgotPassword(email);
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) {
+        res.status(400).json({ success: false, message: "Token and new password are required" });
+        return;
+      }
+      const response = await this.authService.resetPassword(token, newPassword);
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

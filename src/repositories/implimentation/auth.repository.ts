@@ -17,13 +17,26 @@ export class AuthRepository extends BaseRepository<IUser> implements IAuthReposi
     try {
       const user = await this.model
         .findOne({ email })
-        .select("+password") 
+        .select("+password")
         .lean()
         .exec();
       return user;
     } catch (error) {
       console.error("Find user error:", (error as Error).message);
       throw new Error(`Failed to find user: ${(error as Error).message}`);
+    }
+  }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<IUser | null> {
+    try {
+      const user = await this.model
+        .findByIdAndUpdate(userId, { password: hashedPassword }, { new: true, runValidators: true })
+        .lean()
+        .exec();
+      return user;
+    } catch (error) {
+      console.error("Update password error:", (error as Error).message);
+      throw new Error(`Failed to update password: ${(error as Error).message}`);
     }
   }
 }

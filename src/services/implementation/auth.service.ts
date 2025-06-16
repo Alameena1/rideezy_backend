@@ -1,44 +1,35 @@
-
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
 import { IAuthService, IGoogleAuthUser } from "../interfaces/auth/iauthService";
 import { IAuthRepository } from "../../repositories/interface/user/iauthRepository";
 import { ITokenRepository } from "../../repositories/interface/user/itokenRepository";
 import { ITempUserRepository } from "../../repositories/interface/user/itempUserRepository";
-import { ITempUserInput } from "../../repositories/interface/user/itempUserRepository"; 
+import { ITempUserInput } from "../../repositories/interface/user/itempUserRepository";
+import { IResetTokenRepository } from "../../repositories/interface/user/iresetTokenRepository"; // Add this
 import PasswordUtil from "../../helpers/password.util";
-import { sendOTP } from "../../helpers/sendOTP.util";
+import { sendOTP, sendPasswordResetEmail } from "../../helpers/sendOTP.util";
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
 } from "../../helpers/jwt.util";
+import crypto from "crypto";
 
 @injectable()
 export default class AuthService implements IAuthService {
   constructor(
     @inject(TYPES.IAuthRepository) private authRepository: IAuthRepository,
     @inject(TYPES.ITokenRepository) private tokenRepository: ITokenRepository,
-    @inject(TYPES.ITempUserRepository)
-    private tempUserRepository: ITempUserRepository
+    @inject(TYPES.ITempUserRepository) private tempUserRepository: ITempUserRepository,
+    @inject(TYPES.IResetTokenRepository) private resetTokenRepository: IResetTokenRepository
   ) {}
 
   async signup(userData: ITempUserInput) {
-   
-    if (
-      !userData.fullName ||
-      !userData.email ||
-      !userData.password ||
-      userData.password.trim() === ""
-    ) {
-      throw new Error(
-        "Full name, email, and a non-empty password are required."
-      );
+    if (!userData.fullName || !userData.email || !userData.password || userData.password.trim() === "") {
+      throw new Error("Full name, email, and a non-empty password are required.");
     }
 
-    const existingUser = await this.authRepository.findUserByEmail(
-      userData.email
-    );
+    const existingUser = await this.authRepository.findUserByEmail(userData.email);
     if (existingUser) {
       throw new Error("User already exists.");
     }
@@ -74,29 +65,28 @@ export default class AuthService implements IAuthService {
     return { success: true, message: "OTP resent successfully." };
   }
 
+  async verifyOTP(email: string, otp: string) {
+    const tempUser = await this.tempUserRepository.findTempUserByEmail(email);
 
-async verifyOTP(email: string, otp: string) {
-  const tempUser = await this.tempUserRepository.findTempUserByEmail(email);
+    if (!tempUser || !tempUser.otp || !tempUser.otpExpiresAt || new Date() > tempUser.otpExpiresAt || tempUser.otp !== otp) {
+      throw new Error("Invalid or expired OTP.");
+    }
 
-  if (!tempUser || !tempUser.otp || !tempUser.otpExpiresAt || new Date() > tempUser.otpExpiresAt || tempUser.otp !== otp) {
-    throw new Error("Invalid or expired OTP.");
+    if (!tempUser.password || tempUser.password.trim() === "") {
+      throw new Error("No valid password found for registration.");
+    }
+
+    const hashedPassword = await PasswordUtil.hashPassword(tempUser.password);
+    const newUser = await this.authRepository.createUser({
+      fullName: tempUser.fullName,
+      email: tempUser.email,
+      phoneNumber: tempUser.phoneNumber,
+      password: hashedPassword,
+    });
+
+    await this.tempUserRepository.deleteTempUser(email);
+    return { success: true, message: "User registered successfully", user: newUser };
   }
-
-  if (!tempUser.password || tempUser.password.trim() === "") {
-    throw new Error("No valid password found for registration.");
-  }
-
-  const hashedPassword = await PasswordUtil.hashPassword(tempUser.password);
-  const newUser = await this.authRepository.createUser({
-    fullName: tempUser.fullName,
-    email: tempUser.email,
-    phoneNumber: tempUser.phoneNumber,
-    password: hashedPassword,
-  });
-
-  await this.tempUserRepository.deleteTempUser(email);
-  return { success: true, message: "User registered successfully", user: newUser };
-}
 
   async login(email: string, password: string) {
     const user = await this.authRepository.findUserByEmail(email);
@@ -105,14 +95,11 @@ async verifyOTP(email: string, otp: string) {
       throw new Error("Invalid email or password");
     }
     if (user.status === "Blocked") {
-      console.log("Your account has been blocked. Contact support.")
+      console.log("Your account has been blocked. Contact support.");
       throw new Error("Your account has been blocked. Contact support.");
     }
 
-    const isPasswordValid = await PasswordUtil.comparePasswords(
-      password,
-      user.password
-    );
+    const isPasswordValid = await PasswordUtil.comparePasswords(password, user.password);
     if (!isPasswordValid) {
       throw new Error("Invalid email or password");
     }
@@ -162,5 +149,50 @@ async verifyOTP(email: string, otp: string) {
 
     await this.tokenRepository.replaceToken(user._id.toString(), refreshToken);
     return { user, accessToken, refreshToken };
+  }
+
+ async forgotPassword(email: string) {
+  const user = await this.authRepository.findUserByEmail(email);
+  if (!user) {
+    throw new Error("No user found with this email.");
+  }
+
+  // Check if a reset token already exists 
+  const existingToken = await this.resetTokenRepository.findTokenByUserId(user._id.toString());
+  if (existingToken) {
+    //  Delete the existing token
+    await this.resetTokenRepository.deleteToken(existingToken.token);
+ 
+  }
+
+  // Creating  new reset token
+  const token = crypto.randomBytes(32).toString("hex");
+  await this.resetTokenRepository.createToken(user._id.toString(), token);
+
+  const resetLink = `${process.env.FRONTEND_URL}/user/reset-password?token=${token}`;
+  await sendPasswordResetEmail(email, resetLink);
+
+  return { success: true, message: "Password reset link sent to your email." };
+}
+
+  async resetPassword(token: string, newPassword: string) {
+    if (!newPassword || newPassword.trim() === "") {
+      throw new Error("New password is required.");
+    }
+
+    const resetToken = await this.resetTokenRepository.findToken(token);
+    if (!resetToken) {
+      throw new Error("Invalid or expired reset token.");
+    }
+
+    const hashedPassword = await PasswordUtil.hashPassword(newPassword);
+    const user = await this.authRepository.updatePassword(resetToken.userId, hashedPassword);
+
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    await this.resetTokenRepository.deleteToken(token);
+    return { success: true, message: "Password reset successfully." };
   }
 }

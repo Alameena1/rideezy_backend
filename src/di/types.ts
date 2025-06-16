@@ -19,4 +19,5 @@ export const TYPES = {
   ISubscriptionRepository: Symbol.for("ISubscriptionRepository"),
   ISubscriptionService: Symbol.for("ISubscriptionService"),
   ISubscriptionController: Symbol.for("ISubscriptionController"),
+    IResetTokenRepository: Symbol.for("IResetTokenRepository"), 
 };
