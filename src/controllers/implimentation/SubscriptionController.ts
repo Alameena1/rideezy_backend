@@ -75,7 +75,8 @@ async createOrder(req: Request, res: Response): Promise<void> {
     });
   }
 }
-  async verifyAndSubscribe(req: Request, res: Response): Promise<void> {
+
+async verifyAndSubscribe(req: Request, res: Response): Promise<void> {
     try {
       const { userId, planId, paymentId, orderId, signature } = req.body;
       if (!userId || !planId || !paymentId || !orderId || !signature) {

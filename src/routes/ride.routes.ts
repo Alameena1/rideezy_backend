@@ -14,5 +14,8 @@ router.post("/nearest", authMiddleware, rideController.findNearestRides.bind(rid
 router.post("/create-ride-order", authMiddleware, rideController.createRidePaymentOrder.bind(rideController));
 router.post("/verify-and-join", authMiddleware, rideController.verifyAndJoinRide.bind(rideController));
 router.get("/joined", authMiddleware, rideController.getJoinedRides.bind(rideController));
+router.put('/:rideId', authMiddleware, rideController.editRide.bind(rideController));
+router.delete('/:rideId', authMiddleware, rideController.cancelRide.bind(rideController));
+router.delete('/joined/:rideId', authMiddleware, rideController.cancelJoinedRide.bind(rideController));
 
 export default router;

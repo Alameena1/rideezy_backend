@@ -5,6 +5,7 @@ import { IRideController } from "../interface/ride/irideController";
 import { IRideService } from "../../services/interfaces/ride/irideService";
 import { CreateRideSchema, CreateRideDto } from "../../dtos/create-ride.dto";
 import { JoinRideSchema, JoinRideDto } from "../../dtos/join-ride.dto";
+import { EditRideSchema, EditRideDto } from "../../dtos/edit-ride.dto";
 
 interface AuthenticatedRequest extends Request {
   user?: { userId: string; email: string };
@@ -81,7 +82,7 @@ export class RideController implements IRideController {
     }
   }
 
-   async getJoinedRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getJoinedRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
       if (!userId) {
@@ -117,7 +118,6 @@ export class RideController implements IRideController {
     }
   }
 
-  // New endpoint to create a payment order for joining a ride
   async createRidePaymentOrder(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
@@ -149,7 +149,6 @@ export class RideController implements IRideController {
     }
   }
 
-  // New endpoint to verify payment and join the ride
   async verifyAndJoinRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
@@ -179,4 +178,69 @@ export class RideController implements IRideController {
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+  async editRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+
+      const { rideId } = req.params;
+      if (!rideId) {
+        res.status(400).json({ success: false, message: "Ride ID is required" });
+        return;
+      }
+
+      const validationResult = EditRideSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        res.status(400).json({ success: false, errors: validationResult.error.errors });
+        return;
+      }
+
+      const dto: EditRideDto = validationResult.data;
+      const updatedRide = await this.rideService.editRide(rideId, userId, dto);
+      res.status(200).json({ success: true, message: "Ride updated successfully", data: updatedRide });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async cancelRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+
+      const { rideId } = req.params;
+      if (!rideId) {
+        res.status(400).json({ success: false, message: "Ride ID is required" });
+        return;
+      }
+
+      await this.rideService.cancelRide(rideId, userId);
+      res.status(200).json({ success: true, message: "Ride cancelled successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+ async cancelJoinedRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+    const { rideId } = req.params;
+    await this.rideService.cancelJoinedRide(rideId, userId);
+    res.status(200).json({ success: true, message: "Ride cancellation request processed successfully" });
+  } catch (error: any) {
+    console.error(`[RideController] Error cancelling joined ride ${req.params.rideId}: ${error.message} at ${new Date().toISOString()}`);
+    res.status(400).json({ success: false, message: error.message });
+  }
+}
 }

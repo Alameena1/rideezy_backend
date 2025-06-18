@@ -7,6 +7,7 @@ import { IUserRepository } from "../../repositories/interface/user/iuserReposito
 import { ISubscriptionService } from "../interfaces/subscription/isubscriptionService";
 import { CreateRideDto } from "../../dtos/create-ride.dto";
 import { JoinedRideDto } from "../../dtos/joined-ride.dto";
+import { EditRideDto } from "../../dtos/edit-ride.dto";
 import { OSRMClient, RouteResponse } from "../../infrastructure/map-api/osrm.client";
 import { IRide, RideCreationData } from "../../models/ride.model";
 import axios from "axios";
@@ -39,7 +40,7 @@ export class RideService implements IRideService {
     });
   }
 
-async startRide(dto: CreateRideDto): Promise<IRide> {
+  async startRide(dto: CreateRideDto): Promise<IRide> {
     const driver = await this.userRepo.findUserById(dto.driverId!);
     if (!driver) {
       throw new Error("Driver not found");
@@ -125,9 +126,9 @@ async startRide(dto: CreateRideDto): Promise<IRide> {
     console.log(`Saving ride with routeCoordinates: ${routeCoordinates.length} points`);
     const ride = await this.rideRepo.createRide(rideData);
     return ride;
-}
+  }
 
-async joinRide(rideId: string, passengerId: string, pickupLocation: string, dropoffLocation: string): Promise<IRide> {
+  async joinRide(rideId: string, passengerId: string, pickupLocation: string, dropoffLocation: string): Promise<IRide> {
     const passenger = await this.userRepo.findUserById(passengerId);
     if (!passenger) {
       throw new Error("Passenger not found");
@@ -263,76 +264,73 @@ async joinRide(rideId: string, passengerId: string, pickupLocation: string, drop
       dropoffPoints: updatedRide.dropoffPoints,
     });
     return updatedRide;
-}
+  }
 
-async getRides(userId: string): Promise<IRide[]> {
+  async getRides(userId: string): Promise<IRide[]> {
     const rides = await this.rideRepo.find({ driverId: userId });
     return rides;
   }
 
-async getJoinedRides(passengerId: string): Promise<JoinedRideDto[]> {
-  console.log(`[${new Date().toISOString()}] Fetching joined rides for passengerId: ${passengerId}`);
-  const rides = await this.rideRepo.findJoinedRidesByPassengerId(passengerId);
+  async getJoinedRides(passengerId: string): Promise<JoinedRideDto[]> {
+    console.log(`[${new Date().toISOString()}] Fetching joined rides for passengerId: ${passengerId}`);
+    const rides = await this.rideRepo.findJoinedRidesByPassengerId(passengerId);
 
-  if (!rides || rides.length === 0) {
-    console.log(`[${new Date().toISOString()}] No joined rides found for passengerId: ${passengerId}`);
-    return [];
-  }
-
-  // Update ride status if needed
-  const currentDateTime = new Date();
-  for (const ride of rides) {
-    const rideDateStr = ride.date.toISOString().split("T")[0];
-    const rideDateTime = new Date(`${rideDateStr}T${ride.time}:00+05:30`);
-    if (currentDateTime >= rideDateTime && ride.status === "Pending") {
-      await this.rideRepo.updateOne({ rideId: ride.rideId }, { status: "Started" });
-      ride.status = "Started";
-      console.log(`[${new Date().toISOString()}] Updated ride ${ride.rideId} status to Started`);
+    if (!rides || rides.length === 0) {
+      console.log(`[${new Date().toISOString()}] No joined rides found for passengerId: ${passengerId}`);
+      return [];
     }
 
-    // Ensure pickup and dropoff points exist for the passenger
-    const hasPickup = ride.pickupPoints.some(p => p.passengerId === passengerId);
-    const hasDropoff = ride.dropoffPoints.some(p => p.passengerId === passengerId);
-    if (!hasPickup || !hasDropoff) {
-      console.warn(`[${new Date().toISOString()}] Missing pickup/dropoff points for passenger ${passengerId} in ride ${ride.rideId}`);
-      // Optionally, we can attempt to fix this by re-joining the ride or logging for further investigation
+    const currentDateTime = new Date();
+    for (const ride of rides) {
+      const rideDateStr = ride.date.toISOString().split("T")[0];
+      const rideDateTime = new Date(`${rideDateStr}T${ride.time}:00+05:30`);
+      if (currentDateTime >= rideDateTime && ride.status === "Pending") {
+        await this.rideRepo.updateOne({ rideId: ride.rideId }, { status: "Started" });
+        ride.status = "Started";
+        console.log(`[${new Date().toISOString()}] Updated ride ${ride.rideId} status to Started`);
+      }
+
+      const hasPickup = ride.pickupPoints.some(p => p.passengerId === passengerId);
+      const hasDropoff = ride.dropoffPoints.some(p => p.passengerId === passengerId);
+      if (!hasPickup || !hasDropoff) {
+        console.warn(`[${new Date().toISOString()}] Missing pickup/dropoff points for passenger ${passengerId} in ride ${ride.rideId}`);
+      }
     }
+
+    console.log(`[${new Date().toISOString()}] Found ${rides.length} rides for passengerId: ${passengerId}`);
+    rides.forEach(ride => {
+      console.log(`Ride ${ride.rideId}:`);
+      console.log("Passengers:", ride.passengers);
+      console.log("Pickup Points:", ride.pickupPoints);
+      console.log("Dropoff Points:", ride.dropoffPoints);
+    });
+
+    return rides.map((ride: IRide) => ({
+      _id: ride._id.toString(),
+      rideId: ride.rideId || 'N/A',
+      driverId: ride.driverId || 'N/A',
+      driverName: ride.driverName || 'N/A',
+      vehicleId: ride.vehicleId || 'N/A',
+      date: ride.date.toISOString().split('T')[0] || 'N/A',
+      time: ride.time || 'N/A',
+      startPoint: ride.startPoint || 'N/A',
+      endPoint: ride.endPoint || 'N/A',
+      distanceKm: ride.distanceKm || 0,
+      mileage: ride.mileage || 0,
+      fuelPrice: ride.fuelPrice || 0,
+      passengerCount: ride.passengerCount || 0,
+      totalFuelCost: ride.totalFuelCost || 0,
+      costPerPerson: ride.costPerPerson || 0,
+      totalPeople: ride.totalPeople || 0,
+      passengers: ride.passengers || [],
+      pickupPoints: ride.pickupPoints || [],
+      dropoffPoints: ride.dropoffPoints || [],
+      status: ride.status || 'Pending',
+      routeGeometry: ride.routeGeometry || '',
+      paymentStatus: ride.passengers.some(p => p.passengerId === passengerId) ? "Paid" : "Pending",
+    }));
   }
 
-  console.log(`[${new Date().toISOString()}] Found ${rides.length} rides for passengerId: ${passengerId}`);
-  rides.forEach(ride => {
-    console.log(`Ride ${ride.rideId}:`);
-    console.log("Passengers:", ride.passengers);
-    console.log("Pickup Points:", ride.pickupPoints);
-    console.log("Dropoff Points:", ride.dropoffPoints);
-  });
-
-  return rides.map((ride: IRide) => ({
-    _id: ride._id.toString(),
-    rideId: ride.rideId || 'N/A',
-    driverId: ride.driverId || 'N/A',
-    driverName: ride.driverName || 'N/A',
-    vehicleId: ride.vehicleId || 'N/A',
-    date: ride.date.toISOString().split('T')[0] || 'N/A',
-    time: ride.time || 'N/A',
-    startPoint: ride.startPoint || 'N/A',
-    endPoint: ride.endPoint || 'N/A',
-    distanceKm: ride.distanceKm || 0,
-    mileage: ride.mileage || 0,
-    fuelPrice: ride.fuelPrice || 0,
-    passengerCount: ride.passengerCount || 0,
-    totalFuelCost: ride.totalFuelCost || 0,
-    costPerPerson: ride.costPerPerson || 0,
-    totalPeople: ride.totalPeople || 0,
-    passengers: ride.passengers || [],
-    pickupPoints: ride.pickupPoints || [],
-    dropoffPoints: ride.dropoffPoints || [],
-    status: ride.status || 'Pending',
-    routeGeometry: ride.routeGeometry || '',
-    paymentStatus: ride.passengers.some(p => p.passengerId === passengerId) ? "Paid" : "Pending",
-  }));
-}
- 
   async findNearestRides(
     userLocation: string,
     destination: string,
@@ -631,10 +629,8 @@ async getJoinedRides(passengerId: string): Promise<JoinedRideDto[]> {
       throw new Error("Ride is full");
     }
 
-    // Log the costPerPerson to debug
     console.log(`Ride ${rideId} costPerPerson: ₹${ride.costPerPerson}`);
 
-    // Calculate amount in paise and round to the nearest integer
     const amountInPaise = Math.round(ride.costPerPerson * 100);
     if (amountInPaise < 100) {
       throw new Error(`Amount must be at least ₹1 (100 paise), got ₹${ride.costPerPerson}`);
@@ -687,5 +683,99 @@ async getJoinedRides(passengerId: string): Promise<JoinedRideDto[]> {
     const ride = await this.joinRide(rideId, passengerId, pickupLocation, dropoffLocation);
     console.log(`[${new Date().toISOString()}] Successfully joined ride ${rideId} for passenger ${passengerId}`);
     return ride;
+  }
+
+  async editRide(rideId: string, driverId: string, dto: EditRideDto): Promise<IRide> {
+    const ride = await this.rideRepo.findOne({ rideId });
+    if (!ride) {
+      throw new Error("Ride not found");
+    }
+
+    if (ride.driverId !== driverId) {
+      throw new Error("Only the driver who created the ride can edit it");
+    }
+
+    if (ride.status !== "Pending") {
+      throw new Error("Can only edit rides that are in Pending status");
+    }
+
+    const newDateTime = new Date(`${dto.date}T${dto.time}:00`);
+    const currentDateTime = new Date();
+    if (newDateTime <= currentDateTime) {
+      throw new Error("New date and time must be in the future");
+    }
+
+    await this.rideRepo.updateOne(
+      { rideId },
+      {
+        date: new Date(dto.date),
+        time: dto.time,
+      }
+    );
+
+    const updatedRide = await this.rideRepo.findOne({ rideId });
+    if (!updatedRide) {
+      throw new Error("Failed to retrieve updated ride");
+    }
+
+    return updatedRide;
+  }
+
+  async cancelRide(rideId: string, driverId: string): Promise<void> {
+    const ride = await this.rideRepo.findOne({ rideId });
+    if (!ride) {
+      throw new Error("Ride not found");
+    }
+
+    if (ride.driverId !== driverId) {
+      throw new Error("Only the driver who created the ride can cancel it");
+    }
+
+    if (ride.status !== "Pending") {
+      throw new Error("Can only cancel rides that are in Pending status");
+    }
+
+    await this.rideRepo.updateOne(
+      { rideId },
+      { status: "Cancelled" }
+    );
+  }
+
+  async cancelJoinedRide(rideId: string, passengerId: string): Promise<void> {
+   console.log(`[RideService] Attempting to cancel ride with rideId: ${rideId} for passengerId: ${passengerId} at ${new Date().toISOString()}`);
+  const ride = await this.rideRepo.findOne({ rideId });
+  if (!ride) {
+    console.error(`[RideService] Ride not found for rideId: ${rideId} at ${new Date().toISOString()}`);
+    throw new Error("Ride not found");
+  }
+  if (!ride.passengers.some(p => p.passengerId === passengerId)) {
+    console.error(`[RideService] Passenger ${passengerId} not found in ride ${rideId} at ${new Date().toISOString()}`);
+    throw new Error("Passenger not part of this ride");
+  }
+  if (ride.status !== "Pending") {
+    console.error(`[RideService] Cannot cancel ride ${rideId} as status is ${ride.status} at ${new Date().toISOString()}`);
+    throw new Error("Can only cancel rides that are in Pending status");
+  }
+
+    const updatedPassengers = ride.passengers.filter(p => p.passengerId !== passengerId);
+    const updatedPickupPoints = ride.pickupPoints.filter(p => p.passengerId !== passengerId);
+    const updatedDropoffPoints = ride.dropoffPoints.filter(p => p.passengerId !== passengerId);
+    const newPassengerCount = updatedPassengers.length;
+
+    const fuelNeeded = ride.distanceKm / ride.mileage;
+    const totalFuelCost = fuelNeeded * ride.fuelPrice;
+    const costPerPerson = ride.totalPeople > 0 ? totalFuelCost / ride.totalPeople : 0;
+
+    await this.rideRepo.updateOne(
+      { rideId },
+      {
+        passengers: updatedPassengers,
+        passengerCount: newPassengerCount,
+        pickupPoints: updatedPickupPoints,
+        dropoffPoints: updatedDropoffPoints,
+        totalFuelCost,
+        costPerPerson,
+      }
+    );
   }
 }

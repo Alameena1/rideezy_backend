@@ -20,7 +20,7 @@ export interface IRide extends Document {
   costPerPerson: number;
   totalPeople: number;
   passengers: { passengerId: string; passengerName: string }[];
-  status: 'Pending' | 'Started' | 'Completed';
+  status: 'Pending' | 'Started' | 'Completed' | 'Cancelled';
   routeGeometry: string;
   pickupPoints: { passengerId: string; location: string; placeName: string }[];
   dropoffPoints: { passengerId: string; location: string; placeName: string }[];
@@ -60,7 +60,7 @@ const rideSchema = new Schema<IRide>(
       ],
       default: [],
     },
-    status: { type: String, enum: ['Pending', 'Started', 'Completed'], default: 'Pending' },
+    status: { type: String, enum: ['Pending', 'Started', 'Completed', 'Cancelled'], default: 'Pending' },
     routeGeometry: { type: String, required: true },
     pickupPoints: {
       type: [

@@ -1,13 +1,13 @@
 import { IRide } from '../../../models/ride.model';
 import { CreateRideDto } from '../../../dtos/create-ride.dto';
 import { JoinedRideDto } from '../../../dtos/joined-ride.dto';
+import { EditRideDto } from '../../../dtos/edit-ride.dto';
 
 export interface IRideService {
   startRide(dto: CreateRideDto): Promise<IRide>;
   joinRide(rideId: string, passengerId: string, pickupLocation: string, dropoffLocation: string): Promise<IRide>;
   getRides(userId: string): Promise<IRide[]>;
   getJoinedRides(passengerId: string): Promise<JoinedRideDto[]>;
-
   findNearestRides(
     userLocation: string,
     destination: string,
@@ -24,4 +24,7 @@ export interface IRideService {
     orderId: string,
     signature: string
   ): Promise<IRide>;
+  editRide(rideId: string, driverId: string, dto: EditRideDto): Promise<IRide>;
+  cancelRide(rideId: string, driverId: string): Promise<void>;
+  cancelJoinedRide(rideId: string, passengerId: string): Promise<void>;
 }
