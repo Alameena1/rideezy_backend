@@ -5,14 +5,10 @@ import { IAuthRepository } from "../../repositories/interface/user/iauthReposito
 import { ITokenRepository } from "../../repositories/interface/user/itokenRepository";
 import { ITempUserRepository } from "../../repositories/interface/user/itempUserRepository";
 import { ITempUserInput } from "../../repositories/interface/user/itempUserRepository";
-import { IResetTokenRepository } from "../../repositories/interface/user/iresetTokenRepository"; // Add this
+import { IResetTokenRepository } from "../../repositories/interface/user/iresetTokenRepository";
 import PasswordUtil from "../../helpers/password.util";
 import { sendOTP, sendPasswordResetEmail } from "../../helpers/sendOTP.util";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyRefreshToken,
-} from "../../helpers/jwt.util";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../helpers/jwt.util";
 import crypto from "crypto";
 
 @injectable()
@@ -95,7 +91,6 @@ export default class AuthService implements IAuthService {
       throw new Error("Invalid email or password");
     }
     if (user.status === "Blocked") {
-      console.log("Your account has been blocked. Contact support.");
       throw new Error("Your account has been blocked. Contact support.");
     }
 
@@ -151,29 +146,25 @@ export default class AuthService implements IAuthService {
     return { user, accessToken, refreshToken };
   }
 
- async forgotPassword(email: string) {
-  const user = await this.authRepository.findUserByEmail(email);
-  if (!user) {
-    throw new Error("No user found with this email.");
+  async forgotPassword(email: string) {
+    const user = await this.authRepository.findUserByEmail(email);
+    if (!user) {
+      throw new Error("No user found with this email.");
+    }
+
+    const existingToken = await this.resetTokenRepository.findTokenByUserId(user._id.toString());
+    if (existingToken) {
+      await this.resetTokenRepository.deleteToken(existingToken.token);
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    await this.resetTokenRepository.createToken(user._id.toString(), token);
+
+    const resetLink = `${process.env.FRONTEND_URL}/user/reset-password?token=${token}`;
+    await sendPasswordResetEmail(email, resetLink);
+
+    return { success: true, message: "Password reset link sent to your email." };
   }
-
-  // Check if a reset token already exists 
-  const existingToken = await this.resetTokenRepository.findTokenByUserId(user._id.toString());
-  if (existingToken) {
-    //  Delete the existing token
-    await this.resetTokenRepository.deleteToken(existingToken.token);
- 
-  }
-
-  // Creating  new reset token
-  const token = crypto.randomBytes(32).toString("hex");
-  await this.resetTokenRepository.createToken(user._id.toString(), token);
-
-  const resetLink = `${process.env.FRONTEND_URL}/user/reset-password?token=${token}`;
-  await sendPasswordResetEmail(email, resetLink);
-
-  return { success: true, message: "Password reset link sent to your email." };
-}
 
   async resetPassword(token: string, newPassword: string) {
     if (!newPassword || newPassword.trim() === "") {

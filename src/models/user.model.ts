@@ -1,6 +1,18 @@
 import { Schema, model, Document, Types } from "mongoose";
 
+export interface IWallet {
+  balance: number;
+  transactions: {
+    transactionId: string;
+    type: "DEPOSIT" | "WITHDRAWAL" | "SUBSCRIPTION";
+    amount: number;
+    status: "PENDING" | "COMPLETED" | "FAILED";
+    createdAt: Date;
+  }[];
+}
+
 export interface IUser extends Document {
+  wallet: IWallet;
   fullName: string;
   email: string;
   phoneNumber?: string;
@@ -66,6 +78,18 @@ const UserSchema = new Schema<IUser>(
         vehicleId: { type: Schema.Types.ObjectId, ref: "Vehicle" },
       },
     ],
+    wallet: {
+      balance: { type: Number, default: 0 },
+      transactions: [
+        {
+          transactionId: { type: String, required: true },
+          type: { type: String, enum: ["DEPOSIT", "WITHDRAWAL", "SUBSCRIPTION"], required: true },
+          amount: { type: Number, required: true },
+          status: { type: String, enum: ["PENDING", "COMPLETED", "FAILED"], default: "PENDING" },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+    },
   },
   { timestamps: true }
 );

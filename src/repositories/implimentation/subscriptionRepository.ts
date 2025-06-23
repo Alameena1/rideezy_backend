@@ -1,8 +1,7 @@
 import { injectable } from "inversify";
 import { ISubscriptionRepository } from "../interface/subscription/isubscriptionRepository";
 import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/SubscriptionPlan";
-import UserModel from "../../models/user.model";
-import { IUser } from "../../models/user.model";
+import UserModel, { IUser } from "../../models/user.model";
 import { RideModel } from "../../models/ride.model";
 
 @injectable()
@@ -19,7 +18,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     return await UserModel.findById(userId).exec();
   }
 
-  async updateUser(userId: string, userData: Partial<IUser>): Promise<IUser> {
+  async updateUser(userId: string, userData: any): Promise<IUser> {
     const user = await UserModel.findByIdAndUpdate(userId, userData, { new: true }).exec();
     if (!user) {
       throw new Error("User not found");

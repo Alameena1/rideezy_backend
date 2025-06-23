@@ -20,6 +20,8 @@ import { ITokenRepository } from "../repositories/interface/user/itokenRepositor
 import TokenRepository from "../repositories/implimentation/token.repository";
 import { ITempUserRepository } from "../repositories/interface/user/itempUserRepository";
 import TempUserRepository from "../repositories/implimentation/tempUser.repository";
+import { IResetTokenRepository } from "../repositories/interface/user/iresetTokenRepository"; // Correct import
+import { ResetTokenRepository } from "../repositories/implimentation/resetToken.repository"; // Correct import
 
 // User
 import { IUserController } from "../controllers/interface/user/interface";
@@ -38,23 +40,28 @@ import VehicleService from "../services/implementation/vehicle.service";
 import VehicleRepository from "../repositories/implimentation/vehicle.repository";
 
 // Ride
-import { RideController } from '../controllers/implimentation/ride.controller';
-import { RideService } from '../services/implementation/ride.service';
-import { RideRepository } from '../repositories/implimentation/ride.repository';
-import { IRideController } from '../controllers/interface/ride/irideController';
-import { IRideService } from '../services/interfaces/ride/irideService';
-import { IRideRepository } from '../repositories/interface/ride/irideRepository';
+import { IRideController } from "../controllers/interface/ride/irideController";
+import { IRideService } from "../services/interfaces/ride/irideService";
+import { IRideRepository } from "../repositories/interface/ride/irideRepository";
+import { RideController } from "../controllers/implimentation/ride.controller";
+import { RideService } from "../services/implementation/ride.service";
+import { RideRepository } from "../repositories/implimentation/ride.repository";
 
 // Subscription
-import { SubscriptionController } from "../controllers/implimentation/SubscriptionController";
-import { SubscriptionService } from "../services/implementation/subscriptionService";
-import { SubscriptionRepository } from "../repositories/implimentation/subscriptionRepository";
 import { ISubscriptionController } from "../controllers/interface/subscription/isubscriptionController";
 import { ISubscriptionService } from "../services/interfaces/subscription/isubscriptionService";
 import { ISubscriptionRepository } from "../repositories/interface/subscription/isubscriptionRepository";
+import { SubscriptionController } from "../controllers/implimentation/SubscriptionController";
+import { SubscriptionService } from "../services/implementation/subscriptionService";
+import { SubscriptionRepository } from "../repositories/implimentation/subscriptionRepository";
 
-
-import ResetTokenRepository from "../repositories/implimentation/resetToken.repository"; 
+// Wallet
+import { IWalletController } from "../controllers/interface/wallet/iWalletController";
+import { IWalletService } from "../services/interfaces/wallet/iWalletService";
+import { IWalletRepository } from "../repositories/interface/wallet/iWalletRepository";
+import { WalletController } from "../controllers/implimentation/wallet.controller";
+import { WalletService } from "../services/implementation/wallet.service";
+import { WalletRepository } from "../repositories/implimentation/wallet.repository";
 
 const container = new Container();
 
@@ -69,6 +76,7 @@ container.bind<IAuthService>(TYPES.IAuthService).to(AuthService).inSingletonScop
 container.bind<IAuthRepository>(TYPES.IAuthRepository).to(AuthRepository).inSingletonScope();
 container.bind<ITokenRepository>(TYPES.ITokenRepository).to(TokenRepository).inSingletonScope();
 container.bind<ITempUserRepository>(TYPES.ITempUserRepository).to(TempUserRepository).inSingletonScope();
+container.bind<IResetTokenRepository>(TYPES.IResetTokenRepository).to(ResetTokenRepository).inSingletonScope();
 
 // User bindings
 container.bind<IUserController>(TYPES.IUserController).to(UserController).inSingletonScope();
@@ -90,7 +98,9 @@ container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(Subscr
 container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService).inSingletonScope();
 container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(SubscriptionRepository).inSingletonScope();
 
-
-container.bind(TYPES.IResetTokenRepository).to(ResetTokenRepository); // New
+// Wallet bindings
+container.bind<IWalletController>(TYPES.IWalletController).to(WalletController).inSingletonScope();
+container.bind<IWalletService>(TYPES.IWalletService).to(WalletService).inSingletonScope();
+container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository).inSingletonScope();
 
 export default container;

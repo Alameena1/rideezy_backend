@@ -27,6 +27,7 @@
     "razorpay": "^2.9.6",
     "reflect-metadata": "^0.2.2",
     "twilio": "^5.5.0",
+    "uuid": "^11.1.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {
@@ -42,6 +43,7 @@
     "@types/node": "^22.13.10",
     "@types/nodemailer": "^6.4.17",
     "@types/twilio": "^3.19.3",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9.22.0",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",

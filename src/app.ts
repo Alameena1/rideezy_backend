@@ -8,6 +8,7 @@ import vehicleRoutes from "./routes/vehicle.routes";
 import rideRoutes from "./routes/ride.routes";
 import routeRoutes from "./routes/route.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
+import walletRoutes from './routes/wallet.routes';
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -42,6 +43,7 @@ app.use("/api/rides", rideRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/route", routeRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // Error handling middleware
 app.use(errorMiddleware);

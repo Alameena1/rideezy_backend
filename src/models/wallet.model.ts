@@ -1,35 +1,50 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document } from "mongoose";
 
-export interface ITransaction extends Document {
-  id: string;
-  amount: number;
-  type: string; // "Credit" or "Debit"
-  date: Date;
+export interface IUser extends Document {
+  subscription?: {
+    planId: Schema.Types.ObjectId;
+    startDate: Date;
+    endDate: Date;
+  };
+  monthlyRideCount: number;
+  lastRideReset: Date;
+  vehicles: string[];
+  wallet: {
+    balance: number;
+    transactions: {
+      transactionId: string;
+      type: "DEPOSIT" | "WITHDRAWAL" | "SUBSCRIPTION";
+      amount: number;
+      status: "PENDING" | "COMPLETED" | "FAILED";
+      createdAt: Date;
+    }[];
+  };
 }
 
-export interface IWallet extends Document {
-  userId: string;
-  balance: number;
-  currency: string;
-  transactions: ITransaction[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+const UserSchema: Schema = new Schema<IUser>(
+  {
+    subscription: {
+      planId: { type: Schema.Types.ObjectId, ref: "SubscriptionPlan" },
+      startDate: { type: Date },
+      endDate: { type: Date },
+    },
+    monthlyRideCount: { type: Number, default: 0 },
+    lastRideReset: { type: Date, default: Date.now },
+    vehicles: [{ type: String }],
+    wallet: {
+      balance: { type: Number, default: 0 },
+      transactions: [
+        {
+          transactionId: { type: String, required: true },
+          type: { type: String, enum: ["DEPOSIT", "WITHDRAWAL", "SUBSCRIPTION"], required: true },
+          amount: { type: Number, required: true },
+          status: { type: String, enum: ["PENDING", "COMPLETED", "FAILED"], default: "PENDING" },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+    },
+  },
+  { timestamps: true }
+);
 
-const TransactionSchema = new Schema<ITransaction>({
-  id: { type: String, required: true, unique: true },
-  amount: { type: Number, required: true },
-  type: { type: String, required: true, enum: ['Credit', 'Debit'] },
-  date: { type: Date, default: Date.now },
-});
-
-const WalletSchema = new Schema<IWallet>({
-  userId: { type: String, required: true, unique: true },
-  balance: { type: Number, default: 0 },
-  currency: { type: String, default: 'INR' },
-  transactions: [TransactionSchema],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
-
-export const WalletModel = model<IWallet>('Wallet', WalletSchema);
+export default model<IUser>("User", UserSchema);

@@ -20,4 +20,7 @@ export const TYPES = {
   ISubscriptionService: Symbol.for("ISubscriptionService"),
   ISubscriptionController: Symbol.for("ISubscriptionController"),
     IResetTokenRepository: Symbol.for("IResetTokenRepository"), 
-};
+  IWalletService: Symbol.for("IWalletService"),
+  IWalletRepository: Symbol.for("IWalletRepository"),
+  IWalletController: Symbol.for("IWalletController"),
+}

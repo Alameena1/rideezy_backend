@@ -1,27 +1,24 @@
 import { injectable } from "inversify";
+import { IResetTokenRepository } from "../interface/user/iresetTokenRepository";
 import ResetTokenModel from "../../models/resetToken.model";
-import { BaseRepository } from "../base/base.repository";
 
 @injectable()
-export class ResetTokenRepository extends BaseRepository<any> {
-  constructor() {
-    super(ResetTokenModel);
+export class ResetTokenRepository implements IResetTokenRepository {
+  async createToken(userId: string, token: string): Promise<any> {
+    const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour expiry
+    const resetToken = new ResetTokenModel({ userId, token, expiresAt });
+    return await resetToken.save();
   }
 
-  async createToken(userId: string, token: string) {
-    return this.model.create({ userId, token });
+  async findToken(token: string): Promise<any> {
+    return await ResetTokenModel.findOne({ token }).exec();
   }
 
-  async findToken(token: string) {
-    return this.findOne({ token });
+  async findTokenByUserId(userId: string): Promise<any> {
+    return await ResetTokenModel.findOne({ userId }).exec();
   }
 
-  async deleteToken(token: string) {
-    await this.model.deleteOne({ token });
+  async deleteToken(token: string): Promise<void> {
+    await ResetTokenModel.deleteOne({ token }).exec();
   }
-  async findTokenByUserId(userId: string) {
-  return await ResetTokenModel.findOne({ userId });
 }
-}
-
-export default ResetTokenRepository;
