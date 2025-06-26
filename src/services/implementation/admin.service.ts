@@ -18,6 +18,9 @@ export class AdminService implements IAdminService {
     this.adminRepository = adminRepository;
     this.initializeAdminCredentials();
   }
+  getDashboardData(startDate?: string, endDate?: string): Promise<{ metrics: { totalUsers: number; subscribedUsers: number; nonSubscribedUsers: number; totalRides: number; totalRevenue: number; }; userGrowth: Array<{ month: string; users: number; }>; rideCount: Array<{ month: string; rides: number; }>; revenueDistribution: Array<{ name: string; value: number; }>; }> {
+    throw new Error("Method not implemented.");
+  }
 
   private async initializeAdminCredentials() {
     try {
@@ -98,7 +101,7 @@ export class AdminService implements IAdminService {
   }
 
   async updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void> {
-    console.log("from service checking vehicle rejection note",note)
+    console.log("from service checking vehicle rejection note", note);
     await this.adminRepository.updateVehicleStatus(vehicleId, status, note);
   }
 
@@ -156,6 +159,22 @@ export class AdminService implements IAdminService {
 
   async getAllRides(): Promise<any[]> {
     return await this.adminRepository.getAllRides();
+  }
+
+  async getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{
+    metrics: {
+      totalUsers: number;
+      subscribedUsers: number;
+      nonSubscribedUsers: number;
+      totalRides: number;
+      totalRevenue: number;
+    };
+    userGrowth: { month: string; users: number }[];
+    rideCount: { month: string; rides: number }[];
+    revenueDistribution: { name: string; value: number }[];
+  }> {
+    console.log("Fetching dashboard metrics in AdminService");
+    return await this.adminRepository.getDashboardMetrics(params);
   }
 }
 

@@ -16,4 +16,16 @@ export interface IAdminRepository {
   getRideDetails(rideId: string): Promise<any>;
   updateRideStatus(rideId: string, status: "Active" | "Blocked" | "Cancelled"): Promise<void>;
   getAllRides(): Promise<any[]>;
+  getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{
+  metrics: {
+    totalUsers: number;
+    subscribedUsers: number;
+    nonSubscribedUsers: number;
+    totalRides: number;
+    totalRevenue: number;
+  };
+  userGrowth: { month: string; users: number }[];
+  rideCount: { month: string; rides: number }[];
+  revenueDistribution: { name: string; value: number }[];
+}>;
 }

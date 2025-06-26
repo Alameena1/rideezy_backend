@@ -17,6 +17,7 @@ export class AdminController implements IAdminController {
   constructor(@inject(TYPES.IAdminService) adminService: IAdminService) {
     this.adminService = adminService;
   }
+  getDashboardData: any;
 
   adminLogin = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
@@ -260,6 +261,22 @@ export class AdminController implements IAdminController {
       const rides = await this.adminService.getAllRides();
       res.status(200).json({ success: true, message: "Rides retrieved successfully", rides });
     } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+ async getDashboardMetrics(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      console.log("Fetching dashboard metrics");
+      const { startDate, endDate } = req.query;
+      const dashboardData = await this.adminService.getDashboardMetrics({
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+      });
+      console.log("Dashboard data retrieved:", dashboardData);
+      res.status(200).json({ success: true, message: "Dashboard metrics retrieved successfully", ...dashboardData });
+    } catch (error) {
+      console.error("Error fetching dashboard metrics:", (error as Error).message);
       res.status(500).json({ success: false, message: (error as Error).message });
     }
   }

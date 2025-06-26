@@ -4,7 +4,7 @@ import VehicleModel from "../../models/vehicle.modal";
 import { IAdminRepository } from "../interface/admin/interface";
 import { BaseRepository } from "../base/base.repository";
 import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/SubscriptionPlan";
-import {RideModel} from "../../models/ride.model";
+import { RideModel } from "../../models/ride.model";
 
 @injectable()
 export class AdminRepository extends BaseRepository<any> implements IAdminRepository {
@@ -156,6 +156,125 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
       return rides;
     } catch (error) {
       throw new Error(`Failed to fetch rides: ${(error as Error).message}`);
+    }
+  }
+
+ async getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{
+    metrics: {
+      totalUsers: number;
+      subscribedUsers: number;
+      nonSubscribedUsers: number;
+      totalRides: number;
+      totalRevenue: number;
+    };
+    userGrowth: { month: string; users: number }[];
+    rideCount: { month: string; rides: number }[];
+    revenueDistribution: { name: string; value: number }[];
+  }> {
+    console.log("Fetching dashboard metrics in AdminRepository");
+    try {
+      const { startDate, endDate } = params;
+      const currentDate = new Date();
+      const dateFilter = startDate && endDate ? { $gte: startDate, $lte: endDate } : {
+        $gte: new Date(currentDate.getFullYear(), currentDate.getMonth() - 5, 1),
+        $lte: currentDate,
+      };
+
+      // Metrics
+      const totalUsers = await UserModel.countDocuments();
+      console.log("Total users:", totalUsers);
+      const subscribedUsers = await UserModel.countDocuments({
+        "subscription.endDate": { $gt: currentDate },
+      });
+      const nonSubscribedUsers = totalUsers - subscribedUsers;
+      const totalRides = await RideModel.countDocuments({ status: "COMPLETED" });
+
+      // Aggregate subscription revenue from wallet.transactions
+      const subscriptionRevenueResult = await UserModel.aggregate([
+        { $unwind: "$wallet.transactions" },
+        {
+          $match: {
+            "wallet.transactions.type": "SUBSCRIPTION",
+            "wallet.transactions.status": "COMPLETED",
+            "wallet.transactions.createdAt": dateFilter,
+          },
+        },
+        { $group: { _id: null, total: { $sum: "$wallet.transactions.amount" } } },
+      ]);
+      const subscriptionRevenue = subscriptionRevenueResult[0]?.total || 0;
+
+      // Aggregate platform fee revenue from wallet.transactions (WITHDRAWAL for non-subscribed users)
+      const platformFeeTransactionResult = await UserModel.aggregate([
+        { $unwind: "$wallet.transactions" },
+        {
+          $match: {
+            "wallet.transactions.type": "WITHDRAWAL",
+            "wallet.transactions.status": "COMPLETED",
+            "wallet.transactions.createdAt": dateFilter,
+          },
+        },
+        { $group: { _id: null, total: { $sum: "$wallet.transactions.amount" } } },
+      ]);
+      const platformFeeFromTransactions = platformFeeTransactionResult[0]?.total || 0;
+
+      // Aggregate platform fee from completed rides (for consistency, if needed)
+      const platformFeeRideResult = await RideModel.aggregate([
+        { $match: { status: "COMPLETED", date: dateFilter } },
+        { $group: { _id: null, total: { $sum: "$platformFee" } } },
+      ]);
+      const platformFeeFromRides = platformFeeRideResult[0]?.total || 0;
+
+      // Combine platform fees from transactions and rides (avoid double-counting if needed)
+      const totalPlatformFee = platformFeeFromTransactions + platformFeeFromRides;
+      const totalRevenue = subscriptionRevenue + totalPlatformFee;
+
+      // User Growth
+      const userGrowth = await UserModel.aggregate([
+        { $match: { createdAt: dateFilter } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%b", date: "$createdAt" } },
+            users: { $sum: 1 },
+          },
+        },
+        { $sort: { "_id": 1 } },
+        { $project: { month: "$_id", users: 1, _id: 0 } },
+      ]);
+
+      // Ride Count
+      const rideCount = await RideModel.aggregate([
+        { $match: { status: "COMPLETED", date: dateFilter } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%b", date: "$date" } },
+            rides: { $sum: 1 },
+          },
+        },
+        { $sort: { "_id": 1 } },
+        { $project: { month: "$_id", rides: 1, _id: 0 } },
+      ]);
+
+      // Revenue Distribution
+      const revenueDistribution = [
+        { name: "Subscription", value: subscriptionRevenue },
+        { name: "Platform Fee", value: totalPlatformFee },
+      ];
+
+      return {
+        metrics: {
+          totalUsers,
+          subscribedUsers,
+          nonSubscribedUsers,
+          totalRides,
+          totalRevenue,
+        },
+        userGrowth,
+        rideCount,
+        revenueDistribution,
+      };
+    } catch (error) {
+      console.error("Error in getDashboardMetrics:", (error as Error).message);
+      throw new Error(`Failed to fetch dashboard metrics: ${(error as Error).message}`);
     }
   }
 }

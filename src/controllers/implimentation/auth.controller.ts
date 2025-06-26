@@ -37,9 +37,11 @@ export class AuthController implements IAuthController {
     }
   }
 
-  async verifyOTP(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async verifyOTP(req: Request, res: Response, next: NextFunction): Promise<void> {   
+    console.log("dshcbdshicbsdhic")
     try {
       const { email, otp } = req.body;
+   
       if (!email || !otp) {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_OTP_REQUIRED });
         return;
@@ -47,6 +49,7 @@ export class AuthController implements IAuthController {
       const response = await this.authService.verifyOTP(email, otp);
       res.status(StatusCode.OK).json(response);
     } catch (error) {
+      console.log(error)
       next(error);
     }
   }

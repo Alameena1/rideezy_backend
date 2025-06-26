@@ -179,33 +179,39 @@ export class SubscriptionService implements ISubscriptionService {
     }
 
     const amount = plan.price;
-    const balance = await this.walletService.getBalance(userId);
+    const transactionId = uuidv4();
+    const transaction = {
+      transactionId,
+      type: "SUBSCRIPTION" as const,
+      amount,
+      status: "COMPLETED" as const,
+      createdAt: new Date(),
+    };
 
+    // Check if payment is from wallet
+    const balance = await this.walletService.getBalance(userId);
     if (balance >= amount) {
-      const transactionId = uuidv4();
       await this.subscriptionRepository.updateUser(userId, {
         $inc: { "wallet.balance": -amount },
-        $push: {
-          "wallet.transactions": {
-            transactionId,
-            type: "SUBSCRIPTION",
-            amount,
-            status: "COMPLETED",
-            createdAt: new Date(),
-          },
-        },
+        $push: { "wallet.transactions": transaction },
       } as UserUpdate);
       return await this.subscribeUser(userId, planId);
-    } else {
-      const generatedSignature = createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI")
-        .update(`${orderId}|${paymentId}`)
-        .digest("hex");
-
-      if (generatedSignature !== signature) {
-        throw new Error("Invalid payment signature");
-      }
-
-      return await this.subscribeUser(userId, planId);
     }
+
+    // Verify Razorpay payment
+    const generatedSignature = createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI")
+      .update(`${orderId}|${paymentId}`)
+      .digest("hex");
+
+    if (generatedSignature !== signature) {
+      throw new Error("Invalid payment signature");
+    }
+
+    // Log Razorpay payment as a transaction
+    await this.subscriptionRepository.updateUser(userId, {
+      $push: { "wallet.transactions": transaction },
+    } as UserUpdate);
+
+    return await this.subscribeUser(userId, planId);
   }
 }
