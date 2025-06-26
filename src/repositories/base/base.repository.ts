@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import mongoose, { Model, Document, FilterQuery } from "mongoose";
+import { Model, Document, FilterQuery, ClientSession } from "mongoose";
 
 @injectable()
 export abstract class BaseRepository<T extends Document> {
@@ -9,63 +9,84 @@ export abstract class BaseRepository<T extends Document> {
     this.model = model;
   }
 
-  async create(data: Partial<T>): Promise<T> {
+  async create(data: Partial<T>, options?: { session: ClientSession }): Promise<T> {
     try {
-      const document = await this.model.create(data);
-      return document as T; // Ensure the return type matches T
+      const document = await this.model.create([data], { session: options?.session ?? null });
+      return document[0] as T;
     } catch (error) {
       throw new Error(`Failed to create document: ${(error as Error).message}`);
     }
   }
 
-  async findById(id: string): Promise<T | null> {
+  async findById(id: string, options?: { session: ClientSession }): Promise<T | null> {
     try {
-      const document = await this.model.findById(id).select("-password").lean().exec();
-      return document as T | null; // Cast to T | null
+      const document = await this.model
+        .findById(id)
+        .select("-password")
+        .session(options?.session ?? null)
+        .lean()
+        .exec();
+      return document as T | null;
     } catch (error) {
       throw new Error(`Failed to find document by ID: ${(error as Error).message}`);
     }
   }
 
-  async find(query: FilterQuery<T>): Promise<T[]> {
+  async find(query: FilterQuery<T>, options?: { session: ClientSession }): Promise<T[]> {
     try {
-      const documents = await this.model.find(query).select("-password").lean().exec();
-      return documents as T[]; // Cast to T[]
+      const documents = await this.model
+        .find(query)
+        .select("-password")
+        .session(options?.session ?? null)
+        .lean()
+        .exec();
+      return documents as T[];
     } catch (error) {
       throw new Error(`Failed to find documents: ${(error as Error).message}`);
     }
   }
 
-  async findOne(query: FilterQuery<T>): Promise<T | null> {
+  async findOne(query: FilterQuery<T>, options?: { session: ClientSession }): Promise<T | null> {
     try {
-      const document = await this.model.findOne(query).select("-password").lean().exec();
-      return document as T | null; // Cast to T | null
+      const document = await this.model
+        .findOne(query)
+        .select("-password")
+        .session(options?.session ?? null)
+        .lean()
+        .exec();
+      return document as T | null;
     } catch (error) {
       throw new Error(`Failed to find document: ${(error as Error).message}`);
     }
   }
 
-  async updateById(id: string, data: Partial<T>): Promise<T | null> {
+  async updateById(id: string, data: Partial<T>, options?: { session: ClientSession }): Promise<T | null> {
     try {
-      const document = await this.model.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean().exec();
-      return document as T | null; // Cast to T | null
+      const document = await this.model
+        .findByIdAndUpdate(id, data, { new: true, runValidators: true, session: options?.session ?? null })
+        .lean()
+        .exec();
+      return document as T | null;
     } catch (error) {
       throw new Error(`Failed to update document: ${(error as Error).message}`);
     }
   }
 
-  async updateOne(query: FilterQuery<T>, update: Partial<T>): Promise<T | null> {
+  async updateOne(query: FilterQuery<T>, update: Partial<T>, options?: { session: ClientSession }): Promise<T | null> {
     try {
-      const document = await this.model.findOneAndUpdate(query, update, { new: true, runValidators: true }).lean().exec();
-      return document as T | null; // Cast to T | null
+      const document = await this.model
+        .findOneAndUpdate(query, update, { new: true, runValidators: true, session: options?.session ?? null })
+        .lean()
+        .exec();
+      return document as T | null;
     } catch (error) {
       throw new Error(`Failed to update document: ${(error as Error).message}`);
     }
   }
 
-  async deleteById(id: string): Promise<boolean> {
+  async deleteById(id: string, options?: { session: ClientSession }): Promise<boolean> {
     try {
-      const result = await this.model.deleteOne({ _id: id });
+      const result = await this.model.deleteOne({ _id: id }, { session: options?.session });
       return result.deletedCount === 1;
     } catch (error) {
       throw new Error(`Failed to delete document: ${(error as Error).message}`);

@@ -1,7 +1,17 @@
-import { Schema, model, Document, Types } from 'mongoose';
+import { Schema, model, Document, Types } from "mongoose";
+
+export interface PickupDropoffPoint {
+  passengerId: string;
+  location: string;
+  placeName: string;
+}
+
+export interface Passenger {
+  passengerId: string;
+  passengerName: string;
+}
 
 export interface IRide extends Document {
-  _id: Types.ObjectId; 
   rideId: string;
   driverId: string;
   driverName: string;
@@ -17,76 +27,89 @@ export interface IRide extends Document {
   fuelPrice: number;
   passengerCount: number;
   totalFuelCost: number;
+  platformFee: number;
+  totalRideCost: number;
   costPerPerson: number;
   totalPeople: number;
-  passengers: { passengerId: string; passengerName: string }[];
-  status: 'Pending' | 'Started' | 'Completed' | 'Cancelled';
-  routeGeometry: string;
-  pickupPoints: { passengerId: string; location: string; placeName: string }[];
-  dropoffPoints: { passengerId: string; location: string; placeName: string }[];
-  routeCoordinates?: [number, number][];
+  passengers: Passenger[];
+  status: string;
+  routeGeometry?: string;
+  pickupPoints: PickupDropoffPoint[];
+  dropoffPoints: PickupDropoffPoint[];
+  routeCoordinates: [number, number][];
 }
 
-export type RideCreationData = Omit<
-  IRide,
-  keyof Document | 'createdAt' | 'updatedAt' | '__v'
->;
+export interface RideCreationData {
+  rideId: string;
+  driverId: string;
+  driverName: string;
+  vehicleId: string;
+  date: Date;
+  time: string;
+  startPoint: string;
+  startPlaceName: string;
+  endPoint: string;
+  endPlaceName: string;
+  distanceKm: number;
+  mileage: number;
+  fuelPrice: number;
+  passengerCount: number;
+  totalFuelCost: number;
+  platformFee: number;
+  totalRideCost: number;
+  costPerPerson: number;
+  totalPeople: number;
+  passengers: Passenger[];
+  status: string;
+  routeGeometry?: string;
+  pickupPoints: PickupDropoffPoint[];
+  dropoffPoints: PickupDropoffPoint[];
+  routeCoordinates: [number, number][];
+}
 
-const rideSchema = new Schema<IRide>(
-  {
-    rideId: { type: String, required: true, unique: true },
-    driverId: { type: String, required: true },
-    driverName: { type: String, required: true },
-    vehicleId: { type: String, required: true },
-    date: { type: Date, required: true },
-    time: { type: String, required: true },
-    startPoint: { type: String, required: true },
-    startPlaceName: { type: String, required: true },
-    endPoint: { type: String, required: true },
-    endPlaceName: { type: String, required: true },
-    distanceKm: { type: Number, required: true },
-    mileage: { type: Number, required: true },
-    fuelPrice: { type: Number, required: true },
-    passengerCount: { type: Number, required: true },
-    totalFuelCost: { type: Number, required: true },
-    costPerPerson: { type: Number, required: true },
-    totalPeople: { type: Number, required: true },
-    passengers: {
-      type: [
-        {
-          passengerId: { type: String, required: true },
-          passengerName: { type: String, required: true },
-        },
-      ],
-      default: [],
+const RideSchema = new Schema<IRide>({
+  rideId: { type: String, required: true, unique: true },
+  driverId: { type: String, required: true },
+  driverName: { type: String, required: true },
+  vehicleId: { type: String, ref: "Vehicle", required: true },
+  date: { type: Date, required: true },
+  time: { type: String, required: true },
+  startPoint: { type: String, required: true },
+  startPlaceName: { type: String, required: true },
+  endPoint: { type: String, required: true },
+  endPlaceName: { type: String, required: true },
+  distanceKm: { type: Number, required: true },
+  mileage: { type: Number, required: true },
+  fuelPrice: { type: Number, required: true },
+  passengerCount: { type: Number, required: true },
+  totalFuelCost: { type: Number, required: true },
+  platformFee: { type: Number, required: true },
+  totalRideCost: { type: Number, required: true },
+  costPerPerson: { type: Number, required: true },
+  totalPeople: { type: Number, required: true },
+  passengers: [
+    {
+      passengerId: { type: String, required: true },
+      passengerName: { type: String, required: true },
     },
-    status: { type: String, enum: ['Pending', 'Started', 'Completed', 'Cancelled'], default: 'Pending' },
-    routeGeometry: { type: String, required: true },
-    pickupPoints: {
-      type: [
-        {
-          passengerId: { type: String, required: true },
-          location: { type: String, required: true },
-          placeName: { type: String, required: true },
-        },
-      ],
-      required: true,
-      default: [],
+  ],
+  status: { type: String, required: true },
+  routeGeometry: { type: String },
+  pickupPoints: [
+    {
+      passengerId: { type: String, required: true },
+      location: { type: String, required: true },
+      placeName: { type: String, required: true },
     },
-    dropoffPoints: {
-      type: [
-        {
-          passengerId: { type: String, required: true },
-          location: { type: String, required: true },
-          placeName: { type: String, required: true },
-        },
-      ],
-      required: true,
-      default: [],
+  ],
+  dropoffPoints: [
+    {
+      passengerId: { type: String, required: true },
+      location: { type: String, required: true },
+      placeName: { type: String, required: true },
     },
-    routeCoordinates: { type: [[Number]], required: false },
-  },
-  { timestamps: true }
-);
+  ],
+  routeCoordinates: { type: [[Number]], required: true }, 
+});
 
-export const RideModel = model<IRide>('Ride', rideSchema);
+export const RideModel = model<IRide>("Ride", RideSchema);

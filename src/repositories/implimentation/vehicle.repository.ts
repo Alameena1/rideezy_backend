@@ -1,8 +1,9 @@
 import { injectable } from "inversify";
-import { IVehicle } from "../../models/vehicle.modal";
+import { ClientSession } from "mongoose";
 import { IVehicleRepository } from "../interface/vehicle/ivehicleRepository";
+import { IVehicle } from "../../models/vehicle.modal";
+import VehicleModel from "../../models/vehicle.modal";
 import { BaseRepository } from "../base/base.repository";
-import VehicleModel from "../../models/vehicle.modal"; 
 
 @injectable()
 export class VehicleRepository extends BaseRepository<IVehicle> implements IVehicleRepository {
@@ -10,31 +11,35 @@ export class VehicleRepository extends BaseRepository<IVehicle> implements IVehi
     super(VehicleModel);
   }
 
-  async createVehicle(vehicleData: Partial<IVehicle>): Promise<IVehicle> {
-    return this.create(vehicleData) as Promise<IVehicle>;
+  async createVehicle(data: Partial<IVehicle>, options?: { session: ClientSession }): Promise<IVehicle> {
+    return this.create(data, options);
   }
 
-  async findVehiclesByUserId(userId: string): Promise<IVehicle[]> {
-    return this.model.find({ user: userId }).populate("user", "-password").exec();
-  } 
-
-  async findById(vehicleId: string): Promise<IVehicle | null> {
-    return super.findById(vehicleId); 
+  async findVehiclesByUserId(userId: string, options?: { session: ClientSession }): Promise<IVehicle[]> {
+    return this.find({ user: userId }, options);
   }
 
-  async updateVehicle(vehicleId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle> {
-    const updatedVehicle = await this.updateById(vehicleId, vehicleData) as IVehicle;
-    if (!updatedVehicle) {
+  async findById(vehicleId: string, options?: { session: ClientSession }): Promise<IVehicle | null> {
+    console.log("[VehicleRepository] Finding vehicle with ID:", vehicleId); // Debug log
+    return super.findById(vehicleId, options); // Delegate to BaseRepository
+  }
+
+  async updateVehicle(
+    vehicleId: string,
+    data: Partial<IVehicle>,
+    options?: { session: ClientSession }
+  ): Promise<IVehicle> {
+    const vehicle = await this.updateById(vehicleId, data, options);
+    if (!vehicle) {
       throw new Error("Vehicle not found");
     }
-    return updatedVehicle;
+    return vehicle;
   }
-  async deleteVehicle(vehicleId: string): Promise<void> {
-    const success = await this.deleteById(vehicleId);
+
+  async deleteVehicle(vehicleId: string, options?: { session: ClientSession }): Promise<void> {
+    const success = await this.deleteById(vehicleId, options);
     if (!success) {
-      throw new Error("vehicle not found")
+      throw new Error("Vehicle not found");
     }
   }
 }
-
-export default VehicleRepository;

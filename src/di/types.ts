@@ -1,3 +1,4 @@
+// di/types.ts
 export const TYPES = {
   IAdminController: Symbol.for("IAdminController"),
   IAdminService: Symbol.for("IAdminService"),
@@ -7,6 +8,7 @@ export const TYPES = {
   IAuthRepository: Symbol.for("IAuthRepository"),
   ITokenRepository: Symbol.for("ITokenRepository"),
   ITempUserRepository: Symbol.for("ITempUserRepository"),
+  IResetTokenRepository: Symbol.for("IResetTokenRepository"),
   IUserController: Symbol.for("IUserController"),
   IUserService: Symbol.for("IUserService"),
   IUserRepository: Symbol.for("IUserRepository"),
@@ -16,11 +18,11 @@ export const TYPES = {
   IRideController: Symbol.for("IRideController"),
   IRideService: Symbol.for("IRideService"),
   IRideRepository: Symbol.for("IRideRepository"),
-  ISubscriptionRepository: Symbol.for("ISubscriptionRepository"),
-  ISubscriptionService: Symbol.for("ISubscriptionService"),
   ISubscriptionController: Symbol.for("ISubscriptionController"),
-    IResetTokenRepository: Symbol.for("IResetTokenRepository"), 
+  ISubscriptionService: Symbol.for("ISubscriptionService"),
+  ISubscriptionRepository: Symbol.for("ISubscriptionRepository"),
+  IWalletController: Symbol.for("IWalletController"),
   IWalletService: Symbol.for("IWalletService"),
   IWalletRepository: Symbol.for("IWalletRepository"),
-  IWalletController: Symbol.for("IWalletController"),
-}
+  IOSRMClient: Symbol.for("IOSRMClient"),
+};

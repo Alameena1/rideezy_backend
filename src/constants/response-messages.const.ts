@@ -1,0 +1,13 @@
+export const ResponseMessages = {
+  EMAIL_REQUIRED: "Email is required",
+  EMAIL_AND_OTP_REQUIRED: "Email and OTP are required",
+  EMAIL_AND_PASSWORD_REQUIRED: "Email and password are required",
+  REFRESH_TOKEN_REQUIRED: "Refresh token required",
+  LOGIN_SUCCESS: "Login successful",
+  LOGOUT_SUCCESS: "Logged out successfully",
+  GOOGLE_LOGIN_SUCCESS: "Google login successful",
+  MISSING_FIELDS: "Missing required fields",
+  INVALID_CREDENTIALS: "Invalid email or password",
+  ACCOUNT_BLOCKED: "Your account has been blocked. Contact support.",
+  TOKEN_AND_NEW_PASSWORD_REQUIRED: "Token and new password are required",
+};

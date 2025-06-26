@@ -5,7 +5,7 @@ import { IVehicleRepository } from "../../repositories/interface/vehicle/ivehicl
 import { IVehicleService } from "../interfaces/vehicle/ivehicleService";
 import { ISubscriptionService } from "../interfaces/subscription/isubscriptionService";
 import { Types } from "mongoose";
-import  UserModel  from "../../models/user.model";
+import UserModel from "../../models/user.model";
 
 @injectable()
 export default class VehicleService implements IVehicleService {
@@ -21,7 +21,6 @@ export default class VehicleService implements IVehicleService {
   }
 
   async addVehicle(userId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle> {
-    // Check if user can register a vehicle
     const canRegister = await this.subscriptionService.canRegisterVehicle(userId);
     if (!canRegister) {
       throw new Error("Vehicle registration limit exceeded. Maximum 2 vehicles allowed.");
@@ -34,7 +33,6 @@ export default class VehicleService implements IVehicleService {
     };
     const createdVehicle = await this.vehicleRepository.createVehicle(vehicle);
 
-    // Update user's vehicles array
     await UserModel.findByIdAndUpdate(userId, {
       $push: { vehicles: { vehicleId: createdVehicle._id } },
     });
@@ -81,7 +79,6 @@ export default class VehicleService implements IVehicleService {
 
     await this.vehicleRepository.deleteVehicle(vehicleId);
 
-    // Remove vehicle from user's vehicles array
     await UserModel.findByIdAndUpdate(userId, {
       $pull: { vehicles: { vehicleId: new Types.ObjectId(vehicleId) } },
     });
@@ -106,7 +103,7 @@ export default class VehicleService implements IVehicleService {
     const updatedVehicle = await this.vehicleRepository.updateVehicle(vehicleId, {
       ...vehicleData,
       status: "Pending",
-      note: "", // Clear the rejection note
+      note: "",
       updatedAt: new Date(),
     });
 

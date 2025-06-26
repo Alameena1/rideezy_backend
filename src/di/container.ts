@@ -1,6 +1,6 @@
 import { Container } from "inversify";
 import { TYPES } from "./types";
-
+import Razorpay from "razorpay";
 // Admin
 import { IAdminController } from "../controllers/interface/admin/interface";
 import { IAdminService } from "../services/interfaces/admin/interface";
@@ -20,8 +20,8 @@ import { ITokenRepository } from "../repositories/interface/user/itokenRepositor
 import TokenRepository from "../repositories/implimentation/token.repository";
 import { ITempUserRepository } from "../repositories/interface/user/itempUserRepository";
 import TempUserRepository from "../repositories/implimentation/tempUser.repository";
-import { IResetTokenRepository } from "../repositories/interface/user/iresetTokenRepository"; // Correct import
-import { ResetTokenRepository } from "../repositories/implimentation/resetToken.repository"; // Correct import
+import { IResetTokenRepository } from "../repositories/interface/user/iresetTokenRepository";
+import { ResetTokenRepository } from "../repositories/implimentation/resetToken.repository";
 
 // User
 import { IUserController } from "../controllers/interface/user/interface";
@@ -29,7 +29,7 @@ import { IUserService } from "../services/interfaces/user/iuserService";
 import { IUserRepository } from "../repositories/interface/user/iuserRepository";
 import { UserController } from "../controllers/implimentation/user.controller";
 import UserService from "../services/implementation/user.service";
-import UserRepository from "../repositories/implimentation/user.repository";
+import { UserRepository } from "../repositories/implimentation/user.repository";
 
 // Vehicle
 import { IVehicleController } from "../controllers/interface/vehicle/ivehicleController";
@@ -37,7 +37,7 @@ import { IVehicleService } from "../services/interfaces/vehicle/ivehicleService"
 import { IVehicleRepository } from "../repositories/interface/vehicle/ivehicleRepository";
 import { VehicleController } from "../controllers/implimentation/vehicle.controller";
 import VehicleService from "../services/implementation/vehicle.service";
-import VehicleRepository from "../repositories/implimentation/vehicle.repository";
+import { VehicleRepository } from "../repositories/implimentation/vehicle.repository";
 
 // Ride
 import { IRideController } from "../controllers/interface/ride/irideController";
@@ -46,6 +46,8 @@ import { IRideRepository } from "../repositories/interface/ride/irideRepository"
 import { RideController } from "../controllers/implimentation/ride.controller";
 import { RideService } from "../services/implementation/ride.service";
 import { RideRepository } from "../repositories/implimentation/ride.repository";
+import { IOSRMClient } from "../infrastructure/map-api/osrm.client"; 
+import { OSRMClient } from "../infrastructure/map-api/osrm.client"; 
 
 // Subscription
 import { ISubscriptionController } from "../controllers/interface/subscription/isubscriptionController";
@@ -92,7 +94,7 @@ container.bind<IVehicleRepository>(TYPES.IVehicleRepository).to(VehicleRepositor
 container.bind<IRideController>(TYPES.IRideController).to(RideController).inSingletonScope();
 container.bind<IRideService>(TYPES.IRideService).to(RideService).inSingletonScope();
 container.bind<IRideRepository>(TYPES.IRideRepository).to(RideRepository).inSingletonScope();
-
+container.bind<IOSRMClient>(TYPES.IOSRMClient).to(OSRMClient).inSingletonScope(); 
 // Subscription bindings
 container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController).inSingletonScope();
 container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService).inSingletonScope();
@@ -102,5 +104,14 @@ container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(Subscr
 container.bind<IWalletController>(TYPES.IWalletController).to(WalletController).inSingletonScope();
 container.bind<IWalletService>(TYPES.IWalletService).to(WalletService).inSingletonScope();
 container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository).inSingletonScope();
+
+
+// Razorpay binding
+container.bind<Razorpay>("Razorpay").toConstantValue(
+  new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_KOCURsj88Mu4Sj",
+    key_secret: process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI",
+  })
+);
 
 export default container;

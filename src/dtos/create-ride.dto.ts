@@ -1,46 +1,59 @@
-import { z } from 'zod';
+import { z } from "zod";
+
+export interface CreateRideDto {
+  endPlaceName: string;
+  startPlaceName: string;
+  date: string;
+  time: string;
+  startPoint: string;
+  endPoint: string;
+  passengerCount: number;
+  fuelPrice: number;
+  vehicleId: string;
+  driverId?: string;
+  distance: number;
+  routeGeometry?: string;
+  platformFee?: number;
+  totalFuelCost?: number; // Optional, calculated in service
+  totalRideCost?: number; // Optional, calculated in service
+  costPerPerson?: number; // Optional, calculated in service
+}
 
 export const CreateRideSchema = z.object({
-  driverId: z.string().min(1, 'driverId is required').optional(),
-  vehicleId: z.string().min(1, 'vehicleId is required'),
-  date: z.string().refine(
-    (val) => {
-      const date = new Date(val);
-      return !isNaN(date.getTime()) && /^\d{4}-\d{2}-\d{2}$/.test(val);
-    },
-    { message: 'date must be a valid ISO string (YYYY-MM-DD)' }
-  ),
-  time: z.string().regex(/^\d{2}:\d{2}$/, 'time must be in HH:mm format'),
-  startPoint: z.string().refine(
-    (val) => {
-      const [lat, lng] = val.split(',').map(Number);
-      return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-    },
-    { message: 'startPoint must be valid coordinates (lat,lng)' }
-  ),
-  endPoint: z.string().refine(
-    (val) => {
-      const [lat, lng] = val.split(',').map(Number);
-      return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-    },
-    { message: 'endPoint must be valid coordinates (lat,lng)' }
-  ),
-  passengerCount: z.number().int().min(0, 'passengerCount must be at least 0').max(4, 'passengerCount must not exceed 4'),
-  fuelPrice: z.number().min(0, 'fuelPrice must be a positive number'),
-  distanceKm: z.number().min(0, 'distance must be a positive number'),
-  totalFuelCost: z.number().min(0, 'totalFuelCost must be a positive number'),
-  costPerPerson: z.number().min(0, 'costPerPerson must be a positive number'),
-  routeGeometry: z.string().refine(
-  (val) => {
-    try {
-      const parsed = JSON.parse(val);
-      return parsed.type === 'LineString' && Array.isArray(parsed.coordinates);
-    } catch {
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid datetime",
+    path: ["date"],
+  }),
+  time: z.string(),
+  startPoint: z.string(),
+  endPoint: z.string(),
+  passengerCount: z.number().min(0),
+  fuelPrice: z.number().min(0),
+  vehicleId: z.string(),
+  driverId: z.string().optional(),
+  distance: z.number().min(0),
+  routeGeometry: z.string().optional(),
+  platformFee: z.number().min(0).optional(),
+  totalFuelCost: z.number().min(0).optional(), // Optional, validated if present
+  totalRideCost: z.number().min(0).optional(), // Optional, validated if present
+  costPerPerson: z.number().min(0).optional(), // Optional, validated if present
+}).refine((data) => {
+  // Optional refine for consistency if these fields are provided
+  if (data.totalRideCost && data.totalFuelCost && data.platformFee) {
+    const expectedTotal = data.totalFuelCost + (data.platformFee || 0);
+    if (data.totalRideCost !== expectedTotal) {
       return false;
     }
-  },
-  { message: 'routeGeometry must be a valid GeoJSON LineString' }
-),
+  }
+  if (data.costPerPerson && data.totalRideCost && data.passengerCount !== undefined) {
+    const totalPeople = data.passengerCount + 1;
+    const expectedCostPerPerson = data.totalRideCost / totalPeople;
+    if (Math.abs(data.costPerPerson - expectedCostPerPerson) > 0.01) { // Allow small rounding differences
+      return false;
+    }
+  }
+  return true;
+}, {
+  message: "Total ride cost and cost per person must be consistent with fuel cost and platform fee",
+  path: ["totalRideCost", "costPerPerson"],
 });
-
-export type CreateRideDto = z.infer<typeof CreateRideSchema>;

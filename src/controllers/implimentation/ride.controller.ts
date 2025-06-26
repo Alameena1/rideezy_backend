@@ -18,29 +18,43 @@ export class RideController implements IRideController {
   constructor(@inject(TYPES.IRideService) rideService: IRideService) {
     this.rideService = rideService;
   }
-
+  
   async startRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user?.userId;
-      if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
-        return;
-      }
-
+      console.log("[RideController] Received body:", JSON.stringify(req.body, null, 2));
       const validationResult = CreateRideSchema.safeParse(req.body);
+      console.log("[RideController] Validation result:", JSON.stringify(validationResult, null, 2));
       if (!validationResult.success) {
         res.status(400).json({ success: false, errors: validationResult.error.errors });
         return;
       }
 
-      const dto: CreateRideDto = {
-        ...validationResult.data,
-        driverId: userId,
+      const dto = validationResult.data;
+      if (dto.driverId && dto.driverId !== req.user?.userId) {
+        res.status(403).json({ success: false, message: "Driver ID does not match authenticated user" });
+        return;
+      }
+
+      // Pass only necessary fields, let service calculate totalFuelCost, totalRideCost, and costPerPerson
+      const completeDto: CreateRideDto = {
+        ...dto,
+        driverId: req.user?.userId!,
+        totalFuelCost: undefined, // Let service calculate
+        totalRideCost: undefined, // Let service calculate
+        costPerPerson: undefined,
+        endPlaceName: "",
+        startPlaceName: ""
       };
 
-      const ride = await this.rideService.startRide(dto);
-      res.status(201).json({ success: true, message: "Ride started successfully", data: ride });
-    } catch (error) {
+      const ride = await this.rideService.startRide(completeDto);
+      res.status(201).json({
+        success: true,
+        message: "Ride started successfully",
+        data: ride,
+      });
+    } catch (error: any) {
+      console.error("[RideController] Error starting ride:", error);
+      res.status(400).json({ success: false, message: error.message });
       next(error);
     }
   }
@@ -48,6 +62,7 @@ export class RideController implements IRideController {
   async joinRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
+      console.log("jfidjifhj")
       if (!userId) {
         res.status(401).json({ success: false, message: "Unauthorized" });
         return;
@@ -228,19 +243,19 @@ export class RideController implements IRideController {
     }
   }
 
- async cancelJoinedRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
+  async cancelJoinedRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+      const { rideId } = req.params;
+      await this.rideService.cancelJoinedRide(rideId, userId);
+      res.status(200).json({ success: true, message: "Ride cancellation request processed successfully" });
+    } catch (error: any) {
+      console.error(`[RideController] Error cancelling joined ride ${req.params.rideId}: ${error.message} at ${new Date().toISOString()}`);
+      res.status(400).json({ success: false, message: error.message });
     }
-    const { rideId } = req.params;
-    await this.rideService.cancelJoinedRide(rideId, userId);
-    res.status(200).json({ success: true, message: "Ride cancellation request processed successfully" });
-  } catch (error: any) {
-    console.error(`[RideController] Error cancelling joined ride ${req.params.rideId}: ${error.message} at ${new Date().toISOString()}`);
-    res.status(400).json({ success: false, message: error.message });
   }
-}
 }

@@ -62,7 +62,7 @@ const UserSchema = new Schema<IUser>(
       verificationStatus: {
         type: String,
         enum: ["Pending", "Verified", "Rejected"],
-        default: "Pending",
+        default: "",
       },
       documentUrl: { type: String },
     },

@@ -1,15 +1,17 @@
-    import { Router } from "express";
-    import container from "../di/container";
-    import { TYPES } from "../di/types";
-    import { ISubscriptionController } from "../controllers/interface/subscription/isubscriptionController";
-    import authMiddleware from "../middlewares/auth.middleware";
+import { Router } from "express";
+import container from "../di/container";
+import { TYPES } from "../di/types";
+import { ISubscriptionController } from "../controllers/interface/subscription/isubscriptionController";
+import authMiddleware from "../middlewares/auth.middleware";
 
-    const router = Router();
-    const subscriptionController = container.get<ISubscriptionController>(TYPES.ISubscriptionController);
+const router = Router();
+const subscriptionController = container.get<ISubscriptionController>(TYPES.ISubscriptionController);
 
-    router.get("/plans", authMiddleware, (req, res) => subscriptionController.getPlans(req, res));
-    router.post("/subscribe", authMiddleware, (req, res) => subscriptionController.subscribe(req, res));
-    router.get("/check/:userId", authMiddleware, (req, res) => subscriptionController.checkSubscription(req, res));
-    router.post("/create-order", authMiddleware, (req, res) => subscriptionController.createOrder(req, res));
-    router.post("/verify-and-subscribe", authMiddleware, (req, res) => subscriptionController.verifyAndSubscribe(req, res));
-    export default router;
+router.get("/plans", subscriptionController.getPlans.bind(subscriptionController));
+router.post("/subscribe", subscriptionController.subscribe.bind(subscriptionController));
+router.get("/check/:userId", subscriptionController.checkSubscription.bind(subscriptionController));
+router.post("/create-order", subscriptionController.createOrder.bind(subscriptionController));
+router.post("/verify", subscriptionController.verifyAndSubscribe.bind(subscriptionController));
+router.get("/status", authMiddleware, subscriptionController.getSubscriptionStatus.bind(subscriptionController));
+
+export default router;

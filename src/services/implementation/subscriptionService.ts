@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { ISubscriptionService } from "../interfaces/subscription/isubscriptionService";
-import { ISubscriptionRepository, UserUpdate } from "../../repositories/interface/subscription/isubscriptionRepository"; 
+import { ISubscriptionRepository, UserUpdate } from "../../repositories/interface/subscription/isubscriptionRepository";
 import { IWalletService } from "../interfaces/wallet/iWalletService";
 import Razorpay from "razorpay";
 import { createHmac } from "crypto";
@@ -10,21 +10,11 @@ import { v4 as uuidv4 } from "uuid";
 
 @injectable()
 export class SubscriptionService implements ISubscriptionService {
-  private subscriptionRepository: ISubscriptionRepository;
-  private walletService: IWalletService;
-  private razorpay: Razorpay;
-
   constructor(
-    @inject(TYPES.ISubscriptionRepository) subscriptionRepository: ISubscriptionRepository,
-    @inject(TYPES.IWalletService) walletService: IWalletService
-  ) {
-    this.subscriptionRepository = subscriptionRepository;
-    this.walletService = walletService;
-    this.razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_KOCURsj88Mu4Sj",
-      key_secret: process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI",
-    });
-  }
+    @inject(TYPES.ISubscriptionRepository) private subscriptionRepository: ISubscriptionRepository,
+    @inject(TYPES.IWalletService) private walletService: IWalletService,
+    @inject("Razorpay") private razorpay: Razorpay
+  ) {}
 
   async getAllPlans(): Promise<any[]> {
     return await this.subscriptionRepository.getAllPlans();
@@ -100,7 +90,7 @@ export class SubscriptionService implements ISubscriptionService {
       throw new Error("User not found");
     }
 
-    if (await this.isSubscribed(userId)) {
+    if ((await this.isSubscribed(userId)).isSubscribed) {
       return true;
     }
 
@@ -192,7 +182,6 @@ export class SubscriptionService implements ISubscriptionService {
     const balance = await this.walletService.getBalance(userId);
 
     if (balance >= amount) {
-      // Deduct from wallet
       const transactionId = uuidv4();
       await this.subscriptionRepository.updateUser(userId, {
         $inc: { "wallet.balance": -amount },
@@ -208,7 +197,6 @@ export class SubscriptionService implements ISubscriptionService {
       } as UserUpdate);
       return await this.subscribeUser(userId, planId);
     } else {
-      // Verify Razorpay payment
       const generatedSignature = createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI")
         .update(`${orderId}|${paymentId}`)
         .digest("hex");
