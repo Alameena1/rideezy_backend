@@ -145,10 +145,11 @@ export class AdminController implements IAdminController {
     }
   };
 
-  verifyGovId = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  verifyGovId = async (req: AuthenticatedRequest, res: Response): Promise<void> => { 
+         console.log("uuuuuuuuuuuuuuu",req.body)
+
     try {
       const { userId, status } = req.body;
-
       if (!userId || !status || !["Verified", "Rejected"].includes(status)) {
         res.status(400).json({ success: false, message: "Invalid userId or status" });
         return;
