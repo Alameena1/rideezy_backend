@@ -7,11 +7,14 @@ export interface PickupDropoffPoint {
 }
 
 export interface Passenger {
+  droppedOff: boolean;
+  pickedUp: any;
   passengerId: string;
   passengerName: string;
 }
 
 export interface IRide extends Document {
+  _id: Types.ObjectId; 
   rideId: string;
   driverId: string;
   driverName: string;
@@ -91,6 +94,8 @@ const RideSchema = new Schema<IRide>({
     {
       passengerId: { type: String, required: true },
       passengerName: { type: String, required: true },
+      pickedUp: { type: Boolean, default: false }, 
+      droppedOff: { type: Boolean, default: false },
     },
   ],
   status: { type: String, required: true },
@@ -98,7 +103,7 @@ const RideSchema = new Schema<IRide>({
   pickupPoints: [
     {
       passengerId: { type: String, required: true },
-      location: { type: String, required: true },
+      location: { type: String, required: true }, 
       placeName: { type: String, required: true },
     },
   ],

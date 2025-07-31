@@ -1,9 +1,17 @@
 import { injectable } from "inversify";
-import { ClientSession } from "mongoose";
+import { ClientSession, FilterQuery, UpdateQuery } from "mongoose";
 import { IRideRepository } from "../interface/ride/irideRepository";
 import { IRide, RideCreationData } from "../../models/ride.model";
 import { RideModel } from "../../models/ride.model";
 import { BaseRepository } from "../base/base.repository";
+
+interface MongoUpdateOptions {
+  session?: ClientSession;
+  arrayFilters?: { [key: string]: any }[];
+  new?: boolean;
+  runValidators?: boolean;
+  [key: string]: any;
+}
 
 @injectable()
 export class RideRepository extends BaseRepository<IRide> implements IRideRepository {
@@ -26,7 +34,7 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
     }
   }
 
-  async find(query: any, options?: { session: ClientSession }): Promise<IRide[]> {
+  async find(query: FilterQuery<IRide>, options?: { session: ClientSession }): Promise<IRide[]> {
     try {
       const rides = await super.find(query, options);
       console.log(`[RideRepository] Found ${rides.length} rides with query:`, query);
@@ -37,7 +45,7 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
     }
   }
 
-  async findOne(query: any, options?: { session: ClientSession }): Promise<IRide | null> {
+  async findOne(query: FilterQuery<IRide>, options?: { session: ClientSession }): Promise<IRide | null> {
     try {
       const ride = await super.findOne(query, options);
       if (!ride) {
@@ -52,7 +60,7 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
     }
   }
 
-  async updateOne(query: any, update: any, options?: { session: ClientSession }): Promise<IRide | null> {
+  async updateOne(query: FilterQuery<IRide>, update: UpdateQuery<IRide>, options?: MongoUpdateOptions): Promise<IRide | null> {
     try {
       const updatedRide = await super.updateOne(query, update, options);
       if (!updatedRide) {
@@ -67,14 +75,14 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
     }
   }
 
- async findJoinedRidesByPassengerId(passengerId: string, options?: { session: ClientSession }): Promise<IRide[]> {
-  try {
-    const rides = await this.find({ "passengers.passengerId": passengerId }, options);
-    console.log(`[RideRepository] Found ${rides.length} joined rides for passengerId: ${passengerId}`);
-    return rides;
-  } catch (error) {
-    console.error(`[RideRepository] Error fetching joined rides for passengerId ${passengerId}: ${(error as Error).message}`);
-    throw new Error(`Error fetching joined rides: ${(error as Error).message}`);
+  async findJoinedRidesByPassengerId(passengerId: string, options?: { session: ClientSession }): Promise<IRide[]> {
+    try {
+      const rides = await this.find({ "passengers.passengerId": passengerId }, options);
+      console.log(`[RideRepository] Found ${rides.length} joined rides for passengerId: ${passengerId}`);
+      return rides;
+    } catch (error) {
+      console.error(`[RideRepository] Error fetching joined rides for passengerId ${passengerId}: ${(error as Error).message}`);
+      throw new Error(`Error fetching joined rides: ${(error as Error).message}`);
+    }
   }
-}
 }

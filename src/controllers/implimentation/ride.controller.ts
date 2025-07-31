@@ -200,7 +200,7 @@ export class RideController implements IRideController {
       if (!userId) {
         res.status(401).json({ success: false, message: "Unauthorized" });
         return;
-      }
+      }    
 
       const { rideId } = req.params;
       if (!rideId) {
@@ -216,6 +216,8 @@ export class RideController implements IRideController {
 
       const dto: EditRideDto = validationResult.data;
       const updatedRide = await this.rideService.editRide(rideId, userId, dto);
+console.log("edit ride controller updatedRide",updatedRide)
+
       res.status(200).json({ success: true, message: "Ride updated successfully", data: updatedRide });
     } catch (error) {
       next(error);
@@ -255,6 +257,78 @@ export class RideController implements IRideController {
       res.status(200).json({ success: true, message: "Ride cancellation request processed successfully" });
     } catch (error: any) {
       console.error(`[RideController] Error cancelling joined ride ${req.params.rideId}: ${error.message} at ${new Date().toISOString()}`);
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+ async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const { rideId } = req.params;
+    if (!rideId) {
+      res.status(400).json({ success: false, message: "Ride ID is required" });
+      return;
+    }
+
+    const ride = await this.rideService.startTracking(rideId, userId);
+    res.status(200).json({
+      success: true,
+      message: "Ride tracking started successfully",
+      data: ride,
+    });
+  } catch (error: any) {
+    console.error("[RideController] Error starting tracking:", error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+}
+
+
+async updateRide(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { passengerId, action } = req.body;
+      const driverId = req.headers["driver-id"] as string;
+
+      console.log(`[RideController] Received updateRide request: id=${id}, passengerId=${passengerId}, action=${action}, driverId=${driverId}`);
+
+      if (!id || !passengerId || !action || !driverId) {
+        console.error(`[RideController] Missing required fields: id=${id}, passengerId=${passengerId}, action=${action}, driverId=${driverId}`);
+        res.status(400).json({ success: false, message: "Missing required fields" });
+        return;
+      }
+
+      if (action !== "picked" && action !== "dropped") {
+        console.error(`[RideController] Invalid action: ${action}`);
+        res.status(400).json({ success: false, message: "Invalid action" });
+        return;
+      }
+
+      // Verify driverId matches the ride's driver
+      const ride = await this.rideService.findById(id);
+      if (!ride) {
+        console.error(`[RideController] Ride not found for id: ${id}`);
+        res.status(404).json({ success: false, message: "Ride not found" });
+        return;
+      }
+      if (ride.driverId !== driverId) {
+        console.error(`[RideController] Unauthorized: driverId ${driverId} does not match ride.driverId ${ride.driverId}`);
+        res.status(403).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+
+      const updatedRide = await this.rideService.updateRide(id, { passengerId, action });
+      res.status(200).json({
+        success: true,
+        message: "Ride updated successfully",
+        data: updatedRide,
+      });
+    } catch (error: any) {
+      console.error(`[RideController] Error updating ride: ${error.message}`);
       res.status(400).json({ success: false, message: error.message });
     }
   }

@@ -1,5 +1,14 @@
 import { injectable } from "inversify";
-import { Model, Document, FilterQuery, ClientSession } from "mongoose";
+import { Model, Document, FilterQuery, UpdateQuery, ClientSession } from "mongoose";
+
+// Custom type to support arrayFilters without UpdateOptions
+interface MongoUpdateOptions {
+  session?: ClientSession;
+  arrayFilters?: { [key: string]: any }[];
+  new?: boolean;
+  runValidators?: boolean;
+  [key: string]: any; // Allow other Mongoose options
+}
 
 @injectable()
 export abstract class BaseRepository<T extends Document> {
@@ -7,6 +16,10 @@ export abstract class BaseRepository<T extends Document> {
 
   constructor(model: Model<T>) {
     this.model = model;
+  }
+
+  async startSession(): Promise<ClientSession> {
+    return this.model.startSession();
   }
 
   async create(data: Partial<T>, options?: { session: ClientSession }): Promise<T> {
@@ -72,12 +85,12 @@ export abstract class BaseRepository<T extends Document> {
     }
   }
 
-  async updateOne(query: FilterQuery<T>, update: Partial<T>, options?: { session: ClientSession }): Promise<T | null> {
+  async updateOne(query: FilterQuery<T>, update: UpdateQuery<T>, options?: MongoUpdateOptions): Promise<T | null> {
     try {
-      const document = await this.model
-        .findOneAndUpdate(query, update, { new: true, runValidators: true, session: options?.session ?? null })
-        .lean()
-        .exec();
+      console.log('[BaseRepository] updateOne:', { query, update, options });
+      const result = await this.model.updateOne(query, update, { ...options, runValidators: true }).exec();
+      console.log('[BaseRepository] update result:', result);
+      const document = await this.model.findOne(query).session(options?.session ?? null).lean().exec();
       return document as T | null;
     } catch (error) {
       throw new Error(`Failed to update document: ${(error as Error).message}`);

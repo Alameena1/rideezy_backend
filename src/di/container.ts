@@ -65,6 +65,14 @@ import { WalletController } from "../controllers/implimentation/wallet.controlle
 import { WalletService } from "../services/implementation/wallet.service";
 import { WalletRepository } from "../repositories/implimentation/wallet.repository";
 
+// Tracking
+import { TrackingService } from "../services/implementation/tracking.service";
+import { TrackingController } from "../controllers/implimentation/tracking.controller";
+import { ITrackingService } from "../services/interfaces/tracking/itrackingService";
+import { ITrackingController } from "../controllers/interface/tracking/itrackingController";
+import { ITrackingRepository } from "../repositories/interface/tracking/itrackingRepository";
+import { TrackingRepository } from "../repositories/implimentation/tracking.repository";
+
 const container = new Container();
 
 // Admin bindings
@@ -99,12 +107,19 @@ container.bind<IOSRMClient>(TYPES.IOSRMClient).to(OSRMClient).inSingletonScope()
 container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController).inSingletonScope();
 container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService).inSingletonScope();
 container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(SubscriptionRepository).inSingletonScope();
-
+ 
 // Wallet bindings
 container.bind<IWalletController>(TYPES.IWalletController).to(WalletController).inSingletonScope();
 container.bind<IWalletService>(TYPES.IWalletService).to(WalletService).inSingletonScope();
 container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository).inSingletonScope();
 
+// Tracking bindings
+container
+  .bind<ITrackingRepository>(TYPES.ITrackingRepository)
+  .toDynamicValue((context) => new TrackingRepository())
+  .inSingletonScope();
+container.bind<ITrackingService>(TYPES.ITrackingService).to(TrackingService).inSingletonScope();
+container.bind<ITrackingController>(TYPES.ITrackingController).to(TrackingController).inSingletonScope();
 
 // Razorpay binding
 container.bind<Razorpay>("Razorpay").toConstantValue(

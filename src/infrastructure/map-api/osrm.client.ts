@@ -2,17 +2,17 @@ import axios from "axios";
 import polyline from "@mapbox/polyline";
 
 export interface IOSRMClient {
-  getRoute(waypoints: string[]): Promise<RouteResponse>;
+  getRoute(waypoints: string[], providedGeometry?: string): Promise<RouteResponse>;
   reverseGeocode(lat: number, lng: number): Promise<string>;
   findNearestPointOnRoute(routeCoordinates: [number, number][], userLocation: [number, number]): Promise<[number, number]>;
   haversineDistance(coord1: [number, number], coord2: [number, number]): number;
 }
 
 export interface RouteResponse {
-  distance: number; // in kilometers
-  duration: number; // in minutes
-  geometry: string; // Polyline for frontend
-  coordinates: [number, number][]; // Required field
+  distance: number; 
+  duration: number; 
+  geometry: string;
+  coordinates: [number, number][]; 
 }
 
 export class OSRMClient implements IOSRMClient {
@@ -22,56 +22,72 @@ export class OSRMClient implements IOSRMClient {
     this.baseUrl = baseUrl;
   }
 
-  async getRoute(waypoints: string[]): Promise<RouteResponse> {
-    if (!waypoints || waypoints.length < 2) throw new Error("At least two waypoints are required");
+async getRoute(waypoints: string[], providedGeometry?: string): Promise<RouteResponse> {
+  if (!waypoints || waypoints.length < 2) throw new Error("At least two waypoints are required");
 
-    const parsedWaypoints: [number, number][] = waypoints.map((wp) => {
-      const coords = wp.split(",").map(Number);
-      if (coords.length !== 2 || coords.some(isNaN)) throw new Error(`Invalid waypoint: ${wp}`);
-      return coords as [number, number];
+  const parsedWaypoints: [number, number][] = waypoints.map((wp) => {
+    const coords = wp.split(",").map(Number);
+    if (coords.length !== 2 || coords.some(isNaN)) throw new Error(`Invalid waypoint: ${wp}`);
+    return [coords[1], coords[0]]; // Convert to [lat, lng]
+  });
+
+  if (waypoints[0] === waypoints[waypoints.length - 1]) throw new Error("Start and end cannot be the same");
+
+  console.log(`OSRM Request Waypoints: ${waypoints}`);
+  try {
+    const coordinates = waypoints.join(";");
+    const url = `${this.baseUrl}/route/v1/driving/${coordinates}?overview=full&geometries=polyline&steps=true`;
+    console.log(`OSRM Request URL: ${url}`);
+    const response = await axios.get(url);
+    console.log(`OSRM Response: ${JSON.stringify(response.data)}`);
+
+    if (response.data.code !== "Ok" || !response.data.routes || response.data.routes.length === 0) {
+      throw new Error(`Invalid OSRM Response: ${JSON.stringify(response.data)}`);
+    }
+
+    const route = response.data.routes[0];
+    let decodedCoordinates = polyline.decode(route.geometry) as [number, number][];
+
+    // Validate coordinates
+    const [startLat, startLng] = parsedWaypoints[0];
+    const [endLat, endLng] = parsedWaypoints[parsedWaypoints.length - 1];
+    const isValidCoordinates =
+      decodedCoordinates.length >= 2 &&
+      Math.abs(decodedCoordinates[0][0] - startLat) < 1 &&
+      Math.abs(decodedCoordinates[0][1] - startLng) < 1 &&
+      Math.abs(decodedCoordinates[decodedCoordinates.length - 1][0] - endLat) < 1 &&
+      Math.abs(decodedCoordinates[decodedCoordinates.length - 1][1] - endLng) < 1;
+
+    if (!isValidCoordinates && providedGeometry) {
+      console.warn("OSRM returned invalid coordinates, falling back to provided geometry");
+      const geometryObj = JSON.parse(providedGeometry);
+      if (geometryObj.type === "LineString" && geometryObj.coordinates) {
+        decodedCoordinates = geometryObj.coordinates.map(([lng, lat]: [number, number]) => [lat, lng]); // Ensure [lat, lng]
+      } else {
+        throw new Error("Provided geometry is invalid");
+      }
+    } else if (!isValidCoordinates) {
+      throw new Error("Invalid route coordinates from OSRM and no valid provided geometry");
+    }
+
+    const geoJsonGeometry = JSON.stringify({
+      type: "LineString",
+      coordinates: decodedCoordinates.map(([lat, lng]) => [lng, lat]),
     });
 
-    if (waypoints[0] === waypoints[waypoints.length - 1]) throw new Error("Start and end cannot be the same");
-
-    console.log(`OSRM Request Waypoints: ${waypoints}`);
-    try {
-      const coordinates = waypoints.join(";");
-      const url = `${this.baseUrl}/route/v1/driving/${coordinates}?overview=full&geometries=polyline&steps=true`;
-      console.log(`OSRM Request URL: ${url}`);
-      const response = await axios.get(url);
-      console.log(`OSRM Response: ${JSON.stringify(response.data)}`);
-
-      if (response.data.code !== "Ok" || !response.data.routes || response.data.routes.length === 0)
-        throw new Error(`Invalid OSRM Response: ${JSON.stringify(response.data)}`);
-
-      const route = response.data.routes[0];
-      const decodedCoordinates = polyline.decode(route.geometry) as [number, number][];
-      if (!decodedCoordinates || decodedCoordinates.length < 2) throw new Error("Invalid route coordinates");
-
-      const geoJsonGeometry = JSON.stringify({
-        type: "LineString",
-        coordinates: decodedCoordinates.map(([lat, lng]) => [lng, lat]),
-      });
-
-      return {
-        distance: route.distance / 1000,
-        duration: route.duration / 60,
-        geometry: geoJsonGeometry,
-        coordinates: decodedCoordinates,
-      };
-    } catch (error: any) {
-      console.error("Failed to fetch route from OSRM:", {
-        message: error.message || "Unknown error",
-        code: error.code || "N/A",
-        response: error.response?.data || "No response data",
-        status: error.response?.status || "No status",
-        waypoints,
-      });
-      throw new Error(`OSRM fetch failed: ${error.message || "Unknown error"}`);
-    }
+    return {
+      distance: route.distance / 1000,
+      duration: route.duration / 60,
+      geometry: geoJsonGeometry,
+      coordinates: decodedCoordinates,
+    };
+  } catch (error: any) {
+    console.error("Failed to fetch route from OSRM:", error);
+    throw error;
   }
+}
 
-  async reverseGeocode(lat: number, lng: number): Promise<string> {
+async reverseGeocode(lat: number, lng: number): Promise<string> {
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
       const response = await axios.get(url);
@@ -87,7 +103,7 @@ export class OSRMClient implements IOSRMClient {
     }
   }
 
-  async findNearestPointOnRoute(routeCoordinates: [number, number][], userLocation: [number, number]): Promise<[number, number]> {
+async findNearestPointOnRoute(routeCoordinates: [number, number][], userLocation: [number, number]): Promise<[number, number]> {
     if (!routeCoordinates || routeCoordinates.length === 0) throw new Error("Invalid route coordinates");
 
     const [lat, lng] = userLocation;
@@ -121,7 +137,7 @@ export class OSRMClient implements IOSRMClient {
     }
   }
 
-  public haversineDistance(coord1: [number, number], coord2: [number, number]): number {
+public haversineDistance(coord1: [number, number], coord2: [number, number]): number {
     const [lat1, lon1] = coord1;
     const [lat2, lon2] = coord2;
 

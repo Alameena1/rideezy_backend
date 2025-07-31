@@ -17,5 +17,7 @@ router.get("/joined", authMiddleware, rideController.getJoinedRides.bind(rideCon
 router.put('/:rideId', authMiddleware, rideController.editRide.bind(rideController));
 router.delete('/:rideId', authMiddleware, rideController.cancelRide.bind(rideController));
 router.delete('/joined/:rideId', authMiddleware, rideController.cancelJoinedRide.bind(rideController));
+router.put("/:rideId/start-tracking", authMiddleware, rideController.startTracking.bind(rideController));
+router.put("/:id/update", authMiddleware, rideController.updateRide.bind(rideController));
 
 export default router;

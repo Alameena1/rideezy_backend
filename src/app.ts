@@ -9,6 +9,7 @@ import rideRoutes from "./routes/ride.routes";
 import routeRoutes from "./routes/route.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import walletRoutes from './routes/wallet.routes';
+import trackingRoutes from "./routes/tracking.routes";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -22,20 +23,16 @@ const corsOptions = {
   origin: "http://localhost:3000",
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 200,
+allowedHeaders: ["Content-Type", "Authorization", "Driver-Id"], 
 };
 
-// Apply CORS middleware first
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
-// Other middleware
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
@@ -44,8 +41,8 @@ app.use("/admin", adminRoutes);
 app.use("/api/route", routeRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use("/api/tracking", trackingRoutes);
 
-// Error handling middleware
 app.use(errorMiddleware);
 
 const PORT = 3001;

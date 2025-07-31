@@ -1,4 +1,3 @@
-// di/types.ts
 export const TYPES = {
   IAdminController: Symbol.for("IAdminController"),
   IAdminService: Symbol.for("IAdminService"),
@@ -25,4 +24,7 @@ export const TYPES = {
   IWalletService: Symbol.for("IWalletService"),
   IWalletRepository: Symbol.for("IWalletRepository"),
   IOSRMClient: Symbol.for("IOSRMClient"),
+  ITrackingRepository: Symbol.for("ITrackingRepository"),
+  ITrackingService: Symbol.for("ITrackingService"),      
+  ITrackingController: Symbol.for("ITrackingController"), 
 };
