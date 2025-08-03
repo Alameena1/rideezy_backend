@@ -1,3 +1,4 @@
+// di/types.ts
 export const TYPES = {
   IAdminController: Symbol.for("IAdminController"),
   IAdminService: Symbol.for("IAdminService"),
@@ -26,5 +27,9 @@ export const TYPES = {
   IOSRMClient: Symbol.for("IOSRMClient"),
   ITrackingRepository: Symbol.for("ITrackingRepository"),
   ITrackingService: Symbol.for("ITrackingService"),      
-  ITrackingController: Symbol.for("ITrackingController"), 
+  ITrackingController: Symbol.for("ITrackingController"),
+  // Add notification types
+  INotificationController: Symbol.for("INotificationController"),
+  INotificationService: Symbol.for("INotificationService"),
+  INotificationRepository: Symbol.for("INotificationRepository"),
 };

@@ -10,6 +10,7 @@ import routeRoutes from "./routes/route.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import walletRoutes from './routes/wallet.routes';
 import trackingRoutes from "./routes/tracking.routes";
+import notificationRoutes from "./routes/notification.routes";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -42,6 +43,7 @@ app.use("/api/route", routeRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use("/api/tracking", trackingRoutes);
+app.use("/api/notifications", notificationRoutes); 
 
 app.use(errorMiddleware);
 

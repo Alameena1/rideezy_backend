@@ -14,8 +14,8 @@ import { EditRideDto } from "../../dtos/edit-ride.dto";
 import { Types } from "mongoose";
 import { ITrackingService } from "../interfaces/tracking/itrackingService";
 import Razorpay from "razorpay";
-import { UpdateWriteOpResult } from 'mongoose'; 
-
+import { UpdateWriteOpResult } from "mongoose";
+import { INotificationService } from "../interfaces/notification/iNotificationService";
 
 interface RideCreationData {
   rideId: string;
@@ -48,6 +48,7 @@ interface RideCreationData {
 @injectable()
 export class RideService implements IRideService {
   private razorpay: Razorpay;
+  private notificationService!: INotificationService;
 
   constructor(
     @inject(TYPES.IUserRepository) private userRepo: IUserRepository,
@@ -55,7 +56,8 @@ export class RideService implements IRideService {
     @inject(TYPES.IRideRepository) private rideRepo: IRideRepository,
     @inject(TYPES.ISubscriptionService) private subscriptionService: ISubscriptionService,
     @inject(TYPES.IOSRMClient) private osrmClient: IOSRMClient,
-    @inject(TYPES.ITrackingService) private trackingService: ITrackingService
+    @inject(TYPES.ITrackingService) private trackingService: ITrackingService,
+    @inject(TYPES.INotificationService) notificationService: INotificationService
   ) {
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       console.error(`[${new Date().toISOString()}] Razorpay environment variables not set`);
@@ -65,7 +67,9 @@ export class RideService implements IRideService {
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
+    this.notificationService = notificationService;
   }
+
   async findById(rideId: string): Promise<IRide | null> {
     try {
       console.log("[RideService] Finding ride by _id:", rideId);
@@ -100,139 +104,149 @@ export class RideService implements IRideService {
   }
 
   async startRide(dto: CreateRideDto): Promise<IRide> {
-    const session = await this.userRepo.startSession();
-    try {
-      const result = await session.withTransaction(async () => {
-        const driver = await this.userRepo.findUserById(dto.driverId!, {
-          session,
-        });
-        if (!driver) throw new Error("Driver not found");
-        if (driver.govId?.verificationStatus !== "Verified")
-          throw new Error("Driver must be verified");
-
-        const canBook = await this.subscriptionService.canBookRide(
-          dto.driverId!
-        );
-        if (!canBook) throw new Error("Ride limit exceeded");
-
-        const vehicle = await this.vehicleRepo.findById(dto.vehicleId, {
-          session,
-        });
-        if (!vehicle) throw new Error("Vehicle not found");
-        if (vehicle.user.toString() !== dto.driverId)
-          throw new Error("Vehicle mismatch");
-        if (vehicle.status !== "Approved")
-          throw new Error("Vehicle not approved");
-
-        if (dto.startPoint === dto.endPoint)
-          throw new Error("Start and end points cannot be the same");
-
-        const driverName = driver.fullName;
-        const route = await this.osrmClient.getRoute(
-          [dto.startPoint, dto.endPoint],
-          dto.routeGeometry
-        );
-        const routeCoordinates = route.coordinates;
-
-        if (routeCoordinates.length < 2)
-          throw new Error("Invalid route coordinates");
-
-        const [startLat, startLng] = dto.startPoint.split(",").map(Number);
-        const [endLat, endLng] = dto.endPoint.split(",").map(Number);
-        const startPlaceName = await this.osrmClient.reverseGeocode(
-          startLat,
-          startLng
-        );
-        const endPlaceName = await this.osrmClient.reverseGeocode(
-          endLat,
-          endLng
-        );
-
-        const distanceKm = dto.distance;
-        const fuelNeeded = distanceKm / vehicle.mileage;
-        let totalFuelCost = fuelNeeded * dto.fuelPrice;
-        const totalPeople = dto.passengerCount + 1;
-        let platformFee = dto.platformFee || 0;
-
-        const isSubscribed =
-          driver.subscription && driver.subscription.endDate > new Date();
-        if (!isSubscribed) {
-          platformFee = Math.ceil(totalFuelCost * 0.1);
-          if (!driver.wallet)
-            throw new Error(
-              "Driver's wallet is not initialized. Please contact support."
-            );
-          if (driver.wallet.balance < platformFee)
-            throw new Error(
-              `Insufficient wallet balance. Please add ₹${
-                platformFee - driver.wallet.balance
-              } to your wallet.`
-            );
-          driver.wallet.balance -= platformFee;
-          driver.wallet.transactions.push({
-            transactionId: `TXN_${Date.now()}`,
-            type: "WITHDRAWAL",
-            amount: platformFee,
-            status: "COMPLETED",
-            createdAt: new Date(),
-          });
-          await this.userRepo.updateOne(
-            { _id: driver._id },
-            { $set: { wallet: driver.wallet } },
-            { session }
-          );
-        }
-
-        const totalRideCost = totalFuelCost + platformFee;
-        const costPerPerson = totalRideCost / totalPeople;
-
-        let rideId: string;
-        let existingRide: IRide | null;
-        do {
-          rideId = `RIDE_${Date.now()}`;
-          existingRide = await this.rideRepo.findOne({ rideId }, { session });
-        } while (existingRide);
-
-        const rideData: RideCreationData = {
-          rideId,
-          driverId: dto.driverId!,
-          driverName,
-          vehicleId: dto.vehicleId,
-          date: new Date(dto.date),
-          time: dto.time,
-          startPoint: dto.startPoint,
-          startPlaceName: dto.startPlaceName || startPlaceName,
-          endPoint: dto.endPoint,
-          endPlaceName: dto.endPlaceName || endPlaceName,
-          distanceKm,
-          mileage: vehicle.mileage,
-          fuelPrice: dto.fuelPrice,
-          passengerCount: 0,
-          totalFuelCost,
-          platformFee,
-          totalRideCost,
-          costPerPerson,
-          totalPeople,
-          passengers: [],
-          status: "Pending",
-          routeGeometry: route.geometry,
-          pickupPoints: [],
-          dropoffPoints: [],
-          routeCoordinates,
-        };
-
-        return await this.rideRepo.createRide(rideData, { session });
+  const session = await this.userRepo.startSession();
+  try {
+    const result = await session.withTransaction(async () => {
+      const driver = await this.userRepo.findUserById(dto.driverId!, {
+        session,
       });
-      return result!;
-    } catch (error) {
-      console.error(
-        `[RideService] Error starting ride: ${(error as Error).message}`
+      if (!driver) throw new Error("Driver not found");
+      if (driver.govId?.verificationStatus !== "Verified")
+        throw new Error("Driver must be verified");
+
+      const canBook = await this.subscriptionService.canBookRide(
+        dto.driverId!
       );
-      throw error;
-    } finally {
-      session.endSession();
-    }
+      if (!canBook) throw new Error("Ride limit exceeded");
+
+      const vehicle = await this.vehicleRepo.findById(dto.vehicleId, {
+        session,
+      });
+      if (!vehicle) throw new Error("Vehicle not found");
+      if (vehicle.user.toString() !== dto.driverId)
+        throw new Error("Vehicle mismatch");
+      if (vehicle.status !== "Approved")
+        throw new Error("Vehicle not approved");
+
+      if (dto.startPoint === dto.endPoint)
+        throw new Error("Start and end points cannot be the same");
+
+      const driverName = driver.fullName;
+      const route = await this.osrmClient.getRoute(
+        [dto.startPoint, dto.endPoint],
+        dto.routeGeometry
+      );
+      const routeCoordinates = route.coordinates;
+
+      if (routeCoordinates.length < 2)
+        throw new Error("Invalid route coordinates");
+
+      const [startLat, startLng] = dto.startPoint.split(",").map(Number);
+      const [endLat, endLng] = dto.endPoint.split(",").map(Number);
+      const startPlaceName = await this.osrmClient.reverseGeocode(
+        startLat,
+        startLng
+      );
+      const endPlaceName = await this.osrmClient.reverseGeocode(
+        endLat,
+        endLng
+      );
+
+      const distanceKm = dto.distance;
+      const fuelNeeded = distanceKm / vehicle.mileage;
+      let totalFuelCost = fuelNeeded * dto.fuelPrice;
+      const totalPeople = dto.passengerCount + 1;
+      let platformFee = dto.platformFee || 0;
+
+      const isSubscribed =
+        driver.subscription && driver.subscription.endDate > new Date();
+      if (!isSubscribed) {
+        platformFee = Math.ceil(totalFuelCost * 0.1);
+        if (!driver.wallet)
+          throw new Error(
+            "Driver's wallet is not initialized. Please contact support."
+          );
+        if (driver.wallet.balance < platformFee)
+          throw new Error(
+            `Insufficient wallet balance. Please add ₹${
+              platformFee - driver.wallet.balance
+            } to your wallet.`
+          );
+        driver.wallet.balance -= platformFee;
+        driver.wallet.transactions.push({
+          transactionId: `TXN_${Date.now()}`,
+          type: "WITHDRAWAL",
+          amount: platformFee,
+          status: "COMPLETED",
+          createdAt: new Date(),
+        });
+        await this.userRepo.updateOne(
+          { _id: driver._id },
+          { $set: { wallet: driver.wallet } },
+          { session }
+        );
+      }
+
+      const totalRideCost = totalFuelCost + platformFee;
+      const costPerPerson = totalRideCost / totalPeople;
+
+      let rideId: string;
+      let existingRide: IRide | null;
+      do {
+        rideId = `RIDE_${Date.now()}`;
+        existingRide = await this.rideRepo.findOne({ rideId }, { session });
+      } while (existingRide);
+
+      const rideData: RideCreationData = {
+        rideId,
+        driverId: dto.driverId!,
+        driverName,
+        vehicleId: dto.vehicleId,
+        date: new Date(dto.date),
+        time: dto.time,
+        startPoint: dto.startPoint,
+        startPlaceName: dto.startPlaceName || startPlaceName,
+        endPoint: dto.endPoint,
+        endPlaceName: dto.endPlaceName || endPlaceName,
+        distanceKm,
+        mileage: vehicle.mileage,
+        fuelPrice: dto.fuelPrice,
+        passengerCount: 0,
+        totalFuelCost,
+        platformFee,
+        totalRideCost,
+        costPerPerson,
+        totalPeople,
+        passengers: [],
+        status: "Pending",
+        routeGeometry: route.geometry,
+        pickupPoints: [],
+        dropoffPoints: [],
+        routeCoordinates,
+      };
+
+      const createdRide = await this.rideRepo.createRide(rideData, { session });
+
+      // Notify the driver that the ride has started
+      const startMessage = `You have started ride ${rideId}. Start: ${dto.startPlaceName || startPlaceName}, End: ${dto.endPlaceName || endPlaceName}, Date: ${dto.date} ${dto.time}`;
+      await this.notificationService.triggerRideCancellationNotification(
+        rideId,
+        dto.driverId!,
+        startMessage
+      );
+
+      return createdRide;
+    });
+    return result!;
+  } catch (error) {
+    console.error(
+      `[RideService] Error starting ride: ${(error as Error).message}`
+    );
+    throw error;
+  } finally {
+    session.endSession();
   }
+}
 
   async joinRide(
     rideId: string,
@@ -255,9 +269,8 @@ export class RideService implements IRideService {
         }
         
         if (passenger.govId?.verificationStatus !== "Verified") {
-               throw new Error("Passenger must be verified");
+          throw new Error("Passenger must be verified");
         }
-     
 
         // Fetch the ride
         const ride = await this.rideRepo.findOne({ rideId }, { session });
@@ -434,14 +447,19 @@ export class RideService implements IRideService {
           { session }
         );
 
+        // Trigger notification for the driver
+        await this.notificationService.triggerRideJoinNotification(
+          rideId,
+          ride.driverId,
+          passengerId
+        );
+
         return await this.rideRepo.findOne({ rideId }, { session })!;
       });
       return result!;
     } catch (error) {
       console.error(
-        `[RideService] Error joining ride ${rideId}: ${
-          (error as Error).message
-        }`
+        `[RideService] Error joining ride ${rideId}: ${(error as Error).message}`
       );
       throw error;
     } finally {
@@ -752,166 +770,101 @@ export class RideService implements IRideService {
     );
   }
 
-  async editRide(
-    rideId: string,
-    driverId: string,
-    dto: EditRideDto
-  ): Promise<IRide> {
-    const ride = await this.rideRepo.findOne({ rideId });
-    if (!ride) throw new Error("Ride not found");
-    if (ride.driverId !== driverId) throw new Error("Unauthorized");
+async editRide(
+  rideId: string,
+  driverId: string,
+  dto: EditRideDto
+): Promise<IRide> {
+  const ride = await this.rideRepo.findOne({ rideId });
+  if (!ride) throw new Error("Ride not found");
+  if (ride.driverId !== driverId) throw new Error("Unauthorized");
 
-    if (
-      ride.status !== "Pending" &&
-      (!dto.status || dto.status !== "Started")
-    ) {
-      throw new Error("Only Pending rides editable or can be started");
-    }
-
-    const newDateTime =
-      dto.date && dto.time ? new Date(`${dto.date}T${dto.time}:00`) : undefined;
-    if (newDateTime && newDateTime <= new Date() && !dto.status) {
-      throw new Error("Future date required for date/time changes");
-    }
-
-    await this.rideRepo.updateOne(
-      { rideId },
-      {
-        date: dto.date ? new Date(dto.date) : ride.date,
-        time: dto.time || ride.time,
-        status: dto.status || ride.status,
-      }
-    );
-    return (await this.rideRepo.findOne({ rideId }))!;
+  if (
+    ride.status !== "Pending" &&
+    (!dto.status || dto.status !== "Started")
+  ) {
+    throw new Error("Only Pending rides editable or can be started");
   }
-  async cancelRide(rideId: string, driverId: string): Promise<void> {
-    const session = await this.rideRepo.startSession();
-    try {
-      await session.withTransaction(async () => {
-        // Fetch the ride
-        const ride = await this.rideRepo.findOne({ rideId }, { session });
-        if (!ride) throw new Error("Ride not found");
-        if (ride.driverId !== driverId) throw new Error("Unauthorized");
-        if (ride.status !== "Pending")
-          throw new Error("Only Pending rides cancellable");
 
-        // Fetch the driver
-        const driver = await this.userRepo.findUserById(ride.driverId, {
-          session,
-        });
-        if (!driver) throw new Error("Driver not found");
-        if (!driver.wallet)
-          throw new Error(
-            "Driver's wallet is not initialized. Please contact support."
-          );
+  const newDateTime =
+    dto.date && dto.time ? new Date(`${dto.date}T${dto.time}:00`) : undefined;
+  if (newDateTime && newDateTime <= new Date() && !dto.status) {
+    throw new Error("Future date required for date/time changes");
+  }
 
-        // Refund costPerPerson to each passenger's wallet
-        const totalRefund = ride.costPerPerson * ride.passengers.length;
-        if (driver.wallet.balance < totalRefund) {
-          throw new Error(
-            `Driver's wallet has insufficient balance for refund. Please contact support.`
-          );
-        }
+  await this.rideRepo.updateOne(
+    { rideId },
+    {
+      date: dto.date ? new Date(dto.date) : ride.date,
+      time: dto.time || ride.time,
+      status: dto.status || ride.status,
+    }
+  );
 
-        for (const passenger of ride.passengers) {
-          const passengerData = await this.userRepo.findUserById(
-            passenger.passengerId,
-            { session }
-          );
-          if (!passengerData) {
-            console.error(
-              `[${new Date().toISOString()}] Passenger not found: ${
-                passenger.passengerId
-              }`
-            );
-            continue; // Skip if passenger not found, log error
-          }
-          if (!passengerData.wallet) {
-            console.error(
-              `[${new Date().toISOString()}] Passenger wallet not initialized: ${
-                passenger.passengerId
-              }`
-            );
-            continue; // Skip if wallet not initialized, log error
-          }
-          passengerData.wallet.balance += ride.costPerPerson;
-          passengerData.wallet.transactions.push({
-            transactionId: `TXN_${Date.now()}`,
-            type: "REFUND",
-            amount: ride.costPerPerson,
-            status: "COMPLETED",
-            createdAt: new Date(),
-          });
-          await this.userRepo.updateOne(
-            { _id: passengerData._id },
-            { $set: { wallet: passengerData.wallet } },
-            { session }
-          );
-        }
-
-        // Deduct total refunded amount from driver's wallet
-        driver.wallet.balance -= totalRefund;
-        driver.wallet.transactions.push({
-          transactionId: `TXN_${Date.now()}`,
-          type: "WITHDRAWAL",
-          amount: totalRefund,
-          status: "COMPLETED",
-          createdAt: new Date(),
-        });
-        await this.userRepo.updateOne(
-          { _id: driver._id },
-          { $set: { wallet: driver.wallet } },
-          { session }
-        );
-
-        // Update ride status to Cancelled
-        await this.rideRepo.updateOne(
-          { rideId },
-          { status: "Cancelled" },
-          { session }
-        );
-      });
-    } catch (error) {
-      console.error(
-        `[RideService] Error cancelling ride ${rideId}: ${
-          (error as Error).message
-        }`
+  // Fetch updated ride and notify passengers
+  const updatedRide = await this.rideRepo.findOne({ rideId })!;
+  if (updatedRide) {
+    const message = `Ride ${rideId} has been updated. New date: ${dto.date || ride.date.toISOString().split('T')[0]}, New time: ${dto.time || ride.time}, Status: ${dto.status || ride.status}`;
+    for (const passenger of updatedRide.passengers) {
+      await this.notificationService.triggerRideCancellationNotification( // Using existing method
+        rideId,
+        passenger.passengerId,
+        message
       );
-      throw error;
-    } finally {
-      session.endSession();
     }
   }
 
-  async cancelJoinedRide(rideId: string, passengerId: string): Promise<void> {
-    const session = await this.rideRepo.startSession();
-    try {
-      await session.withTransaction(async () => {
-        // Fetch the ride
-        const ride = await this.rideRepo.findOne({ rideId }, { session });
-        if (!ride) throw new Error("Ride not found");
-        if (!ride.passengers.some((p) => p.passengerId === passengerId))
-          throw new Error("Not a passenger");
-        if (ride.status !== "Pending")
-          throw new Error("Only Pending rides cancellable");
+  return updatedRide!; // Non-null assertion since we checked earlier
+}
 
-        // Fetch the passenger and driver
-        const passenger = await this.userRepo.findUserById(passengerId, {
-          session,
-        });
-        if (!passenger) throw new Error("Passenger not found");
-        const driver = await this.userRepo.findUserById(ride.driverId, {
-          session,
-        });
-        if (!driver) throw new Error("Driver not found");
+async cancelRide(rideId: string, driverId: string): Promise<void> {
+  const session = await this.rideRepo.startSession();
+  try {
+    await session.withTransaction(async () => {
+      // Fetch the ride
+      const ride = await this.rideRepo.findOne({ rideId }, { session });
+      if (!ride) throw new Error("Ride not found");
+      if (ride.driverId !== driverId) throw new Error("Unauthorized");
+      if (ride.status !== "Pending")
+        throw new Error("Only Pending rides cancellable");
 
-        // Refund costPerPerson to passenger's wallet
-        if (!passenger.wallet)
-          throw new Error(
-            "Passenger's wallet is not initialized. Please contact support."
+      // Fetch the driver
+      const driver = await this.userRepo.findUserById(ride.driverId, {
+        session,
+      });
+      if (!driver) throw new Error("Driver not found");
+      if (!driver.wallet)
+        throw new Error(
+          "Driver's wallet is not initialized. Please contact support."
+        );
+
+      // Refund costPerPerson to each passenger's wallet
+      const totalRefund = ride.costPerPerson * ride.passengers.length;
+      if (driver.wallet.balance < totalRefund) {
+        throw new Error(
+          `Driver's wallet has insufficient balance for refund. Please contact support.`
+        );
+      }
+
+      for (const passenger of ride.passengers) {
+        const passengerData = await this.userRepo.findUserById(
+          passenger.passengerId,
+          { session }
+        );
+        if (!passengerData) {
+          console.error(
+            `[${new Date().toISOString()}] Passenger not found: ${passenger.passengerId}`
           );
-        passenger.wallet.balance += ride.costPerPerson;
-        passenger.wallet.transactions.push({
+          continue;
+        }
+        if (!passengerData.wallet) {
+          console.error(
+            `[${new Date().toISOString()}] Passenger wallet not initialized: ${passenger.passengerId}`
+          );
+          continue;
+        }
+        passengerData.wallet.balance += ride.costPerPerson;
+        passengerData.wallet.transactions.push({
           transactionId: `TXN_${Date.now()}`,
           type: "REFUND",
           amount: ride.costPerPerson,
@@ -919,78 +872,171 @@ export class RideService implements IRideService {
           createdAt: new Date(),
         });
         await this.userRepo.updateOne(
-          { _id: passenger._id },
-          { $set: { wallet: passenger.wallet } },
+          { _id: passengerData._id },
+          { $set: { wallet: passengerData.wallet } },
           { session }
         );
 
-        // Deduct costPerPerson from driver's wallet
-        if (!driver.wallet)
-          throw new Error(
-            "Driver's wallet is not initialized. Please contact support."
-          );
-        if (driver.wallet.balance < ride.costPerPerson) {
-          throw new Error(
-            `Driver's wallet has insufficient balance for refund. Please contact support.`
-          );
-        }
-        driver.wallet.balance -= ride.costPerPerson;
-        driver.wallet.transactions.push({
-          transactionId: `TXN_${Date.now()}`,
-          type: "WITHDRAWAL",
-          amount: ride.costPerPerson,
-          status: "COMPLETED",
-          createdAt: new Date(),
-        });
-        await this.userRepo.updateOne(
-          { _id: driver._id },
-          { $set: { wallet: driver.wallet } },
-          { session }
+        // Notify passenger about cancellation and refund
+        await this.notificationService.triggerRideCancellationNotification(
+          rideId,
+          passenger.passengerId,
+          `Ride ${rideId} has been cancelled by the driver. Refund of ${ride.costPerPerson} credited to your wallet.`
         );
+      }
 
-        // Update ride details
-        const updatedPassengers = ride.passengers.filter(
-          (p) => p.passengerId !== passengerId
-        );
-        const updatedPickupPoints = ride.pickupPoints.filter(
-          (p) => p.passengerId !== passengerId
-        );
-        const updatedDropoffPoints = ride.dropoffPoints.filter(
-          (p) => p.passengerId !== passengerId
-        );
-        const newPassengerCount = updatedPassengers.length;
-
-        const fuelNeeded = ride.distanceKm / ride.mileage;
-        const totalFuelCost = fuelNeeded * ride.fuelPrice;
-        const costPerPerson =
-          ride.totalPeople > 0
-            ? (totalFuelCost + ride.platformFee) / ride.totalPeople
-            : 0;
-
-        await this.rideRepo.updateOne(
-          { rideId },
-          {
-            passengers: updatedPassengers,
-            passengerCount: newPassengerCount,
-            pickupPoints: updatedPickupPoints,
-            dropoffPoints: updatedDropoffPoints,
-            totalFuelCost,
-            costPerPerson,
-          },
-          { session }
-        );
+      // Deduct total refunded amount from driver's wallet
+      driver.wallet.balance -= totalRefund;
+      driver.wallet.transactions.push({
+        transactionId: `TXN_${Date.now()}`,
+        type: "WITHDRAWAL",
+        amount: totalRefund,
+        status: "COMPLETED",
+        createdAt: new Date(),
       });
-    } catch (error) {
-      console.error(
-        `[RideService] Error cancelling joined ride ${rideId}: ${
-          (error as Error).message
-        }`
+      await this.userRepo.updateOne(
+        { _id: driver._id },
+        { $set: { wallet: driver.wallet } },
+        { session }
       );
-      throw error;
-    } finally {
-      session.endSession();
-    }
+
+      // Update ride status to Cancelled
+      await this.rideRepo.updateOne(
+        { rideId },
+        { status: "Cancelled" },
+        { session }
+      );
+    });
+  } catch (error) {
+    console.error(
+      `[RideService] Error cancelling ride ${rideId}: ${(error as Error).message}`
+    );
+    throw error;
+  } finally {
+    session.endSession();
   }
+}
+
+async cancelJoinedRide(rideId: string, passengerId: string): Promise<void> {
+  const session = await this.rideRepo.startSession();
+  try {
+    await session.withTransaction(async () => {
+      // Fetch the ride
+      const ride = await this.rideRepo.findOne({ rideId }, { session });
+      if (!ride) throw new Error("Ride not found");
+      if (!ride.passengers.some((p) => p.passengerId === passengerId))
+        throw new Error("Not a passenger");
+      if (ride.status !== "Pending")
+        throw new Error("Only Pending rides cancellable");
+
+      // Fetch the passenger and driver
+      const passenger = await this.userRepo.findUserById(passengerId, {
+        session,
+      });
+      if (!passenger) throw new Error("Passenger not found");
+      const driver = await this.userRepo.findUserById(ride.driverId, {
+        session,
+      });
+      if (!driver) throw new Error("Driver not found");
+
+      // Refund costPerPerson to passenger's wallet
+      if (!passenger.wallet)
+        throw new Error(
+          "Passenger's wallet is not initialized. Please contact support."
+        );
+      passenger.wallet.balance += ride.costPerPerson;
+      passenger.wallet.transactions.push({
+        transactionId: `TXN_${Date.now()}`,
+        type: "REFUND",
+        amount: ride.costPerPerson,
+        status: "COMPLETED",
+        createdAt: new Date(),
+      });
+      await this.userRepo.updateOne(
+        { _id: passenger._id },
+        { $set: { wallet: passenger.wallet } },
+        { session }
+      );
+
+      // Notify passenger about self-cancellation and refund
+      await this.notificationService.triggerRideCancellationNotification(
+        rideId,
+        passengerId,
+        `You have cancelled your participation in ride ${rideId}. Refund of ${ride.costPerPerson} credited to your wallet.`
+      );
+
+      // Deduct costPerPerson from driver's wallet
+      if (!driver.wallet)
+        throw new Error(
+          "Driver's wallet is not initialized. Please contact support."
+        );
+      if (driver.wallet.balance < ride.costPerPerson) {
+        throw new Error(
+          `Driver's wallet has insufficient balance for refund. Please contact support.`
+        );
+      }
+      driver.wallet.balance -= ride.costPerPerson;
+      driver.wallet.transactions.push({
+        transactionId: `TXN_${Date.now()}`,
+        type: "WITHDRAWAL",
+        amount: ride.costPerPerson,
+        status: "COMPLETED",
+        createdAt: new Date(),
+      });
+      await this.userRepo.updateOne(
+        { _id: driver._id },
+        { $set: { wallet: driver.wallet } },
+        { session }
+      );
+
+      // Notify driver about passenger cancellation
+      await this.notificationService.triggerRideCancellationNotification(
+        rideId,
+        ride.driverId, // Use ride.driverId instead of driverId
+        `Passenger ${passengerId} has cancelled their participation in ride ${rideId}.`
+      );
+
+      // Update ride details
+      const updatedPassengers = ride.passengers.filter(
+        (p) => p.passengerId !== passengerId
+      );
+      const updatedPickupPoints = ride.pickupPoints.filter(
+        (p) => p.passengerId !== passengerId
+      );
+      const updatedDropoffPoints = ride.dropoffPoints.filter(
+        (p) => p.passengerId !== passengerId
+      );
+      const newPassengerCount = updatedPassengers.length;
+
+      const fuelNeeded = ride.distanceKm / ride.mileage;
+      const totalFuelCost = fuelNeeded * ride.fuelPrice;
+      const costPerPerson =
+        ride.totalPeople > 0
+          ? (totalFuelCost + ride.platformFee) / ride.totalPeople
+          : 0;
+
+      await this.rideRepo.updateOne(
+        { rideId },
+        {
+          passengers: updatedPassengers,
+          passengerCount: newPassengerCount,
+          pickupPoints: updatedPickupPoints,
+          dropoffPoints: updatedDropoffPoints,
+          totalFuelCost,
+          costPerPerson,
+        },
+        { session }
+      );
+    });
+  } catch (error) {
+    console.error(
+      `[RideService] Error cancelling joined ride ${rideId}: ${(error as Error).message}`
+    );
+    throw error;
+  } finally {
+    session.endSession();
+  }
+}
 
 async startTracking(rideId: string, driverId: string): Promise<IRide> {
   const session = await this.rideRepo.startSession();

@@ -1,6 +1,8 @@
+// di/container.ts
 import { Container } from "inversify";
 import { TYPES } from "./types";
 import Razorpay from "razorpay";
+
 // Admin
 import { IAdminController } from "../controllers/interface/admin/interface";
 import { IAdminService } from "../services/interfaces/admin/interface";
@@ -73,6 +75,14 @@ import { ITrackingController } from "../controllers/interface/tracking/itracking
 import { ITrackingRepository } from "../repositories/interface/tracking/itrackingRepository";
 import { TrackingRepository } from "../repositories/implimentation/tracking.repository";
 
+// Notification
+import { INotificationController } from "../controllers/interface/notification/iNotificationController";
+import { INotificationService } from "../services/interfaces/notification/iNotificationService";
+import { INotificationRepository } from "../repositories/interface/notification/iNotificationRepository";
+import { NotificationController } from "../controllers/implimentation/notification.controller";
+import { NotificationService } from "../services/implementation/notification.service";
+import { NotificationRepository } from "../repositories/implimentation/notification.repository";
+
 const container = new Container();
 
 // Admin bindings
@@ -103,11 +113,12 @@ container.bind<IRideController>(TYPES.IRideController).to(RideController).inSing
 container.bind<IRideService>(TYPES.IRideService).to(RideService).inSingletonScope();
 container.bind<IRideRepository>(TYPES.IRideRepository).to(RideRepository).inSingletonScope();
 container.bind<IOSRMClient>(TYPES.IOSRMClient).to(OSRMClient).inSingletonScope(); 
+
 // Subscription bindings
 container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController).inSingletonScope();
 container.bind<ISubscriptionService>(TYPES.ISubscriptionService).to(SubscriptionService).inSingletonScope();
 container.bind<ISubscriptionRepository>(TYPES.ISubscriptionRepository).to(SubscriptionRepository).inSingletonScope();
- 
+
 // Wallet bindings
 container.bind<IWalletController>(TYPES.IWalletController).to(WalletController).inSingletonScope();
 container.bind<IWalletService>(TYPES.IWalletService).to(WalletService).inSingletonScope();
@@ -120,6 +131,11 @@ container
   .inSingletonScope();
 container.bind<ITrackingService>(TYPES.ITrackingService).to(TrackingService).inSingletonScope();
 container.bind<ITrackingController>(TYPES.ITrackingController).to(TrackingController).inSingletonScope();
+
+// Notification bindings
+container.bind<INotificationController>(TYPES.INotificationController).to(NotificationController).inSingletonScope();
+container.bind<INotificationService>(TYPES.INotificationService).to(NotificationService).inSingletonScope();
+container.bind<INotificationRepository>(TYPES.INotificationRepository).to(NotificationRepository).inSingletonScope();
 
 // Razorpay binding
 container.bind<Razorpay>("Razorpay").toConstantValue(
