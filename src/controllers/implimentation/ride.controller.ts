@@ -261,40 +261,39 @@ console.log("edit ride controller updatedRide",updatedRide)
     }
   }
 
- async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
-    }
+async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
 
-    const { rideId } = req.params;
-    if (!rideId) {
-      res.status(400).json({ success: false, message: "Ride ID is required" });
-      return;
-    }
+      const { rideId } = req.params;
+      if (!rideId) {
+        res.status(400).json({ success: false, message: "Ride ID is required" });
+        return;
+      }
 
-    const ride = await this.rideService.startTracking(rideId, userId);
-    res.status(200).json({
-      success: true,
-      message: "Ride tracking started successfully",
-      data: ride,
-    });
-  } catch (error: any) {
-    console.error("[RideController] Error starting tracking:", error);
-    res.status(400).json({ success: false, message: error.message });
+      const ride = await this.rideService.startTracking(rideId, userId);
+      res.status(200).json({
+        success: true,
+        message: "Ride tracking started successfully",
+        data: ride,
+      });
+    } catch (error: any) {
+      console.error("[RideController] Error starting tracking:", error);
+      res.status(400).json({ success: false, message: error.message });
+    }
   }
-}
 
-
-async updateRide(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async updateRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const { passengerId, action } = req.body;
-      const driverId = req.headers["driver-id"] as string;
+      const { passengerId, action, currentPosition } = req.body;
+      const driverId = req.user?.userId; // Use authenticated user ID instead of headers
 
-      console.log(`[RideController] Received updateRide request: id=${id}, passengerId=${passengerId}, action=${action}, driverId=${driverId}`);
+      console.log(`[RideController] Received updateRide request: id=${id}, passengerId=${passengerId}, action=${action}, driverId=${driverId}, currentPosition=${currentPosition}`);
 
       if (!id || !passengerId || !action || !driverId) {
         console.error(`[RideController] Missing required fields: id=${id}, passengerId=${passengerId}, action=${action}, driverId=${driverId}`);
@@ -321,7 +320,14 @@ async updateRide(req: Request, res: Response, next: NextFunction): Promise<void>
         return;
       }
 
-      const updatedRide = await this.rideService.updateRide(id, { passengerId, action });
+      // Include currentPosition in updates if provided
+      const updates = {
+        passengerId,
+        action,
+        ...(currentPosition && { currentPosition }), // Conditionally include currentPosition
+      };
+
+      const updatedRide = await this.rideService.updateRide(id, updates, driverId);
       res.status(200).json({
         success: true,
         message: "Ride updated successfully",

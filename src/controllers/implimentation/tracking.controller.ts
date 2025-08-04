@@ -21,53 +21,43 @@ export class TrackingController implements ITrackingController {
 
   async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user?.userId;
-      if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+      const { rideId } = req.params;
+      const driverId = req.user?.userId;
+
+      if (!rideId || !driverId) {
+        res.status(400).json({ success: false, message: "Ride ID and driver ID are required" });
         return;
       }
-
-      const { rideId } = req.params; // MongoDB _id (e.g., 686fad459a92e92788360517)
-      const { initialPosition } = req.body;
 
       const ride = await this.rideService.findById(rideId);
       if (!ride) {
         res.status(404).json({ success: false, message: "Ride not found" });
         return;
       }
-
-      // Validate driver
-      if (ride.driverId !== userId) {
-        res.status(403).json({ success: false, message: "Unauthorized: User is not the driver" });
+      if (ride.driverId !== driverId) {
+        res.status(403).json({ success: false, message: "Unauthorized" });
         return;
       }
 
-      // Validate ride status
-      if (ride.status !== "Pending") {
-        res.status(400).json({ success: false, message: "Only Pending rides can be started" });
+      const initialPosition = req.body.initialPosition as [number, number] | undefined;
+      if (!initialPosition) {
+        res.status(400).json({ success: false, message: "Initial position is required" });
         return;
       }
 
-      // Validate ride time
-      const rideDateTime = new Date(`${ride.date.toISOString().split("T")[0]}T${ride.time}:00`);
-      if (new Date() < rideDateTime) {
-        res.status(400).json({ success: false, message: "Ride cannot be started before scheduled time" });
-        return;
-      }
+      const tracking = await this.trackingService.startTracking(rideId, driverId, initialPosition);
+      
+      // Update ride status to "Started"
+      await this.rideService.updateRide(ride.rideId || ride._id.toString(), { status: "Started" }, ride.driverId);
 
-      const tracking = await this.trackingService.startTracking(rideId, userId, initialPosition);
-
-      // Update the ride status to "Started"
-      await this.rideService.updateRide(ride.rideId, { status: "Started" });
-
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         message: "Tracking started successfully",
         data: tracking,
       });
     } catch (error: any) {
       console.error("[TrackingController] Error starting tracking:", error);
-      res.status(error.statusCode || 400).json({ success: false, message: error.message });
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 
@@ -132,39 +122,40 @@ export class TrackingController implements ITrackingController {
     }
   }
 
-  async stopTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-  try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
-    }
+ async stopTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { rideId } = req.params;
+      const driverId = req.user?.userId;
 
-    const { rideId } = req.params; // MongoDB _id
-    if (!rideId) {
-      res.status(400).json({ success: false, message: "Ride ID is required" });
-      return;
-    }
+      if (!rideId || !driverId) {
+        res.status(400).json({ success: false, message: "Ride ID and driver ID are required" });
+        return;
+      }
 
-    const ride = await this.rideService.findById(rideId);
-    if (!ride) {
-      res.status(404).json({ success: false, message: "Ride not found" });
-      return;
-    }
+      const ride = await this.rideService.findById(rideId);
+      if (!ride) {
+        res.status(404).json({ success: false, message: "Ride not found" });
+        return;
+      }
+      if (ride.driverId !== driverId) {
+        res.status(403).json({ success: false, message: "Unauthorized" });
+        return;
+      }
 
-    if (ride.driverId !== userId) {
-      res.status(403).json({ success: false, message: "Unauthorized: User is not the driver" });
-      return;
-    }
+      await this.trackingService.stopTracking(rideId);
+      
+      // Update ride status to "Completed"
+      await this.rideService.updateRide(ride._id.toString(), { status: "Completed" }, ride.driverId);
 
-    await this.trackingService.stopTracking(rideId);
-    await this.rideService.updateRide(ride._id.toString(), { status: "Completed" }); // Use ride._id instead of ride.rideId
-    res.status(200).json({ success: true, message: "Tracking stopped successfully" });
-  } catch (error: any) {
-    console.error("[TrackingController] Error stopping tracking:", error);
-    res.status(400).json({ success: false, message: error.message });
+      res.status(200).json({
+        success: true,
+        message: "Tracking stopped successfully",
+      });
+    } catch (error: any) {
+      console.error("[TrackingController] Error stopping tracking:", error);
+      res.status(400).json({ success: false, message: error.message });
+    }
   }
-}
 
   async getTrackingStatus(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {

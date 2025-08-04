@@ -1,4 +1,3 @@
-// src/services/interfaces/ride/irideService.ts
 import { IRide } from "../../../models/ride.model";
 import { CreateRideDto } from "../../../dtos/create-ride.dto";
 import { JoinedRideDto } from "../../../dtos/joined-ride.dto";
@@ -42,6 +41,8 @@ export interface IRideService {
       passengerId?: string;
       action?: "picked" | "dropped";
       status?: string;
-    }
+      currentPosition?: [number, number];
+    },
+    driverId: string
   ): Promise<IRide>;
 }

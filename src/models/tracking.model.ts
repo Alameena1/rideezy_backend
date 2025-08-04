@@ -1,11 +1,13 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { model, Schema, Types, Document } from "mongoose";
 
 export interface ITracking extends Document {
   rideId: Types.ObjectId;
-  currentPosition: [number, number]; 
+  currentPosition: [number, number];
   lastUpdated: Date;
-  status: "Started" | "Completed";
+  status: "Started" | "Paused" | "Completed";
   driverId: Types.ObjectId;
+  pickupActions: { passengerId: string; location: string; status: "Pending" | "Completed" }[];
+  dropoffActions: { passengerId: string; location: string; status: "Pending" | "Completed" }[];
 }
 
 const TrackingSchema = new Schema<ITracking>(
@@ -20,10 +22,24 @@ const TrackingSchema = new Schema<ITracking>(
       },
     },
     lastUpdated: { type: Date, required: true, default: Date.now },
-    status: { type: String, enum: ["Started", "Completed"], required: true },
+    status: { type: String, enum: ["Started", "Paused", "Completed"], required: true },
     driverId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    pickupActions: [
+      {
+        passengerId: { type: String, required: true },
+        location: { type: String, required: true },
+        status: { type: String, enum: ["Pending", "Completed"], default: "Pending" },
+      },
+    ],
+    dropoffActions: [
+      {
+        passengerId: { type: String, required: true },
+        location: { type: String, required: true },
+        status: { type: String, enum: ["Pending", "Completed"], default: "Pending" },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-export const TrackingModel = model<ITracking>("Tracking", TrackingSchema);
+export const TrackingModel = model<ITracking & Document>("Tracking", TrackingSchema);

@@ -1068,145 +1068,54 @@ async startTracking(rideId: string, driverId: string): Promise<IRide> {
   }
 }
 
-async updateRide(rideId: string, updates: { passengerId?: string; action?: "picked" | "dropped"; status?: string; currentPosition?: [number, number] }): Promise<IRide> {
+async updateRide(rideId: string, updates: { passengerId?: string; action?: "picked" | "dropped"; status?: string; currentPosition?: [number, number] }, driverId: string): Promise<IRide> {
   try {
     console.log("[RideService] Updating ride with _id:", rideId, "updates:", updates);
-    if (!Types.ObjectId.isValid(rideId)) {
-      console.warn(`[RideService] Invalid ObjectId: ${rideId}`);
-      throw new Error("Invalid ride ID");
-    }
+    if (!Types.ObjectId.isValid(rideId)) throw new Error("Invalid ride ID");
 
     const ride = await this.rideRepo.findOne({ _id: new Types.ObjectId(rideId) });
-    if (!ride) {
-      console.error(`[RideService] Ride not found for _id: ${rideId}`);
-      throw new Error("Ride not found");
-    }
+    if (!ride) throw new Error("Ride not found");
+    if (ride.driverId !== driverId) throw new Error("Unauthorized");
 
     if (updates.status) {
-      console.log(`[RideService] Updating status for ride ${rideId} to ${updates.status}`);
-      if (!["Started", "Completed"].includes(updates.status)) {
-        throw new Error("Invalid status update");
-      }
-      await this.rideRepo.updateOne(
-        { _id: new Types.ObjectId(rideId) },
-        { status: updates.status }
-      );
+      if (!["Started", "Completed"].includes(updates.status)) throw new Error("Invalid status update");
+      await this.rideRepo.updateOne({ _id: new Types.ObjectId(rideId) }, { status: updates.status });
     } else if (updates.action && updates.passengerId) {
-      console.log(`[RideService] Processing action ${updates.action} for passenger ${updates.passengerId} on ride ${rideId}`);
       const passenger = ride.passengers.find((p) => p.passengerId === updates.passengerId);
-      if (!passenger) {
-        console.error(`[RideService] Passenger ${updates.passengerId} not found in ride ${rideId}`);
-        throw new Error("Passenger not found in ride");
-      }
+      if (!passenger) throw new Error("Passenger not found in ride");
 
-      // Use provided currentPosition if available, otherwise fetch from tracking service
-      const currentPosition = updates.currentPosition && Array.isArray(updates.currentPosition) && updates.currentPosition.length === 2
-        ? updates.currentPosition
-        : await this.trackingService.getTrackingPosition(rideId);
-      if (!currentPosition) {
-        console.error(`[RideService] No current position available for ride ${rideId}`);
-        throw new Error("No current position available");
-      }
+      const currentPosition = updates.currentPosition || await this.trackingService.getTrackingPosition(rideId);
+      if (!currentPosition) throw new Error("No current position available");
 
-      if (updates.action === "picked") {
-        const pickupPoint = ride.pickupPoints.find((p) => p.passengerId === updates.passengerId);
-        if (!pickupPoint) {
-          console.error(`[RideService] Pickup point not found for passenger ${updates.passengerId} in ride ${rideId}`);
-          throw new Error("Pickup point not found");
-        }
+      const point = updates.action === "picked"
+        ? ride.pickupPoints.find((p) => p.passengerId === updates.passengerId)
+        : ride.dropoffPoints.find((p) => p.passengerId === updates.passengerId);
+      if (!point) throw new Error(`${updates.action === "picked" ? "Pickup" : "Dropoff"} point not found`);
 
-        const [pickupLat, pickupLng] = pickupPoint.location.split(",").map(Number);
-        if (isNaN(pickupLat) || isNaN(pickupLng)) {
-          console.error(`[RideService] Invalid pickup coordinates for passenger ${updates.passengerId}: ${pickupPoint.location}`);
-          throw new Error("Invalid pickup coordinates");
-        }
+      const [lat, lng] = point.location.split(",").map(Number);
+      if (isNaN(lat) || isNaN(lng)) throw new Error(`Invalid ${updates.action} coordinates`);
 
-        const distance = this.osrmClient.haversineDistance(currentPosition, [pickupLat, pickupLng]);
-        console.log("[RideService] Pickup validation:", {
-          rideId,
-          passengerId: updates.passengerId,
-          currentPosition,
-          pickupCoord: [pickupLat, pickupLng],
-          distance: distance * 1000, // Log in meters
-        });
+      const distance = this.osrmClient.haversineDistance(currentPosition, [lat, lng]);
+      const THRESHOLD = 0.1; // 100 meters
+      if (distance > THRESHOLD) throw new Error(`Cannot mark ${updates.action}: Vehicle is ${(distance * 1000).toFixed(0)}m away`);
 
-        const PICKUP_THRESHOLD = 0.1; // 100 meters
-        if (distance > PICKUP_THRESHOLD) {
-          console.error(`[RideService] Pickup failed: Vehicle is ${(distance * 1000).toFixed(0)}m away from pickup point`);
-          throw new Error("Cannot mark picked up: Not at pickup location");
-        }
+      await this.trackingService.updateTrackingAction(rideId, updates.passengerId, updates.action);
 
-        console.log(`[RideService] Marking passenger ${updates.passengerId} as picked up for ride ${rideId}`);
-        const result: IRide | null = await this.rideRepo.updateOne(
-          { _id: new Types.ObjectId(rideId) },
-          { $set: { "passengers.$[elem].pickedUp": true } },
-          { arrayFilters: [{ "elem.passengerId": updates.passengerId }], new: true } // Use new: true to return updated doc
-        );
-        if (!result) {
-          console.error("[RideService] No documents modified or found for pickup update");
-          throw new Error("Failed to update pickup status");
-        }
-      } else if (updates.action === "dropped") {
-        const dropoffPoint = ride.dropoffPoints.find((p) => p.passengerId === updates.passengerId);
-        if (!dropoffPoint) {
-          console.error(`[RideService] Dropoff point not found for passenger ${updates.passengerId} in ride ${rideId}`);
-          throw new Error("Dropoff point not found");
-        }
-
-        const [dropoffLat, dropoffLng] = dropoffPoint.location.split(",").map(Number);
-        if (isNaN(dropoffLat) || isNaN(dropoffLng)) {
-          console.error(`[RideService] Invalid dropoff coordinates for passenger ${updates.passengerId}: ${dropoffPoint.location}`);
-          throw new Error("Invalid dropoff coordinates");
-        }
-
-        const distance = this.osrmClient.haversineDistance(currentPosition, [dropoffLat, dropoffLng]);
-        console.log("[RideService] Dropoff validation:", {
-          rideId,
-          passengerId: updates.passengerId,
-          currentPosition,
-          dropoffCoord: [dropoffLat, dropoffLng],
-          distance: distance * 1000, // Log in meters
-        });
-
-        const DROPOFF_THRESHOLD = 0.1; // 100 meters
-        if (distance > DROPOFF_THRESHOLD) {
-          console.error(`[RideService] Dropoff failed: Vehicle is ${(distance * 1000).toFixed(0)}m away from dropoff point`);
-          throw new Error("Cannot mark dropped off: Not at dropoff location");
-        }
-
-        console.log(`[RideService] Marking passenger ${updates.passengerId} as dropped off for ride ${rideId}`);
-        const result: IRide | null = await this.rideRepo.updateOne(
-          { _id: new Types.ObjectId(rideId) },
-          { $set: { "passengers.$[elem].droppedOff": true } },
-          { arrayFilters: [{ "elem.passengerId": updates.passengerId }], new: true }
-        );
-        if (!result) {
-          console.error("[RideService] No documents modified or found for dropoff update");
-          throw new Error("Failed to update dropoff status");
-        }
-      } else {
-        console.error(`[RideService] Invalid action: ${updates.action}`);
-        throw new Error("Invalid action");
-      }
+      const result = await this.rideRepo.updateOne(
+        { _id: new Types.ObjectId(rideId) },
+        { $set: { [`passengers.$[elem].${updates.action === "picked" ? "pickedUp" : "droppedOff"}`]: true } },
+        { arrayFilters: [{ "elem.passengerId": updates.passengerId }], new: true }
+      );
+      if (!result) throw new Error(`Failed to update ${updates.action} status`);
     } else {
-      console.error("[RideService] Invalid update request: Missing status or action/passengerId");
       throw new Error("Invalid update request");
     }
 
     const updatedRide = await this.rideRepo.findOne({ _id: new Types.ObjectId(rideId) });
-    if (!updatedRide) {
-      console.error(`[RideService] Updated ride not found for _id: ${rideId}`);
-      throw new Error("Updated ride not found");
-    }
-
-    console.log("[RideService] Ride updated successfully:", updatedRide);
+    if (!updatedRide) throw new Error("Updated ride not found");
     return updatedRide;
   } catch (error) {
-    console.error(`[RideService] Error updating ride ${rideId}:`, {
-      error: (error as Error).message,
-      stack: (error as Error).stack,
-      updates,
-    });
+    console.error("[RideService] Error updating ride:", error);
     throw error;
   }
 }
