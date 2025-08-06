@@ -15,14 +15,12 @@
   const authMiddleware: RequestHandler = (req: AuthenticatedRequest, res: Response, next) => {
     try {
       const authHeader = req.headers.authorization;
-      console.log("Auth Header:", authHeader);
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         res.status(401).json({ success: false, message: "Authorization header missing or incorrect" });
         return;
       }
 
       const token = authHeader.split(" ")[1];
-      console.log("Token:", token);
 
       jwt.verify(token, JWT_SECRET, (err, decoded) => {
         console.log("Verification Error:", err?.message);
@@ -36,7 +34,6 @@
         }
 
         req.user = decoded as { userId: string; email: string };
-        console.log("Decoded User:", req.user);
         next();
       });
     } catch (error) {

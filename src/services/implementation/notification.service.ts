@@ -4,6 +4,7 @@ import { INotificationService } from "../interfaces/notification/iNotificationSe
 import { INotificationRepository } from "../../repositories/interface/notification/iNotificationRepository";
 import { IUserRepository } from "../../repositories/interface/user/iuserRepository";
 import { CreateNotificationDto, CreateNotificationDtoType } from "../../dtos/create-notification.dto";
+import { emitNotification } from "../../websocket/emit"; // Adjust path as needed
 
 @injectable()
 export class NotificationService implements INotificationService {
@@ -19,19 +20,20 @@ export class NotificationService implements INotificationService {
   }
 
   async triggerRideJoinNotification(rideId: string, userId: string, joinedUserId: string): Promise<void> {
-    const joinedUser = await this.userRepository.findUserById(joinedUserId);
-    const joinedUserName = joinedUser?.fullName || joinedUserId; 
+  const joinedUser = await this.userRepository.findUserById(joinedUserId);
+  const joinedUserName = joinedUser?.fullName || joinedUserId; 
 
-    const notificationData: CreateNotificationDtoType = {
-      userId,
-      message: `User ${joinedUserName} has joined your ride ${rideId}`,
-      type: "ride_join",
-      isRead: false,
-      createdAt: new Date(),
-    };
-    const validatedData = CreateNotificationDto.parse(notificationData);
-    await this.notificationRepository.create(validatedData);
-  }
+  const notificationData: CreateNotificationDtoType = {
+    userId,
+    message: `User ${joinedUserName} has joined your ride ${rideId}`,
+    type: "ride_join",
+    isRead: false, // Explicitly set to false
+    createdAt: new Date(),
+  };
+  const validatedData = CreateNotificationDto.parse(notificationData);
+  await this.notificationRepository.create(validatedData);
+  emitNotification(userId, validatedData);
+}
 
   async triggerRideCancellationNotification(rideId: string, userId: string, message?: string): Promise<void> {
     const user = await this.userRepository.findUserById(userId);
@@ -46,6 +48,7 @@ export class NotificationService implements INotificationService {
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
     await this.notificationRepository.create(validatedData);
+    emitNotification(userId, validatedData); // Emit the notification via WebSocket
   }
 
   async triggerWalletTransactionNotification(userId: string, amount: number, type: "credit" | "debit"): Promise<void> {
@@ -58,6 +61,7 @@ export class NotificationService implements INotificationService {
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
     await this.notificationRepository.create(validatedData);
+    emitNotification(userId, validatedData); // Emit the notification via WebSocket
   }
 
   async triggerSubscriptionExpiryNotification(userId: string, daysLeft: number): Promise<void> {
@@ -70,10 +74,10 @@ export class NotificationService implements INotificationService {
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
     await this.notificationRepository.create(validatedData);
+    emitNotification(userId, validatedData); // Emit the notification via WebSocket
   }
 
   async getUserNotifications(userId: string): Promise<any[]> {
-    console.log("from noti service", userId);
     return this.notificationRepository.findByUserId(userId);
   }
 
