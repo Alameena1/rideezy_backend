@@ -17,4 +17,5 @@ export interface IRideController {
   cancelJoinedRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
   startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
   updateRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
+  handleJoinRequest(req: Request, res: Response): Promise<void>; // Add this line
 }

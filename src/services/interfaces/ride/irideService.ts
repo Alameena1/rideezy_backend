@@ -45,4 +45,10 @@ export interface IRideService {
     },
     driverId: string
   ): Promise<IRide>;
+  handleJoinRequest(
+  rideId: string,
+  driverId: string,
+  passengerId: string,
+  action: "accept" | "reject"
+): Promise<void>;
 }

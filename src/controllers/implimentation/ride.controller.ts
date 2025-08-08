@@ -338,4 +338,26 @@ async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction
       res.status(400).json({ success: false, message: error.message });
     }
   }
+
+ async handleJoinRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const { rideId, passengerId } = req.params;
+  const { action } = req.body;
+  const driverId = req.user?.userId;
+
+  if (!driverId) {
+    res.status(401).json({ success: false, message: "Unauthorized" });
+    return;
+  }
+  if (!["accept", "reject"].includes(action)) {
+    res.status(400).json({ success: false, message: "Invalid action" });
+    return;
+  }
+
+  try {
+    await this.rideService.handleJoinRequest(rideId, driverId, passengerId, action as "accept" | "reject");
+    res.status(200).json({ success: true, message: `${action === "accept" ? "Accepted" : "Rejected"} join request successfully` });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+}
 }

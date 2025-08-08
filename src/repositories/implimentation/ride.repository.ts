@@ -47,6 +47,7 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
 
   async findOne(query: FilterQuery<IRide>, options?: { session: ClientSession }): Promise<IRide | null> {
     try {
+      
       const ride = await super.findOne(query, options);
       if (!ride) {
         console.warn(`[RideRepository] No ride found with query: ${JSON.stringify(query)}`);
