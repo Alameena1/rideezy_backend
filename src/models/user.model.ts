@@ -1,4 +1,5 @@
 import { Schema, model, Document, Types } from "mongoose";
+import { string } from "zod";
 
 export interface IWallet {
   balance: number;
@@ -22,17 +23,19 @@ export interface IUser extends Document {
   image?: string;
   number?: string;
   state?: string;
-  Country?: string;
+  country?: string;
   gender?: string;
   status?: "Active" | "Blocked";
   govId?: {
     idNumber: string;
     verificationStatus: "Pending" | "Verified" | "Rejected";
     documentUrl?: string;
+    reason:String;
   };
   subscription?: {
     planId: Types.ObjectId;
     startDate: Date;
+    originalPrice: number; 
     endDate: Date;
   };
   monthlyRideCount: number;
@@ -55,7 +58,7 @@ const UserSchema = new Schema<IUser>(
     image: { type: String },
     number: { type: String },
     state: { type: String },
-    Country: { type: String },
+    country: { type: String },
     gender: { type: String },
     status: { type: String, enum: ["Active", "Blocked"], default: "Active" },
     govId: {
@@ -66,10 +69,12 @@ const UserSchema = new Schema<IUser>(
         default: "Rejected",
       },
       documentUrl: { type: String },
+      reason: { type: String, required: false },
     },
     subscription: {
       planId: { type: Schema.Types.ObjectId, ref: "SubscriptionPlan" },
       startDate: { type: Date },
+      originalPrice: { type: Number, required: true }, 
       endDate: { type: Date },
     },
     monthlyRideCount: { type: Number, default: 0 },

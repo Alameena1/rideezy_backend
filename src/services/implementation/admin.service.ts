@@ -105,7 +105,8 @@ export class AdminService implements IAdminService {
     await this.adminRepository.updateVehicleStatus(vehicleId, status, note);
   }
 
-  async verifyGovId(userId: string, status: "Verified" | "Rejected"): Promise<IUser> {
+  async verifyGovId(userId: string, status: "Verified" | "Rejected", rejectionNote?: string): Promise<IUser> {
+    console.log("iiiiiiiiiiiiiiiiiii",rejectionNote)
     const user = await this.adminRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
@@ -119,6 +120,7 @@ export class AdminService implements IAdminService {
       govId: {
         ...user.govId,
         verificationStatus: status,
+        reason: rejectionNote ?? "",
       },
     });
 

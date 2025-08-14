@@ -1,4 +1,3 @@
-// di/container.ts
 import { Container } from "inversify";
 import { TYPES } from "./types";
 import Razorpay from "razorpay";
@@ -83,6 +82,13 @@ import { NotificationController } from "../controllers/implimentation/notificati
 import { NotificationService } from "../services/implementation/notification.service";
 import { NotificationRepository } from "../repositories/implimentation/notification.repository";
 
+//chat
+import IChatController from "../controllers/interface/chat/IChatController";
+import IChatService  from "../services/interfaces/chat/IChatService";
+import IChatRepository  from "../repositories/interface/chat/IChatRepository";
+import ChatController from "../controllers/implimentation/chat.controller";
+import ChatService from "../services/implementation/chat.service";
+import ChatRepository from "../repositories/implimentation/chat.repository";
 const container = new Container();
 
 // Admin bindings
@@ -136,6 +142,11 @@ container.bind<ITrackingController>(TYPES.ITrackingController).to(TrackingContro
 container.bind<INotificationController>(TYPES.INotificationController).to(NotificationController).inSingletonScope();
 container.bind<INotificationService>(TYPES.INotificationService).to(NotificationService).inSingletonScope();
 container.bind<INotificationRepository>(TYPES.INotificationRepository).to(NotificationRepository).inSingletonScope();
+
+//chat
+container.bind<IChatController>(TYPES.IChatController).to(ChatController).inSingletonScope();
+container.bind<IChatService>(TYPES.IChatService).to(ChatService).inSingletonScope();
+container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository).inSingletonScope();
 
 // Razorpay binding
 container.bind<Razorpay>("Razorpay").toConstantValue(

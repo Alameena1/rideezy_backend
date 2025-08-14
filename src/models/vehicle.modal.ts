@@ -8,13 +8,13 @@ export interface IVehicle extends Document {
   licensePlate: string;
   color?: string;
   insuranceNumber?: string;
-  vehicleImage: string; // Changed to required
-  documentImage: string; // Changed to required
+  vehicleImage: string;
+  documentImage: string;
   status: 'Pending' | 'Approved' | 'Rejected';
   note:string;
   createdAt?: Date;
   updatedAt?: Date;
-  mileage: number; // Added mileage property
+  mileage: number;
   _id: any;
 }
 

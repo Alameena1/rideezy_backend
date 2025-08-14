@@ -12,7 +12,7 @@ export interface IAdminService {
   updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void>;
   getAllVehicles(): Promise<any[]>;
   updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void>;
-  verifyGovId(userId: string, status: "Verified" | "Rejected"): Promise<IUser>;
+  verifyGovId(userId: string, status: "Verified" | "Rejected", rejectionNote?: string): Promise<IUser>;
   createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan>;
   updateSubscriptionPlan(planId: string, planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan>;
   deleteSubscriptionPlan(planId: string): Promise<void>;

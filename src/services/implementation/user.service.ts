@@ -24,7 +24,6 @@ export default class UserService implements IUserService {
     if (!userId) {
       throw new Error("User ID is required.");
     }
-    // If govId is being updated, ensure verificationStatus is set to "Pending"
     if (updatedData.govId) {
       updatedData.govId.verificationStatus = "Pending";
     }

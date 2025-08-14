@@ -34,13 +34,16 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
   }
 
   public async getAllVehicles(): Promise<any[]> {
-    try {
-      const vehicles = await VehicleModel.find();
-      return vehicles;
-    } catch (error) {
-      throw new Error("Failed to fetch vehicles from the database");
-    }
+  try {
+    const vehicles = await VehicleModel.find().populate({
+      path: 'user',
+      select: 'fullName' // Only include the fields you need
+    });
+    return vehicles;
+  } catch (error) {
+    throw new Error("Failed to fetch vehicles from the database");
   }
+}
 
   public async updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void> {
     try {

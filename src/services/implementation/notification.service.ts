@@ -87,7 +87,7 @@ export class NotificationService implements INotificationService {
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
     await this.notificationRepository.create(validatedData);
-    emitNotification(userId, validatedData);
+    emitNotification(userId, validatedData); 
   }
 
   async triggerRideJoinAcceptedNotification(rideId: string, userId: string, passengerName: string): Promise<void> {

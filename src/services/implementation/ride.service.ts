@@ -229,7 +229,7 @@ export class RideService implements IRideService {
         const createdRide = await this.rideRepo.createRide(rideData, { session });
 
         // Notify the driver that the ride has started
-        const startMessage = `You have started ride ${rideId}. Start: ${dto.startPlaceName || startPlaceName}, End: ${dto.endPlaceName || endPlaceName}, Date: ${dto.date} ${dto.time}`;
+        const startMessage = `You have initiated ride ${rideId}. Start: ${dto.startPlaceName || startPlaceName}, End: ${dto.endPlaceName || endPlaceName}, Date: ${dto.date} ${dto.time}`;
         await this.notificationService.triggerRideCancellationNotification(
           rideId,
           dto.driverId!,
@@ -786,7 +786,7 @@ async handleJoinRequest(
         }
         driver.wallet.balance += costPerPerson;
         driver.wallet.transactions.push({
-          transactionId: `TXN_${Date.now()}`,
+          transactionId: `TXN_${Date.now()}`, 
           type: "DEPOSIT",
           amount: costPerPerson,
           status: "COMPLETED",
@@ -799,7 +799,6 @@ async handleJoinRequest(
           { session }
         );
 
-        // Update ride: add to passengers and remove from pendingRequests
         console.log("Updating ride with _id:", rideId, "for passengerId:", passengerId);
         await this.rideRepo.updateOne(
           { _id: rideId },
@@ -992,7 +991,6 @@ async handleJoinRequest(
     const session = await this.rideRepo.startSession();
     try {
       await session.withTransaction(async () => {
-        // Fetch the ride
         const ride = await this.rideRepo.findOne({ rideId }, { session });
         if (!ride) throw new Error("Ride not found");
         if (!ride.passengers.some((p) => p.passengerId === passengerId))
@@ -1000,7 +998,6 @@ async handleJoinRequest(
         if (ride.status !== "Pending")
           throw new Error("Only Pending rides cancellable");
 
-        // Fetch the passenger and driver
         const passenger = await this.userRepo.findUserById(passengerId, {
           session,
         });
@@ -1010,7 +1007,7 @@ async handleJoinRequest(
         });
         if (!driver) throw new Error("Driver not found");
 
-        // Refund costPerPerson to passenger's wallet
+        // Refund  to passenger wallet
         if (!passenger.wallet)
           throw new Error(
             "Passenger's wallet is not initialized. Please contact support."
@@ -1029,14 +1026,12 @@ async handleJoinRequest(
           { session }
         );
 
-        // Notify passenger about self-cancellation and refund
         await this.notificationService.triggerRideCancellationNotification(
           rideId,
           passengerId,
           `You have cancelled your participation in ride ${rideId}. Refund of ${ride.costPerPerson} credited to your wallet.`
         );
 
-        // Deduct costPerPerson from driver's wallet
         if (!driver.wallet)
           throw new Error(
             "Driver's wallet is not initialized. Please contact support."
@@ -1060,14 +1055,13 @@ async handleJoinRequest(
           { session }
         );
 
-        // Notify driver about passenger cancellation
+        // passenger cancellation
         await this.notificationService.triggerRideCancellationNotification(
           rideId,
           ride.driverId,
           `Passenger ${passengerId} has cancelled their participation in ride ${rideId}.`
         );
 
-        // Update ride details
         const updatedPassengers = ride.passengers.filter(
           (p) => p.passengerId !== passengerId
         );

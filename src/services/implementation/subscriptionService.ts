@@ -20,69 +20,74 @@ export class SubscriptionService implements ISubscriptionService {
     return await this.subscriptionRepository.getAllPlans();
   }
 
-  async subscribeUser(userId: string, planId: string): Promise<any> {
-    const plan = await this.subscriptionRepository.findPlanById(planId);
-    if (!plan) {
-      throw new Error("Subscription plan not found");
-    }
-
-    const user = await this.subscriptionRepository.findUserById(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const startDate = new Date();
-    const endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + plan.durationMonths);
-
-    const updatedUser = await this.subscriptionRepository.updateUser(userId, {
-      $set: {
-        subscription: {
-          planId: new Types.ObjectId(planId),
-          startDate,
-          endDate,
-        },
-        monthlyRideCount: 0,
-        lastRideReset: new Date(),
-      },
-    } as UserUpdate);
-
-    return updatedUser;
+async subscribeUser(userId: string, planId: string): Promise<any> {
+  const plan = await this.subscriptionRepository.findPlanById(planId);
+  if (!plan) {
+    throw new Error("Subscription plan not found");
   }
 
-  async isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscription?: any }> {
-    const user = await this.subscriptionRepository.findUserById(userId);
-    if (!user || !user.subscription) {
-      return { isSubscribed: false };
-    }
-
-    const now = new Date();
-    const isSubscribed = user.subscription.endDate > now;
-
-    if (!isSubscribed) {
-      return { isSubscribed: false };
-    }
-
-    const plan = await this.subscriptionRepository.findPlanById(user.subscription.planId.toString());
-    if (!plan) {
-      return { isSubscribed: false };
-    }
-
-    return {
-      isSubscribed: true,
-      subscription: {
-        plan: {
-          _id: plan._id,
-          name: plan.name,
-          price: plan.price,
-          durationMonths: plan.durationMonths,
-          description: plan.description,
-        },
-        startDate: user.subscription.startDate,
-        endDate: user.subscription.endDate,
-      },
-    };
+  const user = await this.subscriptionRepository.findUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
   }
+
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + plan.durationMonths);
+
+  const subscriptionData = {
+    planId: new Types.ObjectId(planId),
+    originalPrice: plan.price, // Make sure this is included
+    startDate,
+    endDate
+  };
+
+  const updatedUser = await this.subscriptionRepository.updateUser(userId, {
+    $set: {
+      subscription: subscriptionData,
+      monthlyRideCount: 0,
+      lastRideReset: new Date(),
+    },
+  } as UserUpdate);
+
+  console.log("Updated user subscription:", updatedUser);
+  return updatedUser;
+}
+
+async isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscription?: any }> {
+  const user = await this.subscriptionRepository.findUserById(userId);
+ if (!user || !user.subscription) {
+    return { isSubscribed: false };
+  }
+
+  const now = new Date();
+  const isSubscribed = user.subscription.endDate > now;
+
+  if (!isSubscribed) {
+    return { isSubscribed: false };
+  }
+
+  const plan = await this.subscriptionRepository.findPlanById(user.subscription.planId.toString());
+  if (!plan) {
+    return { isSubscribed: false };
+  }
+
+  return {
+    isSubscribed: true,
+    subscription: {
+      plan: {
+        _id: plan._id,
+        name: plan.name,
+        price: plan.price, // Current price (for reference)
+        durationMonths: plan.durationMonths,
+        description: plan.description,
+      },
+      originalPrice: user.subscription.originalPrice, // Original price paid
+      startDate: user.subscription.startDate,
+      endDate: user.subscription.endDate,
+    },
+  };
+}
 
   async canBookRide(userId: string): Promise<boolean> {
     const user = await this.subscriptionRepository.findUserById(userId);

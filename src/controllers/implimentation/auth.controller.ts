@@ -74,6 +74,7 @@ export class AuthController implements IAuthController {
 
   async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+        
       const { refreshToken } = req.body;
       if (!refreshToken) {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.REFRESH_TOKEN_REQUIRED });

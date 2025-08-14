@@ -47,6 +47,7 @@ export class SubscriptionController implements ISubscriptionController {
     try {
       const { userId } = req.params;
       const result = await this.subscriptionService.isSubscribed(userId);
+      console.log("result",result)
       res.status(StatusCode.OK).json({ success: true, ...result });
     } catch (error: any) {
       console.error("Error in checkSubscription:", error);
