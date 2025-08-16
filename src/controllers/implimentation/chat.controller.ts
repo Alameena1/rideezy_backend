@@ -102,7 +102,7 @@ class ChatController implements IChatController {
       console.error("Error creating conversation:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to create conversation",
+        message: `Failed to create conversation: ${(error as Error).message}`,
       });
     }
   }
@@ -111,8 +111,7 @@ class ChatController implements IChatController {
     try {
       const { conversationId } = req.params;
       const userId = req.user?.userId;
-      console.log("req.params",req.params)
-      console.log("userId",userId)
+
       if (!userId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
@@ -140,7 +139,7 @@ class ChatController implements IChatController {
       console.error("Error getting conversation:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to get conversation",
+        message: `Failed to get conversation: ${(error as Error).message}`,
       });
     }
   }
@@ -170,14 +169,14 @@ class ChatController implements IChatController {
       const messages = await this.chatService.getMessages(conversationId, userId);
 
       res.status(StatusCode.OK).json({
-        success: true,
+        success: false,
         messages,
       });
     } catch (error) {
       console.error("Error getting messages:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to get messages",
+        message: `Failed to get messages: ${(error as Error).message}`,
       });
     }
   }
@@ -223,7 +222,7 @@ class ChatController implements IChatController {
       console.error("Error sending message:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to send message",
+        message: `Failed to send message: ${(error as Error).message}`,
       });
     }
   }
@@ -259,48 +258,54 @@ class ChatController implements IChatController {
       console.error("Error getting user conversations:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to get user conversations",
+        message: `Failed to get user conversations: ${(error as Error).message}`,
       });
     }
   }
 
-async getOrCreateRideConversation(req: AuthenticatedRequest, res: Response): Promise<void> {
-  try {
-    const { rideId, driverId } = req.body;
-    const userId = req.user?.userId;
+  async getOrCreateRideConversation(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { rideId, driverId, userId: bodyUserId } = req.body;
+      const authenticatedUserId = req.user?.userId;
 
-    if (!userId) {
-      res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: "User not authenticated",
+      if (!authenticatedUserId) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: "User not authenticated",
+        });
+        return;
+      }
+
+      if (bodyUserId && bodyUserId !== authenticatedUserId) {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: "User ID in request body does not match authenticated user",
+        });
+        return;
+      }
+
+      if (!rideId || !driverId) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "rideId and driverId are required",
+        });
+        return;
+      }
+
+      const conversation = await this.chatService.getOrCreateRideConversation(rideId, authenticatedUserId, driverId);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        conversation,
       });
-      return;
-    }
-
-    if (!rideId || !driverId) {
-      res.status(StatusCode.BAD_REQUEST).json({
+    } catch (error) {
+      console.error("Error getting or creating ride conversation:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "rideId and driverId are required",
+        message: `Failed to get or create conversation: ${(error as Error).message}`,
       });
-      return;
     }
-
-    const conversation = await this.chatService.getOrCreateRideConversation(rideId, userId, driverId);
-
-    res.status(StatusCode.OK).json({
-      success: true,
-      conversation,
-    });
-  } catch (error) {
-    console.error("Error getting or creating ride conversation:", error);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: "Failed to get or create conversation",
-    });
   }
 }
-}
-
-
 
 export default ChatController;

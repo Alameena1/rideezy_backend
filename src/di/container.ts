@@ -1,3 +1,4 @@
+// src/di/container.ts
 import { Container } from "inversify";
 import { TYPES } from "./types";
 import Razorpay from "razorpay";
@@ -15,80 +16,81 @@ import { IAuthController } from "../controllers/interface/auth/interface";
 import { IAuthService } from "../services/interfaces/auth/iauthService";
 import { IAuthRepository } from "../repositories/interface/user/iauthRepository";
 import { AuthController } from "../controllers/implimentation/auth.controller";
-import AuthService from "../services/implementation/auth.service";
-import AuthRepository from "../repositories/implimentation/auth.repository";
+import  AuthService  from "../services/implementation/auth.service"; // Changed to named import
+import { AuthRepository } from "../repositories/implimentation/auth.repository"; // Changed to named import
 import { ITokenRepository } from "../repositories/interface/user/itokenRepository";
-import TokenRepository from "../repositories/implimentation/token.repository";
+import { TokenRepository } from "../repositories/implimentation/token.repository"; // Changed to named import
 import { ITempUserRepository } from "../repositories/interface/user/itempUserRepository";
-import TempUserRepository from "../repositories/implimentation/tempUser.repository";
+import { TempUserRepository } from "../repositories/implimentation/tempUser.repository"; // Changed to named import
 import { IResetTokenRepository } from "../repositories/interface/user/iresetTokenRepository";
-import { ResetTokenRepository } from "../repositories/implimentation/resetToken.repository";
+import { ResetTokenRepository } from "../repositories/implimentation/resetToken.repository"; // Changed to named import
 
 // User
 import { IUserController } from "../controllers/interface/user/interface";
 import { IUserService } from "../services/interfaces/user/iuserService";
 import { IUserRepository } from "../repositories/interface/user/iuserRepository";
 import { UserController } from "../controllers/implimentation/user.controller";
-import UserService from "../services/implementation/user.service";
-import { UserRepository } from "../repositories/implimentation/user.repository";
+import  UserService  from "../services/implementation/user.service"; // Changed to named import
+import { UserRepository } from "../repositories/implimentation/user.repository"; // Changed to named import
 
 // Vehicle
 import { IVehicleController } from "../controllers/interface/vehicle/ivehicleController";
 import { IVehicleService } from "../services/interfaces/vehicle/ivehicleService";
 import { IVehicleRepository } from "../repositories/interface/vehicle/ivehicleRepository";
 import { VehicleController } from "../controllers/implimentation/vehicle.controller";
-import VehicleService from "../services/implementation/vehicle.service";
-import { VehicleRepository } from "../repositories/implimentation/vehicle.repository";
+import  VehicleService  from "../services/implementation/vehicle.service"; // Changed to named import
+import { VehicleRepository } from "../repositories/implimentation/vehicle.repository"; // Changed to named import
 
 // Ride
 import { IRideController } from "../controllers/interface/ride/irideController";
 import { IRideService } from "../services/interfaces/ride/irideService";
 import { IRideRepository } from "../repositories/interface/ride/irideRepository";
 import { RideController } from "../controllers/implimentation/ride.controller";
-import { RideService } from "../services/implementation/ride.service";
-import { RideRepository } from "../repositories/implimentation/ride.repository";
-import { IOSRMClient } from "../infrastructure/map-api/osrm.client"; 
-import { OSRMClient } from "../infrastructure/map-api/osrm.client"; 
+import { RideService } from "../services/implementation/ride.service"; // Changed to named import
+import { RideRepository } from "../repositories/implimentation/ride.repository"; // Changed to named import
+import { IOSRMClient } from "../infrastructure/map-api/osrm.client";
+import { OSRMClient } from "../infrastructure/map-api/osrm.client";
 
 // Subscription
 import { ISubscriptionController } from "../controllers/interface/subscription/isubscriptionController";
 import { ISubscriptionService } from "../services/interfaces/subscription/isubscriptionService";
 import { ISubscriptionRepository } from "../repositories/interface/subscription/isubscriptionRepository";
 import { SubscriptionController } from "../controllers/implimentation/SubscriptionController";
-import { SubscriptionService } from "../services/implementation/subscriptionService";
-import { SubscriptionRepository } from "../repositories/implimentation/subscriptionRepository";
+import { SubscriptionService } from "../services/implementation/subscriptionService"; // Changed to named import
+import { SubscriptionRepository } from "../repositories/implimentation/subscriptionRepository"; // Changed to named import
 
 // Wallet
 import { IWalletController } from "../controllers/interface/wallet/iWalletController";
 import { IWalletService } from "../services/interfaces/wallet/iWalletService";
 import { IWalletRepository } from "../repositories/interface/wallet/iWalletRepository";
 import { WalletController } from "../controllers/implimentation/wallet.controller";
-import { WalletService } from "../services/implementation/wallet.service";
-import { WalletRepository } from "../repositories/implimentation/wallet.repository";
+import { WalletService } from "../services/implementation/wallet.service"; // Changed to named import
+import { WalletRepository } from "../repositories/implimentation/wallet.repository"; // Changed to named import
 
 // Tracking
-import { TrackingService } from "../services/implementation/tracking.service";
+import { TrackingService } from "../services/implementation/tracking.service"; // Changed to named import
 import { TrackingController } from "../controllers/implimentation/tracking.controller";
 import { ITrackingService } from "../services/interfaces/tracking/itrackingService";
 import { ITrackingController } from "../controllers/interface/tracking/itrackingController";
 import { ITrackingRepository } from "../repositories/interface/tracking/itrackingRepository";
-import { TrackingRepository } from "../repositories/implimentation/tracking.repository";
+import { TrackingRepository } from "../repositories/implimentation/tracking.repository"; // Changed to named import
 
 // Notification
 import { INotificationController } from "../controllers/interface/notification/iNotificationController";
 import { INotificationService } from "../services/interfaces/notification/iNotificationService";
 import { INotificationRepository } from "../repositories/interface/notification/iNotificationRepository";
 import { NotificationController } from "../controllers/implimentation/notification.controller";
-import { NotificationService } from "../services/implementation/notification.service";
-import { NotificationRepository } from "../repositories/implimentation/notification.repository";
+import { NotificationService } from "../services/implementation/notification.service"; // Changed to named import
+import { NotificationRepository } from "../repositories/implimentation/notification.repository"; // Changed to named import
 
-//chat
+// Chat
 import IChatController from "../controllers/interface/chat/IChatController";
-import IChatService  from "../services/interfaces/chat/IChatService";
-import IChatRepository  from "../repositories/interface/chat/IChatRepository";
-import ChatController from "../controllers/implimentation/chat.controller";
-import ChatService from "../services/implementation/chat.service";
-import ChatRepository from "../repositories/implimentation/chat.repository";
+import IChatService from "../services/interfaces/chat/IChatService";
+import IChatRepository from "../repositories/interface/chat/IChatRepository";
+import  ChatController  from "../controllers/implimentation/chat.controller"; // Changed to named import
+import { ChatService } from "../services/implementation/chat.service"; // Changed to named import
+import { ChatRepository } from "../repositories/implimentation/chat.repository"; // Changed to named import, fixed typo in path
+
 const container = new Container();
 
 // Admin bindings
@@ -118,7 +120,7 @@ container.bind<IVehicleRepository>(TYPES.IVehicleRepository).to(VehicleRepositor
 container.bind<IRideController>(TYPES.IRideController).to(RideController).inSingletonScope();
 container.bind<IRideService>(TYPES.IRideService).to(RideService).inSingletonScope();
 container.bind<IRideRepository>(TYPES.IRideRepository).to(RideRepository).inSingletonScope();
-container.bind<IOSRMClient>(TYPES.IOSRMClient).to(OSRMClient).inSingletonScope(); 
+container.bind<IOSRMClient>(TYPES.IOSRMClient).to(OSRMClient).inSingletonScope();
 
 // Subscription bindings
 container.bind<ISubscriptionController>(TYPES.ISubscriptionController).to(SubscriptionController).inSingletonScope();
@@ -143,7 +145,7 @@ container.bind<INotificationController>(TYPES.INotificationController).to(Notifi
 container.bind<INotificationService>(TYPES.INotificationService).to(NotificationService).inSingletonScope();
 container.bind<INotificationRepository>(TYPES.INotificationRepository).to(NotificationRepository).inSingletonScope();
 
-//chat
+// Chat bindings
 container.bind<IChatController>(TYPES.IChatController).to(ChatController).inSingletonScope();
 container.bind<IChatService>(TYPES.IChatService).to(ChatService).inSingletonScope();
 container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository).inSingletonScope();

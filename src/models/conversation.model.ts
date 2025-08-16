@@ -1,9 +1,13 @@
 // src/models/conversation.model.ts
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
+
+export interface IParticipant {
+  _id: Types.ObjectId;
+  name?: string;
+}
 
 export interface IConversation extends Document {
-  _id: string;
-  participants: string[];
+  participants: Types.ObjectId[] | IParticipant[]; 
   rideId?: string;
   createdAt: Date;
 }

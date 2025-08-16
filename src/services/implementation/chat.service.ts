@@ -1,4 +1,3 @@
-// src/services/implementation/chat.service.ts
 import { injectable, inject } from "inversify";
 import IChatService from "../interfaces/chat/IChatService";
 import IChatRepository from "../../repositories/interface/chat/IChatRepository";
@@ -6,9 +5,10 @@ import { TYPES } from "../../di/types";
 import { IConversation } from "../../models/conversation.model";
 import { IMessage } from "../../models/message.model.ts";
 import { io } from "../../app";
+import { Types } from "mongoose";
 
 @injectable()
-class ChatService implements IChatService {
+export class ChatService implements IChatService {
   constructor(@inject(TYPES.IChatRepository) private chatRepository: IChatRepository) {}
 
   async createConversation(participants: string[]): Promise<IConversation> {
@@ -20,7 +20,7 @@ class ChatService implements IChatService {
 
   async getConversation(conversationId: string): Promise<IConversation> {
     const conversation = await this.chatRepository.findConversationById(conversationId);
-    console.log("from chat service",conversation)
+    console.log("geeeeeeeetttttttteeeeeeetttttt",conversation)
     if (!conversation) {
       throw new Error("Conversation not found");
     }
@@ -47,10 +47,15 @@ class ChatService implements IChatService {
 
   async validateConversationAccess(conversationId: string, userId: string): Promise<boolean> {
     const conversation = await this.chatRepository.findConversationById(conversationId);
-    if (!conversation) {
-      return false;
-    }
-    return conversation.participants.some((id) => id.toString() === userId);
+    if (!conversation) return false;
+
+    return conversation.participants.some((participant) => {
+      const participantId =
+        participant instanceof Types.ObjectId
+          ? participant.toString()
+          : participant._id.toString();
+      return participantId === userId.toString();
+    });
   }
 
   async getUserConversations(userId: string): Promise<IConversation[]> {
@@ -58,8 +63,8 @@ class ChatService implements IChatService {
   }
 
   async getOrCreateRideConversation(rideId: string, userId: string, driverId: string): Promise<IConversation> {
-    let conversation = await this.chatRepository.findConversationByRideId(rideId);
-    if (conversation && conversation.participants.some((id) => id.toString() === userId) && conversation.participants.some((id) => id.toString() === driverId)) {
+    let conversation = await this.chatRepository.findConversationByRideId(rideId, userId, driverId);
+    if (conversation) {
       return conversation;
     }
 
@@ -68,5 +73,3 @@ class ChatService implements IChatService {
     return conversation;
   }
 }
-
-export default ChatService;

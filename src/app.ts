@@ -49,7 +49,7 @@ app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/tracking", trackingRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/chat", chatRoutes); // Add chat routes
+app.use("/api/chat", chatRoutes); 
 
 app.use(errorMiddleware);
 
