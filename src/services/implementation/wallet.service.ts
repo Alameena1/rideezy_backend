@@ -30,28 +30,27 @@ export class WalletService implements IWalletService {
     return user.wallet.balance;
   }
 
-async createDepositOrder(userId: string, amount: number): Promise<any> {
-  const options = {
-    amount: amount * 100, 
-    currency: "INR",
-    receipt: `rcpt_${userId.slice(0, 15)}_${Date.now().toString().slice(-6)}`,
-  };
-
-  try {
-    const order = await this.razorpay.orders.create(options);
-    return {
-      id: order.id,
-      amount: order.amount,
-      currency: order.currency,
+  async createDepositOrder(userId: string, amount: number): Promise<any> {
+    const options = {
+      amount: amount * 100,
+      currency: "INR",
+      receipt: `rcpt_${userId.slice(0, 15)}_${Date.now().toString().slice(-6)}`,
     };
-  } catch (error) {
-    console.error("Razorpay order creation failed:", error);
-    throw error; 
+
+    try {
+      const order = await this.razorpay.orders.create(options);
+      return {
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+      };
+    } catch (error) {
+      console.error("Razorpay order creation failed:", error);
+      throw error;
+    }
   }
-}
 
-
-async deposit(userId: string, amount: number, paymentId: string, orderId: string, signature: string): Promise<IUser> {
+  async deposit(userId: string, amount: number, paymentId: string, orderId: string, signature: string): Promise<IUser> {
     const generatedSignature = createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI")
       .update(`${orderId}|${paymentId}`)
       .digest("hex");
@@ -100,23 +99,44 @@ async deposit(userId: string, amount: number, paymentId: string, orderId: string
     } as UserUpdate);
   }
 
-  async getTransactions(userId: string): Promise<any[]> {
+  async getTransactions(userId: string, page: number = 1, limit: number = 10): Promise<{
+    transactions: any[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    balance: number;
+  }> {
     const user = await this.walletRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
     }
-    return user.wallet.transactions;
-  }
+console.log("user.wallet.balance",user.wallet.balance)
+    const transactions = user.wallet.transactions || [];
+    const total = transactions.length;
 
+    // Calculate skip and limit for pagination
+    const skip = (page - 1) * limit;
+    const paginatedTransactions = transactions
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) // Sort by createdAt descending
+      .slice(skip, skip + limit);
+
+    return {
+      transactions: paginatedTransactions,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      balance: user.wallet.balance,
+    };
+  }
 
   async getWallet(userId: string): Promise<{ balance: number; transactions: any[] }> {
-  const user = await this.walletRepository.findUserById(userId);
-  if (!user) {
-    throw new Error("User not found");
+    const user = await this.walletRepository.findUserById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return {
+      balance: user.wallet.balance,
+      transactions: user.wallet.transactions || [],
+    };
   }
-  return {
-    balance: user.wallet.balance,
-    transactions: user.wallet.transactions || [],
-  };
-}
 }

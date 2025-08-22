@@ -128,7 +128,6 @@ export class AdminController implements IAdminController {
   getVehicles = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const vehicles = await this.adminService.getAllVehicles();
-      console.log("hhhhhhhoooooohhhhhoooo",vehicles)
       res.status(200).json({ message: "Vehicles retrieved successfully", vehicles });
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve vehicles" });
@@ -147,7 +146,6 @@ export class AdminController implements IAdminController {
   };
 
   verifyGovId = async (req: AuthenticatedRequest, res: Response): Promise<void> => { 
-         console.log("uuuuuuuuuuuuuuu",req.body)
 
     try {
       const { userId, status, rejectionNote } = req.body;

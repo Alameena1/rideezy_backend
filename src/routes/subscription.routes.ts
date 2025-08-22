@@ -9,6 +9,7 @@ const subscriptionController = container.get<ISubscriptionController>(TYPES.ISub
 
 router.get("/plans", subscriptionController.getPlans.bind(subscriptionController));
 router.post("/subscribe", subscriptionController.subscribe.bind(subscriptionController));
+router.post("/subscribe-wallet", subscriptionController.subscribeWithWallet.bind(subscriptionController));
 router.get("/check/:userId", subscriptionController.checkSubscription.bind(subscriptionController));
 router.post("/create-order", subscriptionController.createOrder.bind(subscriptionController));
 router.post("/verify", subscriptionController.verifyAndSubscribe.bind(subscriptionController));

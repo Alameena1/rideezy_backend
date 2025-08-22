@@ -14,19 +14,19 @@ export class WalletController implements IWalletController {
     this.walletService = walletService;
   }
 
-async getBalance(req: Request, res: Response): Promise<void> {
-  try {
-    const { userId } = req.params;
-    if (!userId) {
-      res.status(400).json({ success: false, message: "userId is required" });
-      return;
+  async getBalance(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      if (!userId) {
+        res.status(400).json({ success: false, message: "userId is required" });
+        return;
+      }
+      const wallet = await this.walletService.getWallet(userId);
+      res.status(200).json({ success: true, ...wallet });
+    } catch (error) {
+      res.status(500).json({ success: false, message: (error as Error).message });
     }
-    const wallet = await this.walletService.getWallet(userId);
-    res.status(200).json({ success: true, ...wallet });
-  } catch (error) {
-    res.status(500).json({ success: false, message: (error as Error).message });
   }
-}
 
   async deposit(req: Request, res: Response): Promise<void> {
     try {
@@ -59,8 +59,23 @@ async getBalance(req: Request, res: Response): Promise<void> {
   async getTransactions(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
-      const transactions = await this.walletService.getTransactions(userId);
-      res.status(200).json({ success: true, transactions });
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      if (!userId) {
+        res.status(400).json({ success: false, message: "User ID is required" });
+        return;
+      }
+
+      const result = await this.walletService.getTransactions(userId, page, limit);
+      res.status(200).json({
+        success: true,
+        transactions: result.transactions,
+        total: result.total,
+        totalPages: result.totalPages,
+        currentPage: result.currentPage,
+        balance: result.balance, // Include balance in the response
+      });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
     }
@@ -80,5 +95,3 @@ async getBalance(req: Request, res: Response): Promise<void> {
     }
   }
 }
-
-export default WalletController;

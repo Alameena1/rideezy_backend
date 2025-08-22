@@ -12,4 +12,5 @@ router.post("/deposit", authMiddleware, (req, res) => walletController.deposit(r
 router.post("/withdraw", authMiddleware, (req, res) => walletController.withdraw(req, res));
 router.get("/transactions/:userId", authMiddleware, (req, res) => walletController.getTransactions(req, res));
 router.post("/create-deposit-order", authMiddleware, (req, res) => walletController.createDepositOrder(req, res));
+
 export default router;

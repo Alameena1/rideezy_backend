@@ -7,4 +7,5 @@ export interface ISubscriptionController {
   checkSubscription(req: Request, res: Response): Promise<void>;
   createOrder(req: Request, res: Response): Promise<void>;
   verifyAndSubscribe(req: Request, res: Response): Promise<void>;
+  subscribeWithWallet(req: Request, res: Response): Promise<void>;
 }

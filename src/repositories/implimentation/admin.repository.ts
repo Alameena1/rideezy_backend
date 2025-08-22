@@ -190,8 +190,8 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
         "subscription.endDate": { $gt: currentDate },
       });
       const nonSubscribedUsers = totalUsers - subscribedUsers;
-      const totalRides = await RideModel.countDocuments({ status: "COMPLETED" });
-
+     const totalRides = await RideModel.countDocuments({ status: "Completed" });
+console.log("Total rides:", totalRides);
       // Aggregate subscription revenue from wallet.transactions
       const subscriptionRevenueResult = await UserModel.aggregate([
         { $unwind: "$wallet.transactions" },
@@ -246,16 +246,21 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
 
       // Ride Count
       const rideCount = await RideModel.aggregate([
-        { $match: { status: "COMPLETED", date: dateFilter } },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%b", date: "$date" } },
-            rides: { $sum: 1 },
-          },
-        },
-        { $sort: { "_id": 1 } },
-        { $project: { month: "$_id", rides: 1, _id: 0 } },
-      ]);
+  { 
+    $match: { 
+      status: "Completed", 
+      date: { $gte: dateFilter.$gte, $lte: dateFilter.$lte }
+    } 
+  },
+  {
+    $group: {
+      _id: { $dateToString: { format: "%b", date: "$date" } },
+      rides: { $sum: 1 },
+    },
+  },
+  { $sort: { "_id": 1 } },
+  { $project: { month: "$_id", rides: 1, _id: 0 } },
+]);
 
       // Revenue Distribution
       const revenueDistribution = [

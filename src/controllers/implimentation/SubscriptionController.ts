@@ -43,17 +43,32 @@ export class SubscriptionController implements ISubscriptionController {
     }
   }
 
+  async subscribeWithWallet(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, planId } = req.body;
+      if (!userId || !planId) {
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: "User ID and Plan ID are required" });
+        return;
+      }
+
+      const user = await this.subscriptionService.verifyAndSubscribe(userId, planId, "", "", "");
+      res.status(StatusCode.OK).json({ success: true, message: "Subscribed successfully using wallet", user });
+    } catch (error: any) {
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+    }
+  }
+
   async checkSubscription(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
       const result = await this.subscriptionService.isSubscribed(userId);
-      console.log("result",result)
+      console.log("result", result);
       res.status(StatusCode.OK).json({ success: true, ...result });
     } catch (error: any) {
       console.error("Error in checkSubscription:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message || "Internal Server Error" });
     }
-  } 
+  }
 
   async createOrder(req: Request, res: Response): Promise<void> {
     try {

@@ -307,7 +307,6 @@ async joinRide(
         requestedAt: new Date(),
         status: "pending" as const,
       };
-      console.log("pending requestttttttttttttttttttttttttttttttttttttttttttt", pendingRequest);
 
       await this.rideRepo.updateOne(
         { rideId },
@@ -376,7 +375,7 @@ async joinRide(
       pickupPoints: ride.pickupPoints,
       dropoffPoints: ride.dropoffPoints,
       routeCoordinates: ride.routeCoordinates,
-      paymentStatus: "Pending",
+      paymentStatus: "Paid",
     }));
   }
 

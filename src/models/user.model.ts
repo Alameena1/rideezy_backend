@@ -5,10 +5,11 @@ export interface IWallet {
   balance: number;
   transactions: {
     transactionId: string;
-    type: "DEPOSIT" | "WITHDRAWAL" | "SUBSCRIPTION"  | "REFUND";
+    type: "DEPOSIT" | "WITHDRAWAL" | "SUBSCRIPTION" | "REFUND";
     amount: number;
     status: "PENDING" | "COMPLETED" | "FAILED";
     createdAt: Date;
+    description?: string; 
   }[];
 }
 
@@ -30,12 +31,12 @@ export interface IUser extends Document {
     idNumber: string;
     verificationStatus: "Pending" | "Verified" | "Rejected";
     documentUrl?: string;
-    reason:String;
+    reason: string;
   };
   subscription?: {
     planId: Types.ObjectId;
     startDate: Date;
-    originalPrice: number; 
+    originalPrice: number;
     endDate: Date;
   };
   monthlyRideCount: number;
@@ -74,7 +75,7 @@ const UserSchema = new Schema<IUser>(
     subscription: {
       planId: { type: Schema.Types.ObjectId, ref: "SubscriptionPlan" },
       startDate: { type: Date },
-      originalPrice: { type: Number, required: true }, 
+      originalPrice: { type: Number, required: true },
       endDate: { type: Date },
     },
     monthlyRideCount: { type: Number, default: 0 },
@@ -93,6 +94,7 @@ const UserSchema = new Schema<IUser>(
           amount: { type: Number, required: true },
           status: { type: String, enum: ["PENDING", "COMPLETED", "FAILED"], default: "PENDING" },
           createdAt: { type: Date, default: Date.now },
+          description: { type: String, required: false },
         },
       ],
     },

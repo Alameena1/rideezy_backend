@@ -20,74 +20,74 @@ export class SubscriptionService implements ISubscriptionService {
     return await this.subscriptionRepository.getAllPlans();
   }
 
-async subscribeUser(userId: string, planId: string): Promise<any> {
-  const plan = await this.subscriptionRepository.findPlanById(planId);
-  if (!plan) {
-    throw new Error("Subscription plan not found");
-  }
+  async subscribeUser(userId: string, planId: string): Promise<any> {
+    const plan = await this.subscriptionRepository.findPlanById(planId);
+    if (!plan) {
+      throw new Error("Subscription plan not found");
+    }
 
-  const user = await this.subscriptionRepository.findUserById(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
+    const user = await this.subscriptionRepository.findUserById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-  const startDate = new Date();
-  const endDate = new Date(startDate);
-  endDate.setMonth(endDate.getMonth() + plan.durationMonths);
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + plan.durationMonths);
 
-  const subscriptionData = {
-    planId: new Types.ObjectId(planId),
-    originalPrice: plan.price, // Make sure this is included
-    startDate,
-    endDate
-  };
+    const subscriptionData = {
+      planId: new Types.ObjectId(planId),
+      originalPrice: plan.price,
+      startDate,
+      endDate
+    };
 
-  const updatedUser = await this.subscriptionRepository.updateUser(userId, {
-    $set: {
-      subscription: subscriptionData,
-      monthlyRideCount: 0,
-      lastRideReset: new Date(),
-    },
-  } as UserUpdate);
-
-  console.log("Updated user subscription:", updatedUser);
-  return updatedUser;
-}
-
-async isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscription?: any }> {
-  const user = await this.subscriptionRepository.findUserById(userId);
- if (!user || !user.subscription) {
-    return { isSubscribed: false };
-  }
-
-  const now = new Date();
-  const isSubscribed = user.subscription.endDate > now;
-
-  if (!isSubscribed) {
-    return { isSubscribed: false };
-  }
-
-  const plan = await this.subscriptionRepository.findPlanById(user.subscription.planId.toString());
-  if (!plan) {
-    return { isSubscribed: false };
-  }
-
-  return {
-    isSubscribed: true,
-    subscription: {
-      plan: {
-        _id: plan._id,
-        name: plan.name,
-        price: plan.price, // Current price (for reference)
-        durationMonths: plan.durationMonths,
-        description: plan.description,
+    const updatedUser = await this.subscriptionRepository.updateUser(userId, {
+      $set: {
+        subscription: subscriptionData,
+        monthlyRideCount: 0,
+        lastRideReset: new Date(),
       },
-      originalPrice: user.subscription.originalPrice, // Original price paid
-      startDate: user.subscription.startDate,
-      endDate: user.subscription.endDate,
-    },
-  };
-}
+    } as UserUpdate);
+
+    console.log("Updated user subscription:", updatedUser);
+    return updatedUser;
+  }
+
+  async isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscription?: any }> {
+    const user = await this.subscriptionRepository.findUserById(userId);
+    if (!user || !user.subscription) {
+      return { isSubscribed: false };
+    }
+
+    const now = new Date();
+    const isSubscribed = user.subscription.endDate > now;
+
+    if (!isSubscribed) {
+      return { isSubscribed: false };
+    }
+
+    const plan = await this.subscriptionRepository.findPlanById(user.subscription.planId.toString());
+    if (!plan) {
+      return { isSubscribed: false };
+    }
+
+    return {
+      isSubscribed: true,
+      subscription: {
+        plan: {
+          _id: plan._id,
+          name: plan.name,
+          price: plan.price,
+          durationMonths: plan.durationMonths,
+          description: plan.description,
+        },
+        originalPrice: user.subscription.originalPrice,
+        startDate: user.subscription.startDate,
+        endDate: user.subscription.endDate,
+      },
+    };
+  }
 
   async canBookRide(userId: string): Promise<boolean> {
     const user = await this.subscriptionRepository.findUserById(userId);
@@ -191,6 +191,7 @@ async isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscriptio
       amount,
       status: "COMPLETED" as const,
       createdAt: new Date(),
+      description: `Debited for ${plan.name} subscription`, 
     };
 
     // Check if payment is from wallet
@@ -203,7 +204,6 @@ async isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscriptio
       return await this.subscribeUser(userId, planId);
     }
 
-    // Verify Razorpay payment
     const generatedSignature = createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI")
       .update(`${orderId}|${paymentId}`)
       .digest("hex");
