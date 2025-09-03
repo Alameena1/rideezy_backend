@@ -1,4 +1,3 @@
-// Utility functions for emitting events
 import { io } from "../app";
 
 export const emitNotification = (userId: string, notification: any) => {

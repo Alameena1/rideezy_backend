@@ -1,106 +1,106 @@
-import { Schema, model, Document, Types } from "mongoose";
-import { string } from "zod";
+  import { Schema, model, Document, Types } from "mongoose";
+  import { string } from "zod";
 
-export interface IWallet {
-  balance: number;
-  transactions: {
-    transactionId: string;
-    type: "DEPOSIT" | "WITHDRAWAL" | "SUBSCRIPTION" | "REFUND";
-    amount: number;
-    status: "PENDING" | "COMPLETED" | "FAILED";
-    createdAt: Date;
-    description?: string; 
-  }[];
-}
+  export interface IWallet {
+    balance: number;
+    transactions: {
+      transactionId: string;
+      type: "DEPOSIT" | "WITHDRAWAL" | "SUBSCRIPTION" | "REFUND";
+      amount: number;
+      status: "PENDING" | "COMPLETED" | "FAILED";
+      createdAt: Date;
+      description?: string; 
+    }[];
+  }
 
-export interface IUser extends Document {
-  walletBalance: number;
-  wallet: IWallet;
-  fullName: string;
-  email: string;
-  phoneNumber?: string;
-  password?: string;
-  provider?: string;
-  image?: string;
-  number?: string;
-  state?: string;
-  country?: string;
-  gender?: string;
-  status?: "Active" | "Blocked";
-  govId?: {
-    idNumber: string;
-    verificationStatus: "Pending" | "Verified" | "Rejected";
-    documentUrl?: string;
-    reason: string;
-  };
-  subscription?: {
-    planId: Types.ObjectId;
-    startDate: Date;
-    originalPrice: number;
-    endDate: Date;
-  };
-  monthlyRideCount: number;
-  lastRideReset: Date;
-  vehicles: Array<{
-    vehicleId: Types.ObjectId;
-  }>;
-  createdAt?: Date;
-  updatedAt?: Date;
-  _id: any;
-}
+  export interface IUser extends Document {
+    walletBalance: number;
+    wallet: IWallet;
+    fullName: string;
+    email: string;
+    phoneNumber?: string;
+    password?: string;
+    provider?: string;
+    image?: string;
+    number?: string;
+    state?: string;
+    country?: string;
+    gender?: string;
+    status?: "Active" | "Blocked";
+    govId?: {
+      idNumber: string;
+      verificationStatus: "Pending" | "Verified" | "Rejected";
+      documentUrl?: string;
+      reason: string;
+    };
+    subscription?: {
+      planId: Types.ObjectId;
+      startDate: Date;
+      originalPrice: number;
+      endDate: Date;
+    };
+    monthlyRideCount: number;
+    lastRideReset: Date;
+    vehicles: Array<{
+      vehicleId: Types.ObjectId;
+    }>;
+    createdAt?: Date;
+    updatedAt?: Date;
+    _id: any;
+  }
 
-const UserSchema = new Schema<IUser>(
-  {
-    fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    phoneNumber: { type: String },
-    password: { type: String },
-    provider: { type: String, default: "local" },
-    image: { type: String },
-    number: { type: String },
-    state: { type: String },
-    country: { type: String },
-    gender: { type: String },
-    status: { type: String, enum: ["Active", "Blocked"], default: "Active" },
-    govId: {
-      idNumber: { type: String },
-      verificationStatus: {
-        type: String,
-        enum: ["Pending", "Verified", "Rejected"],
-        default: "Rejected",
+  const UserSchema = new Schema<IUser>(
+    {
+      fullName: { type: String, required: true },
+      email: { type: String, required: true, unique: true },
+      phoneNumber: { type: String },
+      password: { type: String },
+      provider: { type: String, default: "local" },
+      image: { type: String },
+      number: { type: String },
+      state: { type: String },
+      country: { type: String },
+      gender: { type: String },
+      status: { type: String, enum: ["Active", "Blocked"], default: "Active" },
+      govId: {
+        idNumber: { type: String },
+        verificationStatus: {
+          type: String,
+          enum: ["Pending", "Verified", "Rejected"],
+          default: "Rejected",
+        },
+        documentUrl: { type: String },
+        reason: { type: String, required: false },
       },
-      documentUrl: { type: String },
-      reason: { type: String, required: false },
-    },
-    subscription: {
-      planId: { type: Schema.Types.ObjectId, ref: "SubscriptionPlan" },
-      startDate: { type: Date },
-      originalPrice: { type: Number, required: true },
-      endDate: { type: Date },
-    },
-    monthlyRideCount: { type: Number, default: 0 },
-    lastRideReset: { type: Date, default: Date.now },
-    vehicles: [
-      {
-        vehicleId: { type: Schema.Types.ObjectId, ref: "Vehicle" },
+      subscription: {
+        planId: { type: Schema.Types.ObjectId, ref: "SubscriptionPlan" },
+        startDate: { type: Date },
+        originalPrice: { type: Number, required: true },
+        endDate: { type: Date },
       },
-    ],
-    wallet: {
-      balance: { type: Number, default: 0 },
-      transactions: [
+      monthlyRideCount: { type: Number, default: 0 },
+      lastRideReset: { type: Date, default: Date.now },
+      vehicles: [
         {
-          transactionId: { type: String, required: true },
-          type: { type: String, enum: ["DEPOSIT", "WITHDRAWAL", "SUBSCRIPTION", "REFUND"], required: true },
-          amount: { type: Number, required: true },
-          status: { type: String, enum: ["PENDING", "COMPLETED", "FAILED"], default: "PENDING" },
-          createdAt: { type: Date, default: Date.now },
-          description: { type: String, required: false },
+          vehicleId: { type: Schema.Types.ObjectId, ref: "Vehicle" },
         },
       ],
+      wallet: {
+        balance: { type: Number, default: 0 },
+        transactions: [
+          {
+            transactionId: { type: String, required: true },
+            type: { type: String, enum: ["DEPOSIT", "WITHDRAWAL", "SUBSCRIPTION", "REFUND"], required: true },
+            amount: { type: Number, required: true },
+            status: { type: String, enum: ["PENDING", "COMPLETED", "FAILED"], default: "PENDING" },
+            createdAt: { type: Date, default: Date.now },
+            description: { type: String, required: false },
+          },
+        ],
+      },
     },
-  },
-  { timestamps: true }
-);
+    { timestamps: true }
+  );
 
-const UserModel = model<IUser>("User", UserSchema);
-export default UserModel;
+  const UserModel = model<IUser>("User", UserSchema);
+  export default UserModel;

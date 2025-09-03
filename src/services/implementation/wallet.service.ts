@@ -117,7 +117,7 @@ console.log("user.wallet.balance",user.wallet.balance)
     // Calculate skip and limit for pagination
     const skip = (page - 1) * limit;
     const paginatedTransactions = transactions
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) // Sort by createdAt descending
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) 
       .slice(skip, skip + limit);
 
     return {

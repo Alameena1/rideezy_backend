@@ -11,7 +11,7 @@ router.get("/users", adminAuthMiddleware, adminController.getUsers.bind(adminCon
 router.get("/vehicles", adminAuthMiddleware, adminController.getVehicles.bind(adminController) as RequestHandler);
 router.get("/rides", adminAuthMiddleware, adminController.getAllRides.bind(adminController) as RequestHandler);
 router.get("/rides/:rideId", adminAuthMiddleware, adminController.getRideDetails.bind(adminController) as RequestHandler);
-router.get("/dashboard-metrics", adminAuthMiddleware, adminController.getDashboardMetrics.bind(adminController) as RequestHandler); // Updated to getDashboardMetrics
+router.get("/dashboard-metrics", adminAuthMiddleware, adminController.getDashboardMetrics.bind(adminController) as RequestHandler); 
 
 router.post("/login", adminController.adminLogin.bind(adminController) as RequestHandler);
 router.post("/refresh", adminController.refreshToken.bind(adminController) as RequestHandler);

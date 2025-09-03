@@ -1,4 +1,3 @@
-// src/models/conversation.model.ts
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface IParticipant {
@@ -10,6 +9,8 @@ export interface IConversation extends Document {
   participants: Types.ObjectId[] | IParticipant[]; 
   rideId?: string;
   createdAt: Date;
+  lastMessage?: string;
+  lastMessageTime?: Date;
 }
 
 const conversationSchema = new Schema<IConversation>({

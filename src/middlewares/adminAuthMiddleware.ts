@@ -1,4 +1,3 @@
-// src/middlewares/adminAuthMiddleware.ts
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt, { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
 

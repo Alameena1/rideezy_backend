@@ -330,22 +330,43 @@ async joinRide(
   }
 }
 
-  async getJoinedRides(userId: string): Promise<JoinedRideDto[]> {
-    const rides = await this.rideRepo.find({
-      "passengers.passengerId": userId,
-    });
+ async getJoinedRides(userId: string): Promise<JoinedRideDto[]> {
+  // Fetch rides where the user is a passenger (accepted)
+  const acceptedRides = await this.rideRepo.find({
+    "passengers.passengerId": userId,
+  });
 
-    const userMap = new Map<string, string>();
-    for (const ride of rides) {
-      for (const passenger of ride.passengers) {
-        if (!userMap.has(passenger.passengerId)) {
-          const user = await this.userRepo.findUserById(passenger.passengerId);
-          userMap.set(passenger.passengerId, user?.fullName || "Unknown");
-        }
+  // Fetch rides where the user has a pending or rejected request
+  const pendingRides = await this.rideRepo.find({
+    "pendingRequests.passengerId": userId,
+  });
+
+  // Combine and process all relevant rides
+  const allRides = [...acceptedRides, ...pendingRides].filter((ride, index, self) =>
+    index === self.findIndex((r) => r.rideId === ride.rideId)
+  ); // Remove duplicates
+
+  const userMap = new Map<string, string>();
+  for (const ride of allRides) {
+    for (const passenger of ride.passengers) {
+      if (!userMap.has(passenger.passengerId)) {
+        const user = await this.userRepo.findUserById(passenger.passengerId);
+        userMap.set(passenger.passengerId, user?.fullName || "Unknown");
       }
     }
+    for (const request of ride.pendingRequests) {
+      if (!userMap.has(request.passengerId)) {
+        const user = await this.userRepo.findUserById(request.passengerId);
+        userMap.set(request.passengerId, user?.fullName || "Unknown");
+      }
+    }
+  }
 
-    return rides.map((ride) => ({
+  return allRides.map((ride) => {
+    const userRequest = ride.pendingRequests.find((req) => req.passengerId === userId);
+    const requestStatus = userRequest ? userRequest.status : "accepted";
+
+    return {
       _id: (ride._id as Types.ObjectId).toString(),
       rideId: ride.rideId,
       driverId: ride.driverId,
@@ -375,13 +396,18 @@ async joinRide(
       pickupPoints: ride.pickupPoints,
       dropoffPoints: ride.dropoffPoints,
       routeCoordinates: ride.routeCoordinates,
-      paymentStatus: "Paid",
-    }));
-  }
+      paymentStatus: "Paid", // Adjust based on your logic
+      requestStatus: requestStatus, // New field to indicate pending/accepted/rejected
+    };
+  });
+}
 
   async getRides(userId: string): Promise<IRide[]> {
-    return await this.rideRepo.find({ driverId: userId });
-  }
+  const rides = await this.rideRepo.find({ driverId: userId });
+  const sortedRides = rides.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  console.log("qqqqqqqq", sortedRides);
+  return sortedRides;
+}
 
   async findNearestRides( 
     userLocation: string,
@@ -662,10 +688,10 @@ async joinRide(
     }
   }
 
-async handleJoinRequest(
+  async handleJoinRequest(
   rideId: string,
   driverId: string,
-  passengerId: string,
+  passengerId: string, 
   action: "accept" | "reject"
 ): Promise<void> {
   // Input validation
@@ -836,8 +862,7 @@ async handleJoinRequest(
     console.log("Ending MongoDB session for rideId:", rideId);
     await session.endSession();
   }
-}
-
+  }
 
   async editRide(
     rideId: string,
@@ -1101,8 +1126,6 @@ async handleJoinRequest(
       session.endSession();
     }
   }
-
-
 
 async startTracking(rideId: string, driverId: string): Promise<IRide> {
   const session = await this.rideRepo.startSession();

@@ -5,6 +5,7 @@ export interface IMessage extends Document {
   senderId: Types.ObjectId;
   content: string;
   createdAt: Date;
+  timestamp: string;
 }
 
 export interface IPopulatedSender {
@@ -24,6 +25,7 @@ const messageSchema = new Schema<IMessage>({
   senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   content: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
+  timestamp: { type: String, default: () => new Date().toISOString() },
 });
 
 export const Message = model<IMessage>("Message", messageSchema);

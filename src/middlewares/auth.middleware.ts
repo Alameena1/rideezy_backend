@@ -3,14 +3,12 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
 
-// Define the JWT payload type
 interface JwtPayload {
   userId: string;
   email: string;
-  role?: string; // Add role to match AuthenticatedRequest
+  role?: string; 
 }
 
-// Define the AuthenticatedRequest interface (move to types/express.d.ts if not already there)
 export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;

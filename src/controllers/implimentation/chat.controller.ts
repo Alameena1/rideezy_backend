@@ -1,4 +1,3 @@
-// src/controllers/implementation/chat.controller.ts
 import { injectable, inject } from "inversify";
 import IChatController from "../interface/chat/IChatController";
 import IChatService from "../../services/interfaces/chat/IChatService";
@@ -169,7 +168,7 @@ class ChatController implements IChatController {
       const messages = await this.chatService.getMessages(conversationId, userId);
 
       res.status(StatusCode.OK).json({
-        success: false,
+        success: true,
         messages,
       });
     } catch (error) {

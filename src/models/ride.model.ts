@@ -8,7 +8,7 @@ export interface PickupDropoffPoint {
 
 export interface Passenger {
   droppedOff: boolean;
-  pickedUp: any; // Consider refining this type (e.g., to boolean) based on your needs
+  pickedUp: any; 
   passengerId: string;
   passengerName: string;
 }
@@ -27,7 +27,10 @@ export interface PendingRequest {
   status: "pending" | "accepted" | "rejected";
 }
 
+
+
 export interface IRide extends Document {
+  createdAt: any;
   _id: Types.ObjectId;
   rideId: string;
   driverId: string;
@@ -145,6 +148,8 @@ const RideSchema = new Schema<IRide>({
     },
   ],
   routeCoordinates: { type: [[Number]], required: true },
-});
+},
+{ timestamps: true }
+);
 
 export const RideModel = model<IRide>("Ride", RideSchema);

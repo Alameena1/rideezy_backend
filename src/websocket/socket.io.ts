@@ -69,11 +69,9 @@ export const initializeSocket = (io: Server) => {
     }
   });
 
-  // Connection handler with heartbeat
   io.on("connection", (socket: Socket & { userId?: string; isAlive?: boolean }) => {
     console.log(`New connection from ${socket.id} (user: ${socket.userId})`);
 
-    // Heartbeat mechanism
     socket.isAlive = true;
     const heartbeatInterval = setInterval(() => {
       if (socket.isAlive === false) {
@@ -98,6 +96,11 @@ export const initializeSocket = (io: Server) => {
       }
       console.log(`User ${socket.userId} joining conversation ${conversationId}`);
       chatController.handleJoinChat(socket, conversationId, callback);
+    });
+
+    socket.on("leaveConversation", (conversationId: string) => {
+      socket.leave(`chat:${conversationId}`);
+      console.log(`User ${socket.userId} left conversation ${conversationId}`);
     });
 
     socket.on("sendMessage", (data: { conversationId: string; content: string }, callback: (error?: string) => void) => {
@@ -149,4 +152,3 @@ export const initializeSocket = (io: Server) => {
   }
 };
 };
-

@@ -2,6 +2,7 @@ import { injectable } from "inversify";
 import IChatRepository from "../interface/chat/IChatRepository";
 import { Conversation, IConversation } from "../../models/conversation.model";
 import { Message, IMessage } from "../../models/message.model.ts";
+import User from "../../models/user.model";
 import { Types } from "mongoose";
 
 @injectable()
@@ -20,12 +21,20 @@ export class ChatRepository implements IChatRepository {
       .exec();
   }
 
+  async findConversationByParticipants(participants: string[]): Promise<IConversation | null> {
+    return await Conversation.findOne({
+      participants: { $all: participants, $size: participants.length },
+    })
+      .populate("participants", "_id fullName")
+      .exec();
+  }
+
   async findConversationByRideId(rideId: string, userId: string, driverId: string): Promise<IConversation | null> {
     return await Conversation.findOne({
       rideId,
       participants: { $all: [userId, driverId] },
     })
-      .populate("participants", "_id fullName") 
+      .populate("participants", "_id fullName")
       .exec();
   }
 
@@ -43,8 +52,12 @@ export class ChatRepository implements IChatRepository {
 
   async findUserConversations(userId: string): Promise<IConversation[]> {
     return await Conversation.find({ participants: userId })
-      .populate("participants", "_id fullName") 
+      .populate("participants", "_id fullName")
       .sort({ createdAt: -1 })
       .exec();
+  }
+
+  async findUserById(userId: string): Promise<{ fullName: string } | null> {
+    return await User.findById(userId).select("fullName").exec();
   }
 }

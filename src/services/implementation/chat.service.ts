@@ -3,7 +3,7 @@ import IChatService from "../interfaces/chat/IChatService";
 import IChatRepository from "../../repositories/interface/chat/IChatRepository";
 import { TYPES } from "../../di/types";
 import { IConversation } from "../../models/conversation.model";
-import { IMessage } from "../../models/message.model.ts";
+import { IMessage, Message } from "../../models/message.model.ts"; 
 import { io } from "../../app";
 import { Types } from "mongoose";
 
@@ -11,16 +11,23 @@ import { Types } from "mongoose";
 export class ChatService implements IChatService {
   constructor(@inject(TYPES.IChatRepository) private chatRepository: IChatRepository) {}
 
-  async createConversation(participants: string[]): Promise<IConversation> {
+  async createConversation(participants: string[], rideId?: string): Promise<IConversation> {
     if (participants.length < 2) {
       throw new Error("At least two participants are required");
     }
-    return await this.chatRepository.createConversation(participants);
+
+    const sortedParticipants = participants.sort();
+    let conversation = await this.chatRepository.findConversationByParticipants(sortedParticipants);
+    if (conversation) {
+      return conversation;
+    }
+
+    return await this.chatRepository.createConversation(sortedParticipants, rideId);
   }
 
   async getConversation(conversationId: string): Promise<IConversation> {
     const conversation = await this.chatRepository.findConversationById(conversationId);
-    console.log("geeeeeeeetttttttteeeeeeetttttt",conversation)
+    
     if (!conversation) {
       throw new Error("Conversation not found");
     }
@@ -41,7 +48,13 @@ export class ChatService implements IChatService {
       throw new Error("Access to conversation denied");
     }
     const message = await this.chatRepository.createMessage(conversationId, senderId, content);
-    io.to(`chat:${conversationId}`).emit("newMessage", message);
+    io.to(`chat:${conversationId}`).emit("newMessage", {
+      ...message.toObject(),
+      senderId: {
+        _id: message.senderId,
+        fullName: (await this.chatRepository.findUserById(message.senderId.toString()))?.fullName || "Unknown User",
+      },
+    });
     return message;
   }
 
@@ -58,17 +71,37 @@ export class ChatService implements IChatService {
     });
   }
 
-  async getUserConversations(userId: string): Promise<IConversation[]> {
-    return await this.chatRepository.findUserConversations(userId);
+ async getUserConversations(userId: string): Promise<IConversation[]> {
+    let conversations = await this.chatRepository.findUserConversations(userId);
+    console.log("Raw conversations from repo:", conversations); // Debug log
+    for (const conv of conversations) {
+      const lastMsg = await Message.findOne({ conversationId: conv._id })
+        .sort({ createdAt: -1 })
+        .select("content createdAt")
+        .exec();
+      if (lastMsg) {
+        (conv as any).lastMessage = lastMsg.content;
+        (conv as any).lastMessageTime = lastMsg.createdAt;
+      } else {
+        (conv as any).lastMessage = null;
+        (conv as any).lastMessageTime = null;
+      }
+    }
+    console.log("Conversations with last messages:", conversations); // Debug log
+    return conversations.sort((a, b) => {
+      const aTime = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : new Date(a.createdAt).getTime();
+      const bTime = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : new Date(b.createdAt).getTime();
+      return bTime - aTime;
+    });
   }
-
+  
   async getOrCreateRideConversation(rideId: string, userId: string, driverId: string): Promise<IConversation> {
-    let conversation = await this.chatRepository.findConversationByRideId(rideId, userId, driverId);
+    const participants = [userId, driverId].sort();
+    let conversation = await this.chatRepository.findConversationByParticipants(participants);
     if (conversation) {
       return conversation;
     }
 
-    const participants = [userId, driverId];
     conversation = await this.chatRepository.createConversation(participants, rideId);
     return conversation;
   }
