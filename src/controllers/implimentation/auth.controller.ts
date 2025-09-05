@@ -5,6 +5,7 @@ import { IAuthController } from "../interface/auth/interface";
 import AuthService from "../../services/implementation/auth.service";
 import { StatusCode } from "../../constants/status-codes.enum";
 import { ResponseMessages } from "../../constants/response-messages.const";
+import { generateAccessToken, verifyRefreshToken } from "../../helpers/jwt.util";
 
 @injectable()
 export class AuthController implements IAuthController {
@@ -37,11 +38,9 @@ export class AuthController implements IAuthController {
     }
   }
 
-  async verifyOTP(req: Request, res: Response, next: NextFunction): Promise<void> {   
-    console.log("dshcbdshicbsdhic")
+  async verifyOTP(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, otp } = req.body;
-   
       if (!email || !otp) {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_OTP_REQUIRED });
         return;
@@ -49,7 +48,7 @@ export class AuthController implements IAuthController {
       const response = await this.authService.verifyOTP(email, otp);
       res.status(StatusCode.OK).json(response);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       next(error);
     }
   }
@@ -61,8 +60,25 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_PASSWORD_REQUIRED });
         return;
       }
-      const tokens = await this.authService.login(email, password);
-      res.status(StatusCode.OK).json({ success: true, message: ResponseMessages.LOGIN_SUCCESS, ...tokens });
+      const { accessToken, refreshToken, user } = await this.authService.login(email, password);
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+        path: "/",
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
+      res.status(StatusCode.OK).json({ success: true, message: ResponseMessages.LOGIN_SUCCESS, user, accessToken, refreshToken });
     } catch (error: any) {
       if (error.message === ResponseMessages.ACCOUNT_BLOCKED) {
         res.status(StatusCode.FORBIDDEN).json({ success: false, message: error.message });
@@ -72,21 +88,30 @@ export class AuthController implements IAuthController {
     }
   }
 
-  async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-        
-      const { refreshToken } = req.body;
-      if (!refreshToken) {
-        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.REFRESH_TOKEN_REQUIRED });
-        return;
-      }
-      const newToken = await this.authService.refreshToken(refreshToken);
-      res.status(StatusCode.OK).json({ success: true, ...newToken });
-    } catch (error) {
-      next(error);
-    }
-  }
+      refreshToken = async (req: Request, res: Response): Promise<void> => {
+     const refreshToken = req.cookies.refreshToken;
+     if (!refreshToken) {
+       res.status(401).json({ message: "No refresh token" });
+       return;
+     }
 
+     try {
+       const decoded = verifyRefreshToken(refreshToken, "admin");
+       const newAccessToken = generateAccessToken(decoded.userId, decoded.email || "", "admin");
+
+       res.cookie("adminAuthToken", newAccessToken, {
+         httpOnly: true,
+         secure: process.env.NODE_ENV === "production",
+         sameSite: "lax",
+         maxAge: 15 * 60 * 1000,
+         path: "/",
+       });
+
+       res.status(200).json({ message: "Token refreshed" });
+     } catch (error) {
+       res.status(401).json({ message: "Invalid refresh token" });
+     }
+   };
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { token } = req.body;
@@ -95,6 +120,8 @@ export class AuthController implements IAuthController {
         return;
       }
       await this.authService.logout(token);
+      res.clearCookie("accessToken", { path: "/" });
+      res.clearCookie("refreshToken", { path: "/" });
       res.status(StatusCode.OK).json({ success: true, message: ResponseMessages.LOGOUT_SUCCESS });
     } catch (error) {
       next(error);
@@ -108,13 +135,30 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      const user = await this.authService.handleGoogleAuth({ fullName, email, image });
+      const { user, accessToken, refreshToken } = await this.authService.handleGoogleAuth({ fullName, email, image });
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+        path: "/",
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
       res.status(StatusCode.OK).json({
         success: true,
         message: ResponseMessages.GOOGLE_LOGIN_SUCCESS,
-        user: user.user,
-        accessToken: user.accessToken,
-        refreshToken: user.refreshToken,
+        user,
+        accessToken,
+        refreshToken,
       });
     } catch (error) {
       next(error);

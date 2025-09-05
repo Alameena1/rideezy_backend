@@ -48,13 +48,24 @@ export class ChatService implements IChatService {
       throw new Error("Access to conversation denied");
     }
     const message = await this.chatRepository.createMessage(conversationId, senderId, content);
-    io.to(`chat:${conversationId}`).emit("newMessage", {
-      ...message.toObject(),
+    
+    // Get sender information for proper population
+    const sender = await this.chatRepository.findUserById(senderId);
+    
+    // Emit the message with properly populated sender data
+    const populatedMessage = {
+      _id: message._id,
+      conversationId: message.conversationId,
       senderId: {
-        _id: message.senderId,
-        fullName: (await this.chatRepository.findUserById(message.senderId.toString()))?.fullName || "Unknown User",
+        _id: senderId,
+        fullName: sender?.fullName || "Unknown User",
       },
-    });
+      content: message.content,
+      createdAt: message.createdAt,
+      timestamp: message.createdAt.toISOString(),
+    };
+    
+    io.to(`chat:${conversationId}`).emit("newMessage", populatedMessage);
     return message;
   }
 
@@ -99,7 +110,7 @@ export class ChatService implements IChatService {
     const participants = [userId, driverId].sort();
     let conversation = await this.chatRepository.findConversationByParticipants(participants);
     if (conversation) {
-      return conversation;
+      return conversation; 
     }
 
     conversation = await this.chatRepository.createConversation(participants, rideId);

@@ -1,5 +1,4 @@
-// src/models/notification.model.ts
-import { Schema, model, Document } from "mongoose";
+ import { Schema, model, Document } from "mongoose";
 
 export interface Notification extends Document {
   userId: string;
@@ -9,7 +8,7 @@ export interface Notification extends Document {
   createdAt: Date;
 }
 
-export type NotificationDocument = Document & Notification; // Explicitly define NotificationDocument
+export type NotificationDocument = Document & Notification;  
 
 const NotificationSchema: Schema = new Schema<Notification>({
   userId: { type: String, required: true },

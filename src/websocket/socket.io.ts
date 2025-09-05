@@ -28,7 +28,7 @@ export const initializeSocket = (io: Server) => {
       const decoded = await new Promise<JwtPayload>((resolve, reject) => {
         jwt.verify(
           token, 
-          process.env.JWT_SECRET as string, 
+          process.env.USER_JWT_SECRET as string, // Changed to use USER_JWT_SECRET
           (err: jwt.VerifyErrors | null, decoded: unknown) => {
             if (err) {
               reject(err);
@@ -54,7 +54,7 @@ export const initializeSocket = (io: Server) => {
           }
           
           const newToken = await refreshAccessToken(refreshToken);
-          const decoded = jwt.verify(newToken, process.env.JWT_SECRET as string) as JwtPayload;
+          const decoded = jwt.verify(newToken, process.env.USER_JWT_SECRET as string) as JwtPayload;
           socket.userId = decoded.userId;
           socket.emit("token_refreshed", { token: newToken });
           console.log("Token refreshed successfully");
@@ -104,11 +104,19 @@ export const initializeSocket = (io: Server) => {
     });
 
     socket.on("sendMessage", (data: { conversationId: string; content: string }, callback: (error?: string) => void) => {
+      console.log(`Message attempt from ${socket.userId} in conversation ${data.conversationId}: "${data.content}"`);
+      
       if (!socket.userId) {
-        console.error("Unauthorized message attempt");
+        console.error("Unauthorized message attempt - no user ID");
         return callback("Authentication required");
       }
-      console.log(`Message from ${socket.userId} in conversation ${data.conversationId}`);
+      
+      if (!data.content || data.content.trim().length === 0) {
+        console.error("Empty message content");
+        return callback("Message content cannot be empty");
+      }
+      
+      console.log(`Processing message from ${socket.userId} in conversation ${data.conversationId}`);
       chatController.handleSendMessage(socket, data, callback);
     });
 

@@ -71,7 +71,7 @@ export class SubscriptionController implements ISubscriptionController {
   }
 
   async createOrder(req: Request, res: Response): Promise<void> {
-    try {
+    try { 
       const { planId } = req.body;
       if (!planId) {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: "Plan ID is required" });

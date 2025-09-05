@@ -1,19 +1,19 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
+const USER_JWT_SECRET = process.env.USER_JWT_SECRET || "usersecret123";
 
 interface JwtPayload {
   userId: string;
   email: string;
-  role?: string; 
+  role: string;
 }
 
 export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;
     email: string;
-    role?: string;
+    role: string;
   };
 }
 
@@ -27,7 +27,7 @@ const authMiddleware: RequestHandler = (req: AuthenticatedRequest, res: Response
 
     const token = authHeader.split(" ")[1];
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, USER_JWT_SECRET, (err, decoded) => {
       if (err) {
         console.log("Verification Error:", err.message);
         if (err.name === "TokenExpiredError") {
@@ -38,7 +38,13 @@ const authMiddleware: RequestHandler = (req: AuthenticatedRequest, res: Response
         return;
       }
 
-      req.user = decoded as JwtPayload;
+      const payload = decoded as JwtPayload;
+      if (!payload.userId || payload.role !== "user") {
+        res.status(403).json({ success: false, message: "User access required" });
+        return;
+      }
+
+      req.user = payload;
       next();
     });
   } catch (error) {

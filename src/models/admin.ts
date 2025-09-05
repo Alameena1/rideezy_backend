@@ -1,11 +1,16 @@
-import mongoose from "mongoose";
+import { Schema, model } from "mongoose";
 
-const AdminSchema = new mongoose.Schema({
-  email: "alameena8841@gmail.com",
-  password:"Al@12345",
+export interface IAdmin {
+  _id: string;
+  email: string;
+  password: string;
+  role: string;
+}
 
+const adminSchema = new Schema<IAdmin>({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: "admin" }
 });
 
-const AdminModal = mongoose.model("admin", AdminSchema);
-export default AdminModal;
- 
+export default model<IAdmin>("Admin", adminSchema, "Admin");

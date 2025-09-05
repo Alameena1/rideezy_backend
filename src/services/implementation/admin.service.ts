@@ -1,90 +1,72 @@
+import { injectable, inject } from "inversify";
 import { IAdminService } from "../interfaces/admin/interface";
 import { IAdminRepository } from "../../repositories/interface/admin/interface";
 import { generateAccessToken, generateRefreshToken } from "../../helpers/jwt.util";
-import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
 import bcrypt from "bcrypt";
 import { IUser } from "../../models/user.model";
 import { ISubscriptionPlan } from "../../models/SubscriptionPlan";
+import AdminModel, { IAdmin } from "../../models/admin";
 
 @injectable()
 export class AdminService implements IAdminService {
   private adminRepository: IAdminRepository;
-  private ADMIN_EMAIL: string = "alameena8841@gmail.com";
-  private ADMIN_PASSWORD_HASH!: string;
   private refreshTokens: Map<string, string> = new Map();
 
   constructor(@inject(TYPES.IAdminRepository) adminRepository: IAdminRepository) {
     this.adminRepository = adminRepository;
-    this.initializeAdminCredentials();
-  }
-  getDashboardData(startDate?: string, endDate?: string): Promise<{ metrics: { totalUsers: number; subscribedUsers: number; nonSubscribedUsers: number; totalRides: number; totalRevenue: number; }; userGrowth: Array<{ month: string; users: number; }>; rideCount: Array<{ month: string; rides: number; }>; revenueDistribution: Array<{ name: string; value: number; }>; }> {
-    throw new Error("Method not implemented.");
-  }
-
-  private async initializeAdminCredentials() {
-    try {
-      const plainPassword = "Al@12345";
-      this.ADMIN_PASSWORD_HASH = await bcrypt.hash(plainPassword, 10);
-      console.log("Admin credentials initialized:", {
-        email: this.ADMIN_EMAIL,
-        passwordHash: this.ADMIN_PASSWORD_HASH,
-      });
-    } catch (error) {
-      console.error("Error initializing admin credentials:", error);
-      throw new Error("Failed to initialize admin credentials");
-    }
   }
 
   async authenticateAdmin(email: string, password: string): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {
+    console.log("Authenticating admin with email:", email, "and password:", password);
     if (!email || !password) {
+      console.log("Missing email or password");
       throw new Error("Email and password are required");
     }
 
     try {
-      if (email.trim().toLowerCase() !== this.ADMIN_EMAIL.trim().toLowerCase()) {
-        console.log("Email does not match admin email:", email, this.ADMIN_EMAIL);
-        throw new Error("Invalid credentials");
+      const admin = await AdminModel.findOne({ email }).exec();
+      console.log("Found admin:", admin);
+      if (!admin) {
+        console.log("Admin not found for email:", email);
+        throw new Error("Invalid email or password");
       }
 
-      const passwordMatch = await bcrypt.compare(password, this.ADMIN_PASSWORD_HASH);
+      if (!admin.password) {
+        console.log("No password set for admin:", email);
+        throw new Error("Invalid email or password");
+      }
+
+      const passwordMatch = await bcrypt.compare(password, admin.password);
       if (!passwordMatch) {
-        console.log("Password does not match");
-        throw new Error("Invalid credentials");
+        console.log("Password does not match for email:", email);
+        throw new Error("Invalid email or password");
       }
 
-      console.log("Generating access token for email:", email);
-      const accessToken = generateAccessToken(email, email);
-      const refreshToken = generateRefreshToken(email);
-      console.log("Generated access token:", accessToken);
+      const accessToken = generateAccessToken(admin._id.toString(), admin.email, "admin");
+      const refreshToken = generateRefreshToken(admin._id.toString(), "admin");
 
-      await this.saveRefreshToken(email, refreshToken);
+      await this.saveRefreshToken(admin._id.toString(), refreshToken);
 
       return { accessToken, refreshToken };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Error in authenticateAdmin:", error.message, error.stack);
-        throw error;
-      }
-      console.error("Non-Error thrown in authenticateAdmin:", error);
-      throw new Error("Unknown authentication error");
+    } catch (error: any) {
+      console.error("Error in authenticateAdmin:", error.message, error.stack);
+      throw new Error("Server error");
     }
   }
 
-  async saveRefreshToken(email: string, refreshToken: string): Promise<void> {
-    this.refreshTokens.set(refreshToken, email);
-    console.log(`Saved refresh token for ${email}: ${refreshToken}`);
+  async saveRefreshToken(userId: string, refreshToken: string): Promise<void> {
+    this.refreshTokens.set(refreshToken, userId);
+    console.log(`Saved refresh token for userId ${userId}`);
   }
 
-  async invalidateRefreshToken(email: string, refreshToken: string): Promise<void> {
+  async invalidateRefreshToken(userId: string, refreshToken: string): Promise<void> {
     if (this.refreshTokens.has(refreshToken)) {
       this.refreshTokens.delete(refreshToken);
-      console.log(`Invalidated refresh token for ${email}: ${refreshToken}`);
-    } else {
-      console.log(`Refresh token not found for ${email}: ${refreshToken}`);
+      console.log(`Invalidated refresh token for userId ${userId}`);
     }
   }
 
@@ -106,7 +88,7 @@ export class AdminService implements IAdminService {
   }
 
   async verifyGovId(userId: string, status: "Verified" | "Rejected", rejectionNote?: string): Promise<IUser> {
-    console.log("iiiiiiiiiiiiiiiiiii",rejectionNote)
+    console.log("verifying gov ID", rejectionNote);
     const user = await this.adminRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
@@ -160,7 +142,7 @@ export class AdminService implements IAdminService {
   }
 
   async getAllRides(): Promise<any[]> {
-    return await this.adminRepository.getAllRides();
+    return this.adminRepository.getAllRides();
   }
 
   async getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{
@@ -179,5 +161,3 @@ export class AdminService implements IAdminService {
     return await this.adminRepository.getDashboardMetrics(params);
   }
 }
-
-export default AdminService;

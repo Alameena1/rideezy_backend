@@ -3,35 +3,55 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || "deaultsecretf"; 
-const REFRESH_SECRET = process.env.REFRESH_SECRET || "defaultrefreshsecret";
+const USER_JWT_SECRET = process.env.USER_JWT_SECRET || "usersecret123";
+const USER_REFRESH_SECRET = process.env.USER_REFRESH_SECRET || "userrefreshsecret123";
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || "adminsecret123";
+const ADMIN_REFRESH_SECRET = process.env.ADMIN_REFRESH_SECRET || "adminrefreshsecret123";
+
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.USER_JWT_SECRET || !process.env.USER_REFRESH_SECRET) {
+    throw new Error("User JWT secrets are not defined in environment variables");
+  }
+  if (!process.env.ADMIN_JWT_SECRET || !process.env.ADMIN_REFRESH_SECRET) {
+    throw new Error("Admin JWT secrets are not defined in environment variables");
+  }
+}
 
 interface AccessTokenPayload {
   userId: string;
-  email?: string; 
+  email: string;
+  role: "user" | "admin";
   iat?: number;
   exp?: number;
 }
 
 interface RefreshTokenPayload {
   userId: string;
+  email?: string; // Changed to optional
+  role: "user" | "admin";
   iat?: number;
   exp?: number;
 }
 
-export const generateAccessToken = (userId: string, email?: string): string => {
-  const payload: AccessTokenPayload = { userId, ...(email && { email }) };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "15m" });
+export const generateAccessToken = (userId: string, email: string, role: "user" | "admin"): string => {
+  const payload: AccessTokenPayload = { userId, email, role };
+  const secret = role === "admin" ? ADMIN_JWT_SECRET : USER_JWT_SECRET;
+  return jwt.sign(payload, secret, { expiresIn: "15m" });
 };
 
-export const generateRefreshToken = (userId: string): string => {
-  const payload: RefreshTokenPayload = { userId };
-  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: "7d" });
+export const generateRefreshToken = (userId: string, role: "user" | "admin"): string => {
+  const payload: RefreshTokenPayload = { userId, role }; // No email needed
+  const secret = role === "admin" ? ADMIN_REFRESH_SECRET : USER_REFRESH_SECRET;
+  return jwt.sign(payload, secret, { expiresIn: "7d" });
 };
 
-export const verifyAccessToken = (token: string): AccessTokenPayload => {
+export const verifyAccessToken = (token: string, role: "user" | "admin"): AccessTokenPayload => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as AccessTokenPayload;
+    const secret = role === "admin" ? ADMIN_JWT_SECRET : USER_JWT_SECRET;
+    const decoded = jwt.verify(token, secret) as AccessTokenPayload;
+    if (decoded.role !== role) {
+      throw new Error("Invalid role in token");
+    }
     return decoded;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
@@ -43,9 +63,13 @@ export const verifyAccessToken = (token: string): AccessTokenPayload => {
   }
 };
 
-export const verifyRefreshToken = (token: string): RefreshTokenPayload => {
+export const verifyRefreshToken = (token: string, role: "user" | "admin"): RefreshTokenPayload => {
   try {
-    const decoded = jwt.verify(token, REFRESH_SECRET) as RefreshTokenPayload;
+    const secret = role === "admin" ? ADMIN_REFRESH_SECRET : USER_REFRESH_SECRET;
+    const decoded = jwt.verify(token, secret) as RefreshTokenPayload;
+    if (decoded.role !== role) {
+      throw new Error("Invalid role in token");
+    }
     return decoded;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

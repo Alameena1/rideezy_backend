@@ -11,7 +11,7 @@ import { StatusCode } from "../../constants/status-codes.enum";
 interface JwtPayload {
   userId: string;
   email: string;
-  role?: string;
+  role: string;
 }
 
 @injectable()
@@ -22,17 +22,27 @@ class ChatController implements IChatController {
     const token = socket.handshake.auth.token;
     if (!token) {
       callback("No token provided");
-      socket.disconnect();
-      return;
+      return; // Don't disconnect immediately
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+      const decoded = jwt.verify(token, process.env.USER_JWT_SECRET as string) as JwtPayload;
+      if (decoded.role !== "user") {
+        callback("User access required");
+        return;
+      }
       await this.chatService.sendMessage(data.conversationId, decoded.userId, data.content);
-      callback();
+      callback(); // Success
     } catch (error) {
       console.error("Error sending message:", error);
-      callback("Failed to send message");
+      
+      if (error instanceof jwt.JsonWebTokenError) {
+        callback("Invalid token");
+      } else if (error instanceof jwt.TokenExpiredError) {
+        callback("Token expired");
+      } else {
+        callback("Failed to send message");
+      }
     }
   }
 
@@ -40,16 +50,18 @@ class ChatController implements IChatController {
     const token = socket.handshake.auth.token;
     if (!token) {
       callback("No token provided");
-      socket.disconnect();
-      return;
+      return; // Don't disconnect immediately
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+      const decoded = jwt.verify(token, process.env.USER_JWT_SECRET as string) as JwtPayload;
+      if (decoded.role !== "user") {
+        callback("User access required");
+        return;
+      }
       const hasAccess = await this.chatService.validateConversationAccess(conversationId, decoded.userId);
       if (!hasAccess) {
         callback("User does not have access to this conversation");
-        socket.disconnect();
         return;
       }
 
@@ -61,13 +73,26 @@ class ChatController implements IChatController {
       callback();
     } catch (error) {
       console.error("Error joining chat:", error);
-      callback("Invalid token");
-      socket.disconnect();
+      
+      if (error instanceof jwt.JsonWebTokenError) {
+        callback("Invalid token");
+      } else if (error instanceof jwt.TokenExpiredError) {
+        callback("Token expired");
+      } else {
+        callback("Failed to join conversation");
+      }
     }
   }
 
   async createConversation(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+      if (!req.user || req.user.role !== "user") {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: "User access required",
+        });
+        return;
+      }
       const { participants } = req.body;
       const userId = req.user?.userId;
 
@@ -108,6 +133,13 @@ class ChatController implements IChatController {
 
   async getConversation(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+      if (!req.user || req.user.role !== "user") {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: "User access required",
+        });
+        return;
+      }
       const { conversationId } = req.params;
       const userId = req.user?.userId;
 
@@ -145,6 +177,13 @@ class ChatController implements IChatController {
 
   async getMessages(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+      if (!req.user || req.user.role !== "user") {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: "User access required",
+        });
+        return;
+      }
       const { conversationId } = req.params;
       const userId = req.user?.userId;
 
@@ -182,6 +221,13 @@ class ChatController implements IChatController {
 
   async sendMessage(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+      if (!req.user || req.user.role !== "user") {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: "User access required",
+        });
+        return;
+      }
       const { conversationId } = req.params;
       const { content } = req.body;
       const userId = req.user?.userId;
@@ -228,6 +274,13 @@ class ChatController implements IChatController {
 
   async getUserConversations(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+      if (!req.user || req.user.role !== "user") {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: "User access required",
+        });
+        return;
+      }
       const { userId } = req.params;
       const requestingUserId = req.user?.userId;
 
@@ -264,6 +317,13 @@ class ChatController implements IChatController {
 
   async getOrCreateRideConversation(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+      if (!req.user || req.user.role !== "user") {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: "User access required",
+        });
+        return;
+      }
       const { rideId, driverId, userId: bodyUserId } = req.body;
       const authenticatedUserId = req.user?.userId;
 

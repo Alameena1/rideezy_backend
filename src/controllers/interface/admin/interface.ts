@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 export interface IAdminController {
-    getDashboardData: any;
+  getDashboardData(req: Request, res: Response): Promise<void>;
   adminLogin(req: Request, res: Response): Promise<void>;
   refreshToken(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
@@ -19,5 +19,5 @@ export interface IAdminController {
   blockRide(req: Request, res: Response): Promise<void>;
   cancelRide(req: Request, res: Response): Promise<void>;
   getAllRides(req: Request, res: Response): Promise<void>;
- getDashboardMetrics(req: Request, res: Response): Promise<void>;
+  getDashboardMetrics(req: Request, res: Response): Promise<void>;
 }
