@@ -1,3 +1,4 @@
+// src/repositories/interface/ride/irideRepository.ts
 import { ClientSession, FilterQuery, UpdateQuery } from "mongoose";
 import { IRide, RideCreationData } from "../../../models/ride.model";
 
@@ -10,6 +11,7 @@ interface MongoUpdateOptions {
 }
 
 export interface IRideRepository {
+  count(query: FilterQuery<IRide>): Promise<number>;
   createRide(ride: RideCreationData, options?: { session: ClientSession }): Promise<IRide>;
   find(query: FilterQuery<IRide>, options?: { session: ClientSession }): Promise<IRide[]>;
   findOne(query: FilterQuery<IRide>, options?: { session: ClientSession }): Promise<IRide | null>;

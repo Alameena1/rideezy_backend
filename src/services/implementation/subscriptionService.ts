@@ -3,27 +3,36 @@ import { TYPES } from "../../di/types";
 import { ISubscriptionService } from "../interfaces/subscription/isubscriptionService";
 import { ISubscriptionRepository, UserUpdate } from "../../repositories/interface/subscription/isubscriptionRepository";
 import { IWalletService } from "../interfaces/wallet/iWalletService";
+import { IRideRepository } from "../../repositories/interface/ride/irideRepository";
+import { IUserRepository } from "../../repositories/interface/user/iuserRepository";
 import Razorpay from "razorpay";
 import { createHmac } from "crypto";
 import { Types } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
+import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/SubscriptionPlan";
 
 @injectable()
 export class SubscriptionService implements ISubscriptionService {
   constructor(
     @inject(TYPES.ISubscriptionRepository) private subscriptionRepository: ISubscriptionRepository,
     @inject(TYPES.IWalletService) private walletService: IWalletService,
+    @inject(TYPES.IRideRepository) private rideRepo: IRideRepository,
+    @inject(TYPES.IUserRepository) private userRepo: IUserRepository,
     @inject("Razorpay") private razorpay: Razorpay
   ) {}
 
+  // EXISTING METHODS
   async getAllPlans(): Promise<any[]> {
-    return await this.subscriptionRepository.getAllPlans();
+    return await SubscriptionPlanModel.find({ status: "Active", isDeleted: false });
   }
 
   async subscribeUser(userId: string, planId: string): Promise<any> {
-    const plan = await this.subscriptionRepository.findPlanById(planId);
+    const plan = await SubscriptionPlanModel.findById(planId);
     if (!plan) {
       throw new Error("Subscription plan not found");
+    }
+    if (plan.isDeleted) {
+      throw new Error("Subscription plan is deleted");
     }
 
     const user = await this.subscriptionRepository.findUserById(userId);
@@ -37,9 +46,16 @@ export class SubscriptionService implements ISubscriptionService {
 
     const subscriptionData = {
       planId: new Types.ObjectId(planId),
+      planName: plan.name,
+      planDescription: plan.description,
+      durationMonths: plan.durationMonths,
+      maxStartingRides: plan.maxStartingRides,
+      maxJoiningRides: plan.maxJoiningRides,
       originalPrice: plan.price,
       startDate,
-      endDate
+      endDate,
+      remainingStartRides: plan.maxStartingRides,
+      remainingJoinRides: plan.maxJoiningRides
     };
 
     const updatedUser = await this.subscriptionRepository.updateUser(userId, {
@@ -67,20 +83,15 @@ export class SubscriptionService implements ISubscriptionService {
       return { isSubscribed: false };
     }
 
-    const plan = await this.subscriptionRepository.findPlanById(user.subscription.planId.toString());
-    if (!plan) {
-      return { isSubscribed: false };
-    }
-
     return {
       isSubscribed: true,
       subscription: {
         plan: {
-          _id: plan._id,
-          name: plan.name,
-          price: plan.price,
-          durationMonths: plan.durationMonths,
-          description: plan.description,
+          _id: user.subscription.planId,
+          name: user.subscription.planName,
+          price: user.subscription.originalPrice,
+          durationMonths: user.subscription.durationMonths,
+          description: user.subscription.planDescription,
         },
         originalPrice: user.subscription.originalPrice,
         startDate: user.subscription.startDate,
@@ -133,9 +144,12 @@ export class SubscriptionService implements ISubscriptionService {
 
   async createPaymentOrder(planId: string): Promise<any> {
     try {
-      const plan = await this.subscriptionRepository.findPlanById(planId);
+      const plan = await SubscriptionPlanModel.findById(planId);
       if (!plan) {
         throw new Error("Subscription plan not found");
+      }
+      if (plan.isDeleted) {
+        throw new Error("Subscription plan is deleted");
       }
 
       if (plan.status !== "Active") {
@@ -173,9 +187,12 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async verifyAndSubscribe(userId: string, planId: string, paymentId: string, orderId: string, signature: string): Promise<any> {
-    const plan = await this.subscriptionRepository.findPlanById(planId);
+    const plan = await SubscriptionPlanModel.findById(planId);
     if (!plan) {
       throw new Error("Subscription plan not found");
+    }
+    if (plan.isDeleted) {
+      throw new Error("Subscription plan is deleted");
     }
 
     const user = await this.subscriptionRepository.findUserById(userId);
@@ -218,5 +235,195 @@ export class SubscriptionService implements ISubscriptionService {
     } as UserUpdate);
 
     return await this.subscribeUser(userId, planId);
+  }
+
+  // NEW METHODS for ride limits
+  async hasActiveSubscription(userId: string): Promise<boolean> {
+    const user = await this.userRepo.findUserById(userId);
+    return !!(user?.subscription && user.subscription.endDate > new Date());
+  }
+
+  async getSubscriptionPlan(userId: string): Promise<ISubscriptionPlan | null> {
+    const user = await this.userRepo.findUserById(userId);
+    if (!user?.subscription) return null;
+    
+    return await SubscriptionPlanModel.findById(user.subscription.planId);
+  }
+
+  async getMonthlyRideCounts(userId: string): Promise<{ startCount: number; joinCount: number }> {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    const monthlyStartCount = await this.rideRepo.count({
+      driverId: userId,
+      status: { $in: ["Pending", "Started", "Completed"] },
+      createdAt: {
+        $gte: new Date(currentYear, currentMonth, 1),
+        $lt: new Date(currentYear, currentMonth + 1, 1)
+      }
+    });
+    
+    const monthlyJoinCount = await this.rideRepo.count({
+      "passengers.passengerId": userId,
+      status: { $in: ["Pending", "Started", "Completed"] },
+      createdAt: {
+        $gte: new Date(currentYear, currentMonth, 1),
+        $lt: new Date(currentYear, currentMonth + 1, 1)
+      }
+    });
+    
+    return { startCount: monthlyStartCount, joinCount: monthlyJoinCount };
+  }
+
+  async canStartRide(userId: string): Promise<boolean> {
+    const user = await this.userRepo.findUserById(userId);
+    if (!user) throw new Error("User not found");
+
+    const hasActiveSubscription = await this.hasActiveSubscription(userId);
+
+    if (hasActiveSubscription) {
+      const subscriptionPlan = await this.getSubscriptionPlan(userId);
+      if (!subscriptionPlan) return false;
+      
+      // Unlimited rides (0 means unlimited)
+      if (subscriptionPlan.maxStartingRides === 0) return true;
+      
+      // Check remaining rides
+      const remainingRides = user.subscription!.remainingStartRides !== undefined ? 
+                           user.subscription!.remainingStartRides : 
+                           subscriptionPlan.maxStartingRides;
+      
+      return remainingRides > 0;
+    } else {
+      // Free tier: 3 rides per month
+      const monthlyCounts = await this.getMonthlyRideCounts(userId);
+      return monthlyCounts.startCount < 3;
+    }
+  }
+
+  async canJoinRide(userId: string): Promise<boolean> {
+    const user = await this.userRepo.findUserById(userId);
+    if (!user) throw new Error("User not found");
+
+    const hasActiveSubscription = await this.hasActiveSubscription(userId);
+
+    if (hasActiveSubscription) {
+      const subscriptionPlan = await this.getSubscriptionPlan(userId);
+      if (!subscriptionPlan) return false;
+      
+      // Unlimited rides (0 means unlimited)
+      if (subscriptionPlan.maxJoiningRides === 0) return true;
+      
+      // Check remaining rides
+      const remainingRides = user.subscription!.remainingJoinRides !== undefined ? 
+                           user.subscription!.remainingJoinRides : 
+                           subscriptionPlan.maxJoiningRides;
+      
+      return remainingRides > 0;
+    } else {
+      // Free tier: 3 rides per month
+      const monthlyCounts = await this.getMonthlyRideCounts(userId);
+      return monthlyCounts.joinCount < 3;
+    }
+  }
+
+  async getRemainingRideCounts(userId: string): Promise<{ startRides: number; joinRides: number }> {
+    const user = await this.userRepo.findUserById(userId);
+    if (!user) throw new Error("User not found");
+
+    const hasActiveSubscription = await this.hasActiveSubscription(userId);
+
+    if (hasActiveSubscription) {
+      const subscriptionPlan = await this.getSubscriptionPlan(userId);
+      if (!subscriptionPlan) return { startRides: 0, joinRides: 0 };
+      
+      const startRides = subscriptionPlan.maxStartingRides === 0 ? 
+        Infinity : (user.subscription!.remainingStartRides !== undefined ? 
+                   user.subscription!.remainingStartRides : 
+                   subscriptionPlan.maxStartingRides);
+      
+      const joinRides = subscriptionPlan.maxJoiningRides === 0 ? 
+        Infinity : (user.subscription!.remainingJoinRides !== undefined ? 
+                   user.subscription!.remainingJoinRides : 
+                   subscriptionPlan.maxJoiningRides);
+      
+      return { startRides, joinRides };
+    } else {
+      const monthlyCounts = await this.getMonthlyRideCounts(userId);
+      return { 
+        startRides: Math.max(0, 3 - monthlyCounts.startCount),
+        joinRides: Math.max(0, 3 - monthlyCounts.joinCount)
+      };
+    }
+  }
+
+  async decrementStartRideCount(userId: string): Promise<void> {
+    const user = await this.userRepo.findUserById(userId);
+    if (!user || !user.subscription) return;
+
+    const hasActiveSubscription = user.subscription.endDate > new Date();
+    if (!hasActiveSubscription) return;
+
+    const subscriptionPlan = await this.getSubscriptionPlan(userId);
+    if (!subscriptionPlan || subscriptionPlan.maxStartingRides === 0) return;
+
+    const currentRemaining = user.subscription.remainingStartRides !== undefined ? 
+                           user.subscription.remainingStartRides : 
+                           subscriptionPlan.maxStartingRides;
+    
+    const newRemaining = Math.max(0, currentRemaining - 1);
+    
+    await this.userRepo.updateOne(
+      { _id: userId },
+      { 
+        $set: { 
+          "subscription.remainingStartRides": newRemaining
+        } 
+      }
+    );
+  }
+
+  async decrementJoinRideCount(userId: string): Promise<void> {
+    const user = await this.userRepo.findUserById(userId);
+    if (!user || !user.subscription) return;
+
+    const hasActiveSubscription = user.subscription.endDate > new Date();
+    if (!hasActiveSubscription) return;
+
+    const subscriptionPlan = await this.getSubscriptionPlan(userId);
+    if (!subscriptionPlan || subscriptionPlan.maxJoiningRides === 0) return;
+
+    const currentRemaining = user.subscription.remainingJoinRides !== undefined ? 
+                           user.subscription.remainingJoinRides : 
+                           subscriptionPlan.maxJoiningRides;
+    
+    const newRemaining = Math.max(0, currentRemaining - 1);
+    
+    await this.userRepo.updateOne(
+      { _id: userId },
+      { 
+        $set: { 
+          "subscription.remainingJoinRides": newRemaining
+        } 
+      }
+    );
+  }
+
+  async resetSubscriptionRideCounts(userId: string): Promise<void> {
+    const user = await this.userRepo.findUserById(userId);
+    if (!user || !user.subscription) return;
+
+    const subscriptionPlan = await this.getSubscriptionPlan(userId);
+    if (!subscriptionPlan) return;
+
+    await this.userRepo.updateOne(
+      { _id: userId },
+      { 
+        $set: { 
+          "subscription.remainingStartRides": subscriptionPlan.maxStartingRides,
+          "subscription.remainingJoinRides": subscriptionPlan.maxJoiningRides
+        } 
+      }
+    );
   }
 }

@@ -155,7 +155,7 @@ updateVehicleStatus = async (req: AuthenticatedRequest, res: Response): Promise<
       const plan = await this.adminService.createSubscriptionPlan(planData);
       res.status(201).json({ success: true, message: "Subscription plan created", plan });
     } catch (error) {
-      res.status(500).json({ success: false, message: (error as Error).message });
+      res.status(400).json({ success: false, message: (error as Error).message });
     }
   };
 
@@ -166,7 +166,7 @@ updateVehicleStatus = async (req: AuthenticatedRequest, res: Response): Promise<
       const plan = await this.adminService.updateSubscriptionPlan(planId, planData);
       res.status(200).json({ success: true, message: "Subscription plan updated", plan });
     } catch (error) {
-      res.status(500).json({ success: false, message: (error as Error).message });
+      res.status(400).json({ success: false, message: (error as Error).message });
     }
   };
 

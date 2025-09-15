@@ -38,7 +38,6 @@ export const CreateRideSchema = z.object({
   totalRideCost: z.number().min(0).optional(), // Optional, validated if present
   costPerPerson: z.number().min(0).optional(), // Optional, validated if present
 }).refine((data) => {
-  // Optional refine for consistency if these fields are provided
   if (data.totalRideCost && data.totalFuelCost && data.platformFee) {
     const expectedTotal = data.totalFuelCost + (data.platformFee || 0);
     if (data.totalRideCost !== expectedTotal) {

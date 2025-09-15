@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import { IUser } from "../../models/user.model";
 import { ISubscriptionPlan } from "../../models/SubscriptionPlan";
 import AdminModel, { IAdmin } from "../../models/admin";
+import { SubscriptionPlanModel } from "../../models/SubscriptionPlan";
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -114,23 +115,93 @@ export class AdminService implements IAdminService {
   }
 
   async createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
-    return await this.adminRepository.createSubscriptionPlan(planData);
+    // Validate fields
+    if (planData.maxStartingRides === undefined || planData.maxJoiningRides === undefined) {
+      throw new Error("maxStartingRides and maxJoiningRides are required");
+    }
+    if (planData.durationMonths === undefined || planData.durationMonths <= 0) {
+      throw new Error("Duration must be at least 1 month");
+    }
+    if (planData.price === undefined || planData.price < 0) {
+      throw new Error("Price cannot be negative");
+    }
+    if (planData.maxStartingRides < 0) {
+      throw new Error("Max starting rides cannot be negative");
+    }
+    if (planData.maxJoiningRides < 0) {
+      throw new Error("Max joining rides cannot be negative");
+    }
+    // Optional: upper limits
+    if (planData.durationMonths > 120) {
+      throw new Error("Duration cannot exceed 10 years (120 months)");
+    }
+    if (planData.price > 10000) {
+      throw new Error("Price cannot exceed $10,000");
+    }
+    if (planData.maxStartingRides > 1000) {
+      throw new Error("Max starting rides cannot exceed 1000");
+    }
+    if (planData.maxJoiningRides > 1000) {
+      throw new Error("Max joining rides cannot exceed 1000");
+    }
+    return await SubscriptionPlanModel.create(planData);
   }
 
   async updateSubscriptionPlan(planId: string, planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
-    return await this.adminRepository.updateSubscriptionPlan(planId, planData);
+    // Validate provided fields
+    if (planData.durationMonths !== undefined && planData.durationMonths <= 0) {
+      throw new Error("Duration must be at least 1 month");
+    }
+    if (planData.price !== undefined && planData.price < 0) {
+      throw new Error("Price cannot be negative");
+    }
+    if (planData.maxStartingRides !== undefined && planData.maxStartingRides < 0) {
+      throw new Error("Max starting rides cannot be negative");
+    }
+    if (planData.maxJoiningRides !== undefined && planData.maxJoiningRides < 0) {
+      throw new Error("Max joining rides cannot be negative");
+    }
+    // Optional: upper limits
+    if (planData.durationMonths !== undefined && planData.durationMonths > 120) {
+      throw new Error("Duration cannot exceed 10 years (120 months)");
+    }
+    if (planData.price !== undefined && planData.price > 10000) {
+      throw new Error("Price cannot exceed $10,000");
+    }
+    if (planData.maxStartingRides !== undefined && planData.maxStartingRides > 1000) {
+      throw new Error("Max starting rides cannot exceed 1000");
+    }
+    if (planData.maxJoiningRides !== undefined && planData.maxJoiningRides > 1000) {
+      throw new Error("Max joining rides cannot exceed 1000");
+    }
+    const updatedPlan = await SubscriptionPlanModel.findByIdAndUpdate(planId, planData, { new: true });
+    if (!updatedPlan) {
+      throw new Error("Subscription plan not found");
+    }
+    return updatedPlan;
   }
 
   async deleteSubscriptionPlan(planId: string): Promise<void> {
-    await this.adminRepository.deleteSubscriptionPlan(planId);
+    const plan = await SubscriptionPlanModel.findById(planId);
+    if (!plan) {
+      throw new Error("Subscription plan not found");
+    }
+    await SubscriptionPlanModel.updateOne({ _id: planId }, { isDeleted: true });
   }
 
   async getSubscriptionPlans(): Promise<ISubscriptionPlan[]> {
-    return await this.adminRepository.getSubscriptionPlans();
+    return await SubscriptionPlanModel.find({ isDeleted: false });
   }
 
   async updateSubscriptionPlanStatus(planId: string, status: "Active" | "Blocked"): Promise<void> {
-    await this.adminRepository.updateSubscriptionPlanStatus(planId, status);
+    const plan = await SubscriptionPlanModel.findById(planId);
+    if (!plan) {
+      throw new Error("Subscription plan not found");
+    }
+    if (plan.isDeleted) {
+      throw new Error("Cannot update status of deleted plan");
+    }
+    await SubscriptionPlanModel.updateOne({ _id: planId }, { status });
   }
 
   async getRideDetails(rideId: string): Promise<any> {

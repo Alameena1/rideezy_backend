@@ -34,9 +34,16 @@ export interface IUser extends Document {
   };
   subscription?: {
     planId: Types.ObjectId;
+    planName: string;
+    planDescription: string;
+    durationMonths: number;
+    maxStartingRides: number;
+    maxJoiningRides: number;
+    originalPrice: number;
     startDate: Date;
-    originalPrice?: number; // Changed to optional
     endDate: Date;
+    remainingStartRides: number; // ADD THIS FIELD
+    remainingJoinRides: number;  // ADD THIS FIELD
   };
   monthlyRideCount: number;
   lastRideReset: Date;
@@ -74,9 +81,16 @@ const UserSchema = new Schema<IUser>(
     },
     subscription: {
       planId: { type: Schema.Types.ObjectId, ref: "SubscriptionPlan" },
+      planName: { type: String },
+      planDescription: { type: String },
+      durationMonths: { type: Number },
+      maxStartingRides: { type: Number },
+      maxJoiningRides: { type: Number },
+      originalPrice: { type: Number },
       startDate: { type: Date },
-      originalPrice: { type: Number, required: false }, // Changed to optional
       endDate: { type: Date },
+      remainingStartRides: { type: Number }, // ADD THIS FIELD
+      remainingJoinRides: { type: Number },  // ADD THIS FIELD
     },
     monthlyRideCount: { type: Number, default: 0 },
     lastRideReset: { type: Date, default: Date.now },

@@ -1,3 +1,4 @@
+// src/repositories/implimentation/ride.repository.ts
 import { injectable } from "inversify";
 import { ClientSession, FilterQuery, UpdateQuery } from "mongoose";
 import { IRideRepository } from "../interface/ride/irideRepository";
@@ -21,6 +22,17 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
 
   async startSession(): Promise<ClientSession> {
     return RideModel.startSession();
+  }
+
+  async count(query: FilterQuery<IRide>): Promise<number> {
+    try {
+      const count = await RideModel.countDocuments(query).exec();
+      console.log(`[RideRepository] Counted ${count} rides with query:`, query);
+      return count;
+    } catch (error) {
+      console.error(`[RideRepository] Error counting rides with query ${JSON.stringify(query)}: ${(error as Error).message}`);
+      throw new Error(`Failed to count rides: ${(error as Error).message}`);
+    }
   }
 
   async createRide(ride: RideCreationData, options?: { session: ClientSession }): Promise<IRide> {
@@ -47,7 +59,6 @@ export class RideRepository extends BaseRepository<IRide> implements IRideReposi
 
   async findOne(query: FilterQuery<IRide>, options?: { session: ClientSession }): Promise<IRide | null> {
     try {
-      
       const ride = await super.findOne(query, options);
       if (!ride) {
         console.warn(`[RideRepository] No ride found with query: ${JSON.stringify(query)}`);
