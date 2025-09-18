@@ -18,7 +18,7 @@ export class RideController implements IRideController {
   constructor(@inject(TYPES.IRideService) rideService: IRideService) {
     this.rideService = rideService;
   }
-  
+
   async startRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       console.log("[RideController] Received body:", JSON.stringify(req.body, null, 2));
@@ -35,7 +35,7 @@ export class RideController implements IRideController {
         return;
       }
 
-      // Pass only necessary fields, let service calculate totalFuelCost, totalRideCost, and costPerPerson
+      // Pass only necessary fields, let service calculate totalFuelCost, totalRideCost, and perKmRate
       const completeDto: CreateRideDto = {
         ...dto,
         driverId: req.user?.userId!,
@@ -59,28 +59,35 @@ export class RideController implements IRideController {
     }
   }
 
-  async joinRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userId = req.user?.userId;
-      console.log("jfidjifhj")
-      if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
-        return;
-      }
-
-      const validationResult = JoinRideSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        res.status(400).json({ success: false, errors: validationResult.error.errors });
-        return;
-      }
-
-      const dto: JoinRideDto = validationResult.data;
-      const ride = await this.rideService.joinRide(dto.rideId, userId, dto.pickupLocation, dto.dropoffLocation);
-      res.status(200).json({ success: true, message: "Joined ride successfully", data: ride });
-    } catch (error) {
-      next(error);
+ async joinRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.user?.userId;
+    console.log("Joining ride with userId:", userId);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
     }
+
+    const validationResult = JoinRideSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      res.status(400).json({ success: false, errors: validationResult.error.errors });
+      return;
+    }
+
+    const dto: JoinRideDto = validationResult.data;
+    const ride = await this.rideService.joinRide(dto.rideId, userId, dto.pickupLocation, dto.dropoffLocation);
+    
+    // Return the ride with the pending request that contains the calculated distance
+    res.status(200).json({ 
+      success: true, 
+      message: "Joined ride successfully", 
+      data: ride 
+    });
+  } catch (error) {
+    next(error);
   }
+}
 
   async getRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -147,7 +154,7 @@ export class RideController implements IRideController {
         return;
       }
 
-      const order = await this.rideService.createRidePaymentOrder(rideId);
+      const order = await this.rideService.createRidePaymentOrder(rideId, userId); // Updated to pass userId as passengerId
       res.status(200).json({ success: true, order });
     } catch (error: any) {
       console.error("Error in createRidePaymentOrder:", error);
@@ -216,7 +223,7 @@ export class RideController implements IRideController {
 
       const dto: EditRideDto = validationResult.data;
       const updatedRide = await this.rideService.editRide(rideId, userId, dto);
-console.log("edit ride controller updatedRide",updatedRide)
+      console.log("edit ride controller updatedRide", updatedRide);
 
       res.status(200).json({ success: true, message: "Ride updated successfully", data: updatedRide });
     } catch (error) {
@@ -261,7 +268,7 @@ console.log("edit ride controller updatedRide",updatedRide)
     }
   }
 
-async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
       if (!userId) {
@@ -339,25 +346,25 @@ async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction
     }
   }
 
- async handleJoinRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
-  const { rideId, passengerId } = req.params;
-  const { action } = req.body;
-  const driverId = req.user?.userId;
+  async handleJoinRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { rideId, passengerId } = req.params;
+    const { action } = req.body;
+    const driverId = req.user?.userId;
 
-  if (!driverId) {
-    res.status(401).json({ success: false, message: "Unauthorized" });
-    return;
-  }
-  if (!["accept", "reject"].includes(action)) {
-    res.status(400).json({ success: false, message: "Invalid action" });
-    return;
-  }
+    if (!driverId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+    if (!["accept", "reject"].includes(action)) {
+      res.status(400).json({ success: false, message: "Invalid action" });
+      return;
+    }
 
-  try {
-    await this.rideService.handleJoinRequest(rideId, driverId, passengerId, action as "accept" | "reject");
-    res.status(200).json({ success: true, message: `${action === "accept" ? "Accepted" : "Rejected"} join request successfully` });
-  } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
+    try {
+      await this.rideService.handleJoinRequest(rideId, driverId, passengerId, action as "accept" | "reject");
+      res.status(200).json({ success: true, message: `${action === "accept" ? "Accepted" : "Rejected"} join request successfully` });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
   }
-}
 }

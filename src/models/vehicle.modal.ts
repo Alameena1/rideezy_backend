@@ -11,10 +11,11 @@ export interface IVehicle extends Document {
   vehicleImage: string;
   documentImage: string;
   status: 'Pending' | 'Approved' | 'Rejected';
-  note:string;
+  note: string;
   createdAt?: Date;
   updatedAt?: Date;
   mileage: number;
+  seatCapacity: number; // New field for seat capacity
   _id: any;
 }
 
@@ -71,7 +72,12 @@ const VehicleSchema = new Schema<IVehicle>(
     },
     mileage: {
       type: Number,
-      required: true, // Mileage is now required for ride calculations
+      required: true,
+    },
+    seatCapacity: {
+      type: Number,
+      required: true, // Seat capacity is required
+      min: [1, 'Seat capacity must be at least 1'],
     },
   },
   { timestamps: true }

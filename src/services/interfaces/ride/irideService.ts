@@ -21,7 +21,7 @@ export interface IRideService {
     maxDistanceToRouteKm?: number,
     maxDistanceToEndKm?: number
   ): Promise<IRide[]>;
-  createRidePaymentOrder(rideId: string): Promise<any>;
+  createRidePaymentOrder(rideId: string, passengerId: string): Promise<any>;
   verifyAndJoinRide(
     rideId: string,
     passengerId: string,
@@ -46,9 +46,9 @@ export interface IRideService {
     driverId: string
   ): Promise<IRide>;
   handleJoinRequest(
-  rideId: string,
-  driverId: string,
-  passengerId: string,
-  action: "accept" | "reject"
-): Promise<void>;
+    rideId: string,
+    driverId: string,
+    passengerId: string,
+    action: "accept" | "reject"
+  ): Promise<void>;
 }

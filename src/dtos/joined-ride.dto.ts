@@ -7,6 +7,8 @@ export interface JoinedRideDto {
   date: string;
   time: string;
   startPoint: string;
+  startPlaceName: string;
+  endPlaceName: string;
   endPoint: string;
   distanceKm: number;
   mileage: number;
@@ -15,7 +17,7 @@ export interface JoinedRideDto {
   totalFuelCost: number;
   platformFee: number;
   totalRideCost: number;
-  costPerPerson: number;
+  costPerPerson: number | null; // Updated to allow null
   totalPeople: number;
   passengers: { passengerId: string; passengerName: string }[];
   status: string;
@@ -24,4 +26,5 @@ export interface JoinedRideDto {
   dropoffPoints: { passengerId: string; location: string; placeName: string }[];
   routeCoordinates: [number, number][];
   paymentStatus: string;
+  requestStatus: "pending" | "accepted" | "rejected";
 }

@@ -30,6 +30,7 @@ export default class VehicleService implements IVehicleService {
     const vehicle = {
       ...vehicleData,
       user: userObjectId,
+      seatCapacity: vehicleData.seatCapacity || 1, // Ensure seatCapacity is included
     };
     const createdVehicle = await this.vehicleRepository.createVehicle(vehicle);
 
@@ -106,7 +107,7 @@ export default class VehicleService implements IVehicleService {
       note: "",
       updatedAt: new Date(),
     });
-
+    
     return updatedVehicle;
   }
 }

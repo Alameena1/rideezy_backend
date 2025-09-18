@@ -36,7 +36,7 @@ interface RefreshTokenPayload {
 export const generateAccessToken = (userId: string, email: string, role: "user" | "admin"): string => {
   const payload: AccessTokenPayload = { userId, email, role };
   const secret = role === "admin" ? ADMIN_JWT_SECRET : USER_JWT_SECRET;
-  return jwt.sign(payload, secret, { expiresIn: "15m" });
+  return jwt.sign(payload, secret, { expiresIn: "15000m" });
 };
 
 export const generateRefreshToken = (userId: string, role: "user" | "admin"): string => {
