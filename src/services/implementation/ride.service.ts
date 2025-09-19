@@ -70,7 +70,7 @@ export class RideService implements IRideService {
     this.notificationService = notificationService;
   }
 
-   async findById(rideId: string): Promise<IRide | null> {
+  async findById(rideId: string): Promise<IRide | null> {
     try {
       console.log("[RideService] Finding ride by _id:", rideId);
       if (!Types.ObjectId.isValid(rideId)) {
@@ -286,180 +286,180 @@ export class RideService implements IRideService {
   }
 
   async joinRide(
-  rideId: string,
-  passengerId: string,
-  pickupLocation: string,
-  dropoffLocation: string
-): Promise<IRide> {
-  const session = await this.rideRepo.startSession();
-  try {
-    const result = await session.withTransaction(async () => {
-      console.log(
-        `[${new Date().toISOString()}] Starting joinRide transaction for rideId: ${rideId}, passengerId: ${passengerId}`
-      );
-      const passenger = await this.userRepo.findUserById(passengerId, { session });
-      if (!passenger) {
-        console.error(`[${new Date().toISOString()}] Passenger not found: ${passengerId}`);
-        throw new Error("Passenger not found");
-      }
-      if (passenger.govId?.verificationStatus !== "Verified") {
-        console.error(`[${new Date().toISOString()}] Passenger not verified: ${passengerId}`);
-        throw new Error("Passenger must be verified");
-      }
+    rideId: string,
+    passengerId: string,
+    pickupLocation: string,
+    dropoffLocation: string
+  ): Promise<IRide> {
+    const session = await this.rideRepo.startSession();
+    try {
+      const result = await session.withTransaction(async () => {
+        console.log(
+          `[${new Date().toISOString()}] Starting joinRide transaction for rideId: ${rideId}, passengerId: ${passengerId}`
+        );
+        const passenger = await this.userRepo.findUserById(passengerId, { session });
+        if (!passenger) {
+          console.error(`[${new Date().toISOString()}] Passenger not found: ${passengerId}`);
+          throw new Error("Passenger not found");
+        }
+        if (passenger.govId?.verificationStatus !== "Verified") {
+          console.error(`[${new Date().toISOString()}] Passenger not verified: ${passengerId}`);
+          throw new Error("Passenger must be verified");
+        }
 
-      const canJoin = await this.subscriptionService.canJoinRide(passengerId);
-      if (!canJoin) {
-        const { joinRides } = await this.subscriptionService.getRemainingRideCounts(passengerId);
-        console.error(`[${new Date().toISOString()}] Ride join limit exceeded for passengerId: ${passengerId}, remaining joins: ${joinRides}`);
-        throw new Error(`Ride join limit exceeded. Remaining joins: ${joinRides}`);
-      }
+        const canJoin = await this.subscriptionService.canJoinRide(passengerId);
+        if (!canJoin) {
+          const { joinRides } = await this.subscriptionService.getRemainingRideCounts(passengerId);
+          console.error(`[${new Date().toISOString()}] Ride join limit exceeded for passengerId: ${passengerId}, remaining joins: ${joinRides}`);
+          throw new Error(`Ride join limit exceeded. Remaining joins: ${joinRides}`);
+        }
 
-      const ride = await this.rideRepo.findOne({ rideId }, { session });
-      if (!ride) {
-        console.error(`[${new Date().toISOString()}] Ride not found: ${rideId}`);
-        throw new Error("Ride not found");
-      }
-      console.log(`[${new Date().toISOString()}] Ride found:`, {
-        rideId: ride.rideId,
-        status: ride.status,
-        passengers: ride.passengers.length,
-        passengerCount: ride.passengerCount,
-        pendingRequests: ride.pendingRequests
+        const ride = await this.rideRepo.findOne({ rideId }, { session });
+        if (!ride) {
+          console.error(`[${new Date().toISOString()}] Ride not found: ${rideId}`);
+          throw new Error("Ride not found");
+        }
+        console.log(`[${new Date().toISOString()}] Ride found:`, {
+          rideId: ride.rideId,
+          status: ride.status,
+          passengers: ride.passengers.length,
+          passengerCount: ride.passengerCount,
+          pendingRequests: ride.pendingRequests
+        });
+
+        if (ride.passengers.some((p) => p.passengerId === passengerId)) {
+          console.error(`[${new Date().toISOString()}] Passenger ${passengerId} already joined ride ${rideId}`);
+          throw new Error("Already joined");
+        }
+        if (new Date() >= new Date(`${ride.date.toISOString().split("T")[0]}T${ride.time}:00`)) {
+          await this.rideRepo.updateOne({ rideId }, { status: "Started" }, { session });
+          console.error(`[${new Date().toISOString()}] Ride ${rideId} has started`);
+          throw new Error("Ride has started");
+        }
+        if (ride.passengers.length >= ride.passengerCount) {
+          console.error(`[${new Date().toISOString()}] Ride ${rideId} is full`);
+          throw new Error("Ride is full");
+        }
+
+        const [pickupLat, pickupLng] = pickupLocation.split(",").map(Number);
+        const [dropoffLat, dropoffLng] = dropoffLocation.split(",").map(Number);
+        if ([pickupLat, pickupLng, dropoffLat, dropoffLng].some(isNaN)) {
+          console.error(`[${new Date().toISOString()}] Invalid coordinates for ride ${rideId}:`, { pickupLocation, dropoffLocation });
+          throw new Error("Invalid coordinates");
+        }
+
+        const pickupPlaceName = await this.osrmClient.reverseGeocode(pickupLat, pickupLng);
+        const dropoffPlaceName = await this.osrmClient.reverseGeocode(dropoffLat, dropoffLng);
+        console.log(`[${new Date().toISOString()}] Geocoded locations:`, { pickupPlaceName, dropoffPlaceName });
+
+        const JOIN_THRESHOLD = 0.5;
+        let routeCoordinates = ride.routeCoordinates || [];
+        if (routeCoordinates.length < 2) {
+          console.warn(`[${new Date().toISOString()}] Route coordinates missing for ride ${rideId}, fetching new route`);
+          const route = await this.osrmClient.getRoute([ride.startPoint, ride.endPoint]);
+          routeCoordinates = route.coordinates;
+          await this.rideRepo.updateOne({ rideId }, { routeCoordinates }, { session });
+        }
+
+        const nearestPickupPoint = await this.osrmClient.findNearestPointOnRoute(routeCoordinates, [pickupLat, pickupLng]);
+        const pickupDistance = this.osrmClient.haversineDistance(nearestPickupPoint, [pickupLat, pickupLng]);
+        if (pickupDistance > JOIN_THRESHOLD) {
+          console.error(`[${new Date().toISOString()}] Pickup too far for ride ${rideId}: ${pickupDistance} km`);
+          throw new Error("Pickup too far");
+        }
+        const pickupPointStr = `${nearestPickupPoint[0]},${nearestPickupPoint[1]}`;
+
+        const nearestDropoffPoint = await this.osrmClient.findNearestPointOnRoute(routeCoordinates, [dropoffLat, dropoffLng]);
+        const dropoffDistance = this.osrmClient.haversineDistance(nearestDropoffPoint, [dropoffLat, dropoffLng]);
+        if (dropoffDistance > JOIN_THRESHOLD) {
+          console.error(`[${new Date().toISOString()}] Drop-off too far for ride ${rideId}: ${dropoffDistance} km`);
+          throw new Error("Drop-off too far");
+        }
+        const dropoffPointStr = `${nearestDropoffPoint[0]},${nearestDropoffPoint[1]}`;
+
+        let startIndex = 0;
+        let minDistStart = Infinity;
+        for (let i = 0; i < routeCoordinates.length; i++) {
+          const dist = this.osrmClient.haversineDistance(routeCoordinates[i], nearestPickupPoint);
+          if (dist < minDistStart) {
+            minDistStart = dist;
+            startIndex = i;
+          }
+        }
+
+        let endIndex = routeCoordinates.length - 1;
+        let minDistEnd = Infinity;
+        for (let i = 0; i < routeCoordinates.length; i++) {
+          const dist = this.osrmClient.haversineDistance(routeCoordinates[i], nearestDropoffPoint);
+          if (dist < minDistEnd) {
+            minDistEnd = dist;
+            endIndex = i;
+          }
+        }
+
+        if (startIndex >= endIndex) {
+          console.error(`[${new Date().toISOString()}] Invalid segment for ride ${rideId}: Pickup after dropoff`);
+          throw new Error("Invalid segment: Pickup after dropoff");
+        }
+
+        let segmentDistanceKm = 0;
+        for (let i = startIndex; i < endIndex; i++) {
+          segmentDistanceKm += this.osrmClient.haversineDistance(routeCoordinates[i], routeCoordinates[i + 1]);
+        }
+        console.log(
+          `[${new Date().toISOString()}] Segment for passengerId: ${passengerId} in ride: ${rideId}`,
+          { startIndex, endIndex, segmentDistanceKm }
+        );
+
+        const pendingRequest = {
+          passengerId,
+          passengerName: passenger.fullName,
+          pickupLocation: pickupPointStr,
+          dropoffLocation: dropoffPointStr,
+          pickupPlaceName,
+          dropoffPlaceName,
+          requestedAt: new Date(),
+          status: "pending" as const,
+          distanceKm: segmentDistanceKm,
+        };
+
+        console.log(
+          `[${new Date().toISOString()}] Adding pending request for passengerId: ${passengerId} in ride: ${rideId}`,
+          pendingRequest
+        );
+
+        const updateResult = await this.rideRepo.updateOne(
+          { rideId },
+          { $push: { pendingRequests: pendingRequest } },
+          { session }
+        );
+        console.log(
+          `[${new Date().toISOString()}] MongoDB update result for ride ${rideId}:`,
+          updateResult
+        );
+
+        const updatedRide = await this.rideRepo.findOne({ rideId }, { session });
+        if (!updatedRide) {
+          console.error(`[${new Date().toISOString()}] Updated ride not found: ${rideId}`);
+          throw new Error("Updated ride not found");
+        }
+        console.log(
+          `[${new Date().toISOString()}] Updated ride pendingRequests for ride ${rideId}:`,
+          updatedRide.pendingRequests
+        );
+
+        await this.notificationService.triggerRideJoinNotification(rideId, ride.driverId, passengerId);
+        return updatedRide;
       });
-
-      if (ride.passengers.some((p) => p.passengerId === passengerId)) {
-        console.error(`[${new Date().toISOString()}] Passenger ${passengerId} already joined ride ${rideId}`);
-        throw new Error("Already joined");
-      }
-      if (new Date() >= new Date(`${ride.date.toISOString().split("T")[0]}T${ride.time}:00`)) {
-        await this.rideRepo.updateOne({ rideId }, { status: "Started" }, { session });
-        console.error(`[${new Date().toISOString()}] Ride ${rideId} has started`);
-        throw new Error("Ride has started");
-      }
-      if (ride.passengers.length >= ride.passengerCount) {
-        console.error(`[${new Date().toISOString()}] Ride ${rideId} is full`);
-        throw new Error("Ride is full");
-      }
-
-      const [pickupLat, pickupLng] = pickupLocation.split(",").map(Number);
-      const [dropoffLat, dropoffLng] = dropoffLocation.split(",").map(Number);
-      if ([pickupLat, pickupLng, dropoffLat, dropoffLng].some(isNaN)) {
-        console.error(`[${new Date().toISOString()}] Invalid coordinates for ride ${rideId}:`, { pickupLocation, dropoffLocation });
-        throw new Error("Invalid coordinates");
-      }
-
-      const pickupPlaceName = await this.osrmClient.reverseGeocode(pickupLat, pickupLng);
-      const dropoffPlaceName = await this.osrmClient.reverseGeocode(dropoffLat, dropoffLng);
-      console.log(`[${new Date().toISOString()}] Geocoded locations:`, { pickupPlaceName, dropoffPlaceName });
-
-      const JOIN_THRESHOLD = 0.5;
-      let routeCoordinates = ride.routeCoordinates || [];
-      if (routeCoordinates.length < 2) {
-        console.warn(`[${new Date().toISOString()}] Route coordinates missing for ride ${rideId}, fetching new route`);
-        const route = await this.osrmClient.getRoute([ride.startPoint, ride.endPoint]);
-        routeCoordinates = route.coordinates;
-        await this.rideRepo.updateOne({ rideId }, { routeCoordinates }, { session });
-      }
-
-      const nearestPickupPoint = await this.osrmClient.findNearestPointOnRoute(routeCoordinates, [pickupLat, pickupLng]);
-      const pickupDistance = this.osrmClient.haversineDistance(nearestPickupPoint, [pickupLat, pickupLng]);
-      if (pickupDistance > JOIN_THRESHOLD) {
-        console.error(`[${new Date().toISOString()}] Pickup too far for ride ${rideId}: ${pickupDistance} km`);
-        throw new Error("Pickup too far");
-      }
-      const pickupPointStr = `${nearestPickupPoint[0]},${nearestPickupPoint[1]}`;
-
-      const nearestDropoffPoint = await this.osrmClient.findNearestPointOnRoute(routeCoordinates, [dropoffLat, dropoffLng]);
-      const dropoffDistance = this.osrmClient.haversineDistance(nearestDropoffPoint, [dropoffLat, dropoffLng]);
-      if (dropoffDistance > JOIN_THRESHOLD) {
-        console.error(`[${new Date().toISOString()}] Drop-off too far for ride ${rideId}: ${dropoffDistance} km`);
-        throw new Error("Drop-off too far");
-      }
-      const dropoffPointStr = `${nearestDropoffPoint[0]},${nearestDropoffPoint[1]}`;
-
-      let startIndex = 0;
-      let minDistStart = Infinity;
-      for (let i = 0; i < routeCoordinates.length; i++) {
-        const dist = this.osrmClient.haversineDistance(routeCoordinates[i], nearestPickupPoint);
-        if (dist < minDistStart) {
-          minDistStart = dist;
-          startIndex = i;
-        }
-      }
-
-      let endIndex = routeCoordinates.length - 1;
-      let minDistEnd = Infinity;
-      for (let i = 0; i < routeCoordinates.length; i++) {
-        const dist = this.osrmClient.haversineDistance(routeCoordinates[i], nearestDropoffPoint);
-        if (dist < minDistEnd) {
-          minDistEnd = dist;
-          endIndex = i;
-        }
-      }
-
-      if (startIndex >= endIndex) {
-        console.error(`[${new Date().toISOString()}] Invalid segment for ride ${rideId}: Pickup after dropoff`);
-        throw new Error("Invalid segment: Pickup after dropoff");
-      }
-
-      let segmentDistanceKm = 0;
-      for (let i = startIndex; i < endIndex; i++) {
-        segmentDistanceKm += this.osrmClient.haversineDistance(routeCoordinates[i], routeCoordinates[i + 1]);
-      }
-      console.log(
-        `[${new Date().toISOString()}] Segment for passengerId: ${passengerId} in ride: ${rideId}`,
-        { startIndex, endIndex, segmentDistanceKm }
-      );
-
-      const pendingRequest = {
-        passengerId,
-        passengerName: passenger.fullName,
-        pickupLocation: pickupPointStr,
-        dropoffLocation: dropoffPointStr,
-        pickupPlaceName,
-        dropoffPlaceName,
-        requestedAt: new Date(),
-        status: "pending" as const,
-        distanceKm: segmentDistanceKm,
-      };
-
-      console.log(
-        `[${new Date().toISOString()}] Adding pending request for passengerId: ${passengerId} in ride: ${rideId}`,
-        pendingRequest
-      );
-
-      const updateResult = await this.rideRepo.updateOne(
-        { rideId },
-        { $push: { pendingRequests: pendingRequest } },
-        { session }
-      );
-      console.log(
-        `[${new Date().toISOString()}] MongoDB update result for ride ${rideId}:`,
-        updateResult
-      );
-
-      const updatedRide = await this.rideRepo.findOne({ rideId }, { session });
-      if (!updatedRide) {
-        console.error(`[${new Date().toISOString()}] Updated ride not found: ${rideId}`);
-        throw new Error("Updated ride not found");
-      }
-      console.log(
-        `[${new Date().toISOString()}] Updated ride pendingRequests for ride ${rideId}:`,
-        updatedRide.pendingRequests
-      );
-
-      await this.notificationService.triggerRideJoinNotification(rideId, ride.driverId, passengerId);
-      return updatedRide;
-    });
-    return result!;
-  } catch (error) {
-    console.error(`[RideService] Error joining ride ${rideId}:`, (error as Error).message);
-    throw error;
-  } finally {
-    console.log(`[${new Date().toISOString()}] Ending session for joinRide: ${rideId}`);
-    session.endSession();
+      return result!;
+    } catch (error) {
+      console.error(`[RideService] Error joining ride ${rideId}:`, (error as Error).message);
+      throw error;
+    } finally {
+      console.log(`[${new Date().toISOString()}] Ending session for joinRide: ${rideId}`);
+      session.endSession();
+    }
   }
-}
 
   async getJoinedRides(userId: string): Promise<JoinedRideDto[]> {
     const acceptedRides = await this.rideRepo.find({
@@ -901,63 +901,63 @@ export class RideService implements IRideService {
           throw new Error("Request not found or already processed");
         }
 
-       if (action === "reject") {
-  const passengerCost = Math.max(request.distanceKm * ride.perKmRate, 20);
+        if (action === "reject") {
+          const passengerCost = Math.max(request.distanceKm * ride.perKmRate, 20);
 
-  if (request.paymentId) {
-    console.log("Processing refund for paymentId:", request.paymentId);
-    try {
-      await this.razorpay.payments.refund(request.paymentId, {
-        amount: Math.round(passengerCost * 100),
-      });
-      console.log(`Refund successful for paymentId: ${request.paymentId}`);
-    } catch (refundError) {
-      console.error(`Failed to process Razorpay refund for paymentId: ${request.paymentId}`, refundError);
-      throw new Error("Failed to process refund");
-    }
-  }
+          if (request.paymentId) {
+            console.log("Processing refund for paymentId:", request.paymentId);
+            try {
+              await this.razorpay.payments.refund(request.paymentId, {
+                amount: Math.round(passengerCost * 100),
+              });
+              console.log(`Refund successful for paymentId: ${request.paymentId}`);
+            } catch (refundError) {
+              console.error(`Failed to process Razorpay refund for paymentId: ${request.paymentId}`, refundError);
+              throw new Error("Failed to process refund");
+            }
+          }
 
-  // Update passenger's wallet
-  const passenger = await this.userRepo.findUserById(passengerId, { session });
-  if (!passenger) {
-    console.error("Passenger not found for passengerId:", passengerId);
-    throw new Error("Passenger not found");
-  }
-  if (!passenger.wallet) {
-    console.error("Passenger's wallet is not initialized for passengerId:", passengerId);
-    throw new Error("Passenger's wallet is not initialized");
-  }
+          // Update passenger's wallet
+          const passenger = await this.userRepo.findUserById(passengerId, { session });
+          if (!passenger) {
+            console.error("Passenger not found for passengerId:", passengerId);
+            throw new Error("Passenger not found");
+          }
+          if (!passenger.wallet) {
+            console.error("Passenger's wallet is not initialized for passengerId:", passengerId);
+            throw new Error("Passenger's wallet is not initialized");
+          }
 
-  passenger.wallet.balance += passengerCost;
-  passenger.wallet.transactions.push({
-    transactionId: `TXN_${Date.now()}`,
-    type: "REFUND",
-    amount: passengerCost,
-    status: "COMPLETED",
-    createdAt: new Date(),
-  });
+          passenger.wallet.balance += passengerCost;
+          passenger.wallet.transactions.push({
+            transactionId: `TXN_${Date.now()}`,
+            type: "REFUND",
+            amount: passengerCost,
+            status: "COMPLETED",
+            createdAt: new Date(),
+          });
 
-  await this.userRepo.updateOne(
-    { _id: passengerId },
-    { $set: { wallet: passenger.wallet } },
-    { session }
-  );
+          await this.userRepo.updateOne(
+            { _id: passengerId },
+            { $set: { wallet: passenger.wallet } },
+            { session }
+          );
 
-  // Remove the pending request
-  await this.rideRepo.updateOne(
-    { _id: rideId },
-    { $pull: { pendingRequests: { passengerId } } },
-    { session }
-  );
+          // Remove the pending request
+          await this.rideRepo.updateOne(
+            { _id: rideId },
+            { $pull: { pendingRequests: { passengerId } } },
+            { session }
+          );
 
-  // Trigger notification
-  await this.notificationService.triggerRideJoinRejectedNotification(
-    rideId,
-    passengerId,
-    passengerId,
-    request.passengerName
-  );
-}else if (action === "accept") {
+          // Trigger notification
+          await this.notificationService.triggerRideJoinRejectedNotification(
+            rideId,
+            passengerId,
+            passengerId,
+            request.passengerName
+          );
+        } else if (action === "accept") {
           const canJoin = await this.subscriptionService.canJoinRide(passengerId);
           if (!canJoin) {
             const { joinRides } = await this.subscriptionService.getRemainingRideCounts(passengerId);
@@ -1310,7 +1310,7 @@ export class RideService implements IRideService {
     const session = await this.rideRepo.startSession();
     try {
       const result = await session.withTransaction(async () => {
-        const ride = await this.rideRepo.findOne({ rideId });
+        const ride = await this.rideRepo.findOne({ rideId }, { session });
         if (!ride) {
           console.error("[RideService] No ride found in database for rideId:", rideId);
           throw new Error("Ride not found");
@@ -1323,7 +1323,17 @@ export class RideService implements IRideService {
           console.warn("Starting tracking before scheduled time");
         }
 
-        await this.rideRepo.updateOne({ rideId }, { status: "Started" });
+        await this.rideRepo.updateOne({ rideId }, { status: "Started" }, { session });
+
+        // Notify all passengers that the ride has started
+        for (const passenger of ride.passengers) {
+          await this.notificationService.triggerRideCancellationNotification(
+            rideId,
+            passenger.passengerId,
+            `Ride ${rideId} has started. Get ready for your trip!`
+          );
+        }
+
         return (await this.rideRepo.findOne({ rideId }, { session }))!;
       });
       return result!;

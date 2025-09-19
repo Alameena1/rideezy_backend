@@ -123,7 +123,6 @@ export class AdminController implements IAdminController {
     }
   };
 
-  // In AdminController.ts
 updateVehicleStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { vehicleId } = req.params; // Get vehicleId from URL params
   const { status, note } = req.body; // Get status and note from request body
@@ -190,8 +189,8 @@ updateVehicleStatus = async (req: AuthenticatedRequest, res: Response): Promise<
   };
 
 updateSubscriptionPlanStatus = async (req: Request, res: Response): Promise<void> => {
-  const { planId } = req.params; // Get planId from URL params
-  const { status } = req.body;   // Get status from request body
+  const { planId } = req.params; 
+  const { status } = req.body;   
 
   try {
     await this.adminService.updateSubscriptionPlanStatus(planId, status);
