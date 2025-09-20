@@ -52,10 +52,10 @@ import { IOSRMClient } from "../infrastructure/map-api/osrm.client";
 import { OSRMClient } from "../infrastructure/map-api/osrm.client";
 
 // Subscription
-import { ISubscriptionController } from "../controllers/interface/subscription/isubscriptionController";
+import { ISubscriptionController } from "../controllers/implimentation/subscription/isubscriptionController";
 import { ISubscriptionService } from "../services/interfaces/subscription/isubscriptionService";
 import { ISubscriptionRepository } from "../repositories/interface/subscription/isubscriptionRepository";
-import { SubscriptionController } from "../controllers/implimentation/SubscriptionController";
+import { SubscriptionController } from "../controllers/implimentation/subscription/SubscriptionController";
 import { SubscriptionService } from "../services/implementation/subscriptionService"; 
 import { SubscriptionRepository } from "../repositories/implimentation/subscriptionRepository"; 
 

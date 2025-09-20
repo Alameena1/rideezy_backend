@@ -5,8 +5,8 @@ export interface ISubscriptionPlan extends Document {
   durationMonths: number;
   price: number;
   description: string;
-  maxStartingRides: number; // Maximum rides the user can start per subscription period
-  maxJoiningRides: number;  // Maximum rides the user can join per subscription period
+  maxStartingRides: number; 
+  maxJoiningRides: number;  
   status: "Active" | "Blocked";
   isDeleted: boolean;
   createdAt?: Date;

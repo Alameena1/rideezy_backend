@@ -71,34 +71,35 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscription?: any }> {
-    const user = await this.subscriptionRepository.findUserById(userId);
-    if (!user || !user.subscription) {
-      return { isSubscribed: false };
-    }
-
-    const now = new Date();
-    const isSubscribed = user.subscription.endDate > now;
-
-    if (!isSubscribed) {
-      return { isSubscribed: false };
-    }
-
-    return {
-      isSubscribed: true,
-      subscription: {
-        plan: {
-          _id: user.subscription.planId,
-          name: user.subscription.planName,
-          price: user.subscription.originalPrice,
-          durationMonths: user.subscription.durationMonths,
-          description: user.subscription.planDescription,
-        },
-        originalPrice: user.subscription.originalPrice,
-        startDate: user.subscription.startDate,
-        endDate: user.subscription.endDate,
-      },
-    };
+  const user = await this.subscriptionRepository.findUserById(userId);
+  if (!user || !user.subscription) {
+    return { isSubscribed: false };
   }
+
+  const now = new Date();
+  const isSubscribed = user.subscription.endDate > now;
+
+  if (!isSubscribed) {
+    return { isSubscribed: false };
+  }
+
+  // Ensure the response matches the DTO structure
+  return {
+    isSubscribed: true,
+    subscription: {
+      plan: {
+        _id: user.subscription.planId?.toString(), 
+        name: user.subscription.planName,
+        price: user.subscription.originalPrice,
+        durationMonths: user.subscription.durationMonths,
+        description: user.subscription.planDescription,
+      },
+      originalPrice: user.subscription.originalPrice,
+      startDate: user.subscription.startDate,
+      endDate: user.subscription.endDate,
+    },
+  };
+}
 
   async canBookRide(userId: string): Promise<boolean> {
     const user = await this.subscriptionRepository.findUserById(userId);

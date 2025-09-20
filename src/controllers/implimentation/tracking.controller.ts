@@ -4,7 +4,12 @@ import { TYPES } from "../../di/types";
 import { ITrackingController } from "../interface/tracking/itrackingController";
 import { ITrackingService } from "../../services/interfaces/tracking/itrackingService";
 import { IRideService } from "../../services/interfaces/ride/irideService";
-import { AuthenticatedRequest } from "../../types/express";
+import { StatusCode } from "../../constants/status-codes.enum";
+import { ResponseMessages } from "../../constants/response-messages.const";
+
+interface AuthenticatedRequest extends Request {
+  user?: { userId: string; email: string };
+}
 
 @injectable()
 export class TrackingController implements ITrackingController {
@@ -25,39 +30,38 @@ export class TrackingController implements ITrackingController {
       const driverId = req.user?.userId;
 
       if (!rideId || !driverId) {
-        res.status(400).json({ success: false, message: "Ride ID and driver ID are required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
 
       const ride = await this.rideService.findById(rideId);
       if (!ride) {
-        res.status(404).json({ success: false, message: "Ride not found" });
+        res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
       }
       if (ride.driverId !== driverId) {
-        res.status(403).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.FORBIDDEN).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
       const initialPosition = req.body.initialPosition as [number, number] | undefined;
       if (!initialPosition) {
-        res.status(400).json({ success: false, message: "Initial position is required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
 
       const tracking = await this.trackingService.startTracking(rideId, driverId, initialPosition);
       
-      // Update ride status to "Started"
       await this.rideService.updateRide(ride.rideId || ride._id.toString(), { status: "Started" }, ride.driverId);
 
-      res.status(200).json({
+      res.status(StatusCode.OK).json({
         success: true,
         message: "Tracking started successfully",
         data: tracking,
       });
     } catch (error: any) {
       console.error("[TrackingController] Error starting tracking:", error);
-      res.status(400).json({ success: false, message: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
     }
   }
 
@@ -65,95 +69,94 @@ export class TrackingController implements ITrackingController {
     try {
       const userId = req.user?.userId;
       if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
-      const { rideId } = req.params; // MongoDB _id
+      const { rideId } = req.params;
       if (!rideId) {
-        res.status(400).json({ success: false, message: "Ride ID is required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
 
       const ride = await this.rideService.findById(rideId);
       if (!ride) {
-        res.status(404).json({ success: false, message: "Ride not found" });
+        res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
       }
 
       if (ride.driverId !== userId) {
-        res.status(403).json({ success: false, message: "Unauthorized: User is not the driver" });
+        res.status(StatusCode.FORBIDDEN).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
       const { position } = req.body;
       if (!position || !Array.isArray(position) || position.length !== 2 || position.some(isNaN)) {
-        res.status(400).json({ success: false, message: "Invalid position data" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: "Invalid position data" });
         return;
       }
 
       await this.trackingService.updateTrackingPosition(rideId, position as [number, number]);
-      res.status(200).json({ success: true, message: "Tracking position updated successfully" });
+      res.status(StatusCode.OK).json({ success: true, message: "Tracking position updated successfully" });
     } catch (error: any) {
       console.error("[TrackingController] Error updating tracking position:", error);
-      res.status(400).json({ success: false, message: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
     }
   }
 
   async getTrackingPosition(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { rideId } = req.params; // MongoDB _id
+      const { rideId } = req.params;
       if (!rideId) {
-        res.status(400).json({ success: false, message: "Ride ID is required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
 
       const ride = await this.rideService.findById(rideId);
       if (!ride) {
-        res.status(404).json({ success: false, message: "Ride not found" });
+        res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
       }
 
       const position = await this.trackingService.getTrackingPosition(rideId);
-      res.status(200).json({ success: true, data: position });
+      res.status(StatusCode.OK).json({ success: true, data: position });
     } catch (error: any) {
       console.error("[TrackingController] Error fetching tracking position:", error);
-      res.status(400).json({ success: false, message: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
     }
   }
 
- async stopTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async stopTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { rideId } = req.params;
       const driverId = req.user?.userId;
 
       if (!rideId || !driverId) {
-        res.status(400).json({ success: false, message: "Ride ID and driver ID are required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
 
       const ride = await this.rideService.findById(rideId);
       if (!ride) {
-        res.status(404).json({ success: false, message: "Ride not found" });
+        res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
       }
       if (ride.driverId !== driverId) {
-        res.status(403).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.FORBIDDEN).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
       await this.trackingService.stopTracking(rideId);
       
-      // Update ride status to "Completed"
       await this.rideService.updateRide(ride._id.toString(), { status: "Completed" }, ride.driverId);
 
-      res.status(200).json({
+      res.status(StatusCode.OK).json({
         success: true,
         message: "Tracking stopped successfully",
       });
     } catch (error: any) {
       console.error("[TrackingController] Error stopping tracking:", error);
-      res.status(400).json({ success: false, message: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
     }
   }
 
@@ -162,29 +165,32 @@ export class TrackingController implements ITrackingController {
       const userId = req.user?.userId;
       console.log("[TrackingController] User ID from token:", userId);
       if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
-      const { rideId } = req.params; // MongoDB _id
-      console.log("[TrackingController] Received rideId for status:", rideId);
+      const { rideId } = req.params;
+      if (!rideId) {
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+        return;
+      }
 
       const ride = await this.rideService.findById(rideId);
       if (!ride) {
-        res.status(404).json({ success: false, message: "Ride not found" });
+        res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
       }
 
       const tracking = await this.trackingService.getTrackingStatus(rideId);
 
-      res.status(200).json({
+      res.status(StatusCode.OK).json({
         success: true,
         message: "Tracking status retrieved successfully",
         data: tracking,
       });
     } catch (error: any) {
       console.error("[TrackingController] Error fetching tracking status:", error);
-      res.status(error.statusCode || 400).json({ success: false, message: error.message });
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
     }
   }
 }

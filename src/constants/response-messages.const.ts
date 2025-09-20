@@ -10,4 +10,8 @@ export const ResponseMessages = {
   INVALID_CREDENTIALS: "Invalid email or password",
   ACCOUNT_BLOCKED: "Your account has been blocked. Contact support.",
   TOKEN_AND_NEW_PASSWORD_REQUIRED: "Token and new password are required",
+  UNAUTHORIZED: "Unauthorized access",
+  FORBIDDEN: "Forbidden access",
+  USER_NOT_FOUND: "User not found",
+  INVALID_REQUEST: "Invalid request",
 };

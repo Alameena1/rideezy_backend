@@ -3,6 +3,8 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { INotificationService } from "../../services/interfaces/notification/iNotificationService";
 import { INotificationController } from "../interface/notification/iNotificationController";
+import { StatusCode } from "../../constants/status-codes.enum";
+import { ResponseMessages } from "../../constants/response-messages.const";
 
 @injectable()
 export class NotificationController implements INotificationController {
@@ -16,13 +18,13 @@ export class NotificationController implements INotificationController {
     try {
       const { rideId, userId, joinedUserId } = req.body;
       if (!rideId || !userId || !joinedUserId) {
-        res.status(400).json({ success: false, message: "All fields are required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
       await this.notificationService.triggerRideJoinNotification(rideId, userId, joinedUserId);
-      res.status(200).json({ success: true, message: "Notification triggered" });
+      res.status(StatusCode.OK).json({ success: true, message: "Notification triggered" });
     } catch (error) {
-      res.status(500).json({ success: false, message: (error as Error).message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
     }
   }
 
@@ -30,41 +32,41 @@ export class NotificationController implements INotificationController {
     try {
       const { rideId, userId } = req.body;
       if (!rideId || !userId) {
-        res.status(400).json({ success: false, message: "All fields are required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
       await this.notificationService.triggerRideCancellationNotification(rideId, userId);
-      res.status(200).json({ success: true, message: "Notification triggered" });
+      res.status(StatusCode.OK).json({ success: true, message: "Notification triggered" });
     } catch (error) {
-      res.status(500).json({ success: false, message: (error as Error).message });
-    } 
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
+    }
   }
 
   async triggerWalletTransactionNotification(req: Request, res: Response): Promise<void> {
     try {
       const { userId, amount, type } = req.body;
       if (!userId || !amount || !type) {
-        res.status(400).json({ success: false, message: "All fields are required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
       await this.notificationService.triggerWalletTransactionNotification(userId, amount, type as "credit" | "debit");
-      res.status(200).json({ success: true, message: "Notification triggered" });
+      res.status(StatusCode.OK).json({ success: true, message: "Notification triggered" });
     } catch (error) {
-      res.status(500).json({ success: false, message: (error as Error).message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
     }
   }
 
   async triggerSubscriptionExpiryNotification(req: Request, res: Response): Promise<void> {
     try {
       const { userId, daysLeft } = req.body;
-      if (!userId || !daysLeft) {
-        res.status(400).json({ success: false, message: "All fields are required" });
+      if (!userId || daysLeft === undefined) {
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
       await this.notificationService.triggerSubscriptionExpiryNotification(userId, daysLeft);
-      res.status(200).json({ success: true, message: "Notification triggered" });
+      res.status(StatusCode.OK).json({ success: true, message: "Notification triggered" });
     } catch (error) {
-      res.status(500).json({ success: false, message: (error as Error).message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
     }
   }
 
@@ -72,13 +74,13 @@ export class NotificationController implements INotificationController {
     try {
       const { userId } = req.params;
       if (!userId) {
-        res.status(400).json({ success: false, message: "userId is required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
       const notifications = await this.notificationService.getUserNotifications(userId);
-      res.status(200).json({ success: true, notifications });
+      res.status(StatusCode.OK).json({ success: true, notifications });
     } catch (error) {
-      res.status(500).json({ success: false, message: (error as Error).message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
     }
   }
 
@@ -86,13 +88,13 @@ export class NotificationController implements INotificationController {
     try {
       const { notificationId } = req.params;
       if (!notificationId) {
-        res.status(400).json({ success: false, message: "notificationId is required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
       const notification = await this.notificationService.markAsRead(notificationId);
-      res.status(200).json({ success: true, notification });
+      res.status(StatusCode.OK).json({ success: true, notification });
     } catch (error) {
-      res.status(500).json({ success: false, message: (error as Error).message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
     }
   }
 }

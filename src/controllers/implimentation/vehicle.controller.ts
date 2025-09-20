@@ -3,6 +3,8 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { IVehicleService } from "../../services/interfaces/vehicle/ivehicleService";
 import { IVehicleController } from "../interface/vehicle/ivehicleController";
+import { StatusCode } from "../../constants/status-codes.enum";
+import { ResponseMessages } from "../../constants/response-messages.const";
 
 interface AuthenticatedRequest extends Request {
   user?: { userId: string; email: string };
@@ -20,23 +22,20 @@ export class VehicleController implements IVehicleController {
     try {
       const userId = req.user?.userId;
       const vehicleData = req.body;
-  
+
       if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
-  
+
       const { vehicleName, vehicleType, licensePlate, vehicleImage, documentImage } = vehicleData;
       if (!vehicleName || !vehicleType || !licensePlate || !vehicleImage || !documentImage) {
-        res.status(400).json({
-          success: false,
-          message: "Missing required fields: vehicleName, vehicleType, licensePlate, vehicleImage, or documentImage",
-        });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-  
+
       const newVehicle = await this.vehicleService.addVehicle(userId, vehicleData);
-      res.status(201).json({ success: true, message: "Vehicle added successfully", data: newVehicle });
+      res.status(StatusCode.CREATED).json({ success: true, message: "Vehicle added successfully", data: newVehicle });
     } catch (error) {
       next(error);
     }
@@ -47,12 +46,12 @@ export class VehicleController implements IVehicleController {
       const userId = req.user?.userId;
 
       if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
       const vehicles = await this.vehicleService.getUserVehicles(userId);
-      res.status(200).json({ success: true, data: vehicles });
+      res.status(StatusCode.OK).json({ success: true, data: vehicles });
     } catch (error) {
       next(error);
     }
@@ -61,21 +60,21 @@ export class VehicleController implements IVehicleController {
   async updateVehicle(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
-      const vehicleId = req.params.id; 
+      const vehicleId = req.params.id;
       const vehicleData = req.body;
 
       if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
       if (!vehicleId) {
-        res.status(400).json({ success: false, message: "Vehicle ID is required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
 
       const updatedVehicle = await this.vehicleService.updateVehicle(userId, vehicleId, vehicleData);
-      res.status(200).json({ success: true, message: "Vehicle updated successfully", data: updatedVehicle });
+      res.status(StatusCode.OK).json({ success: true, message: "Vehicle updated successfully", data: updatedVehicle });
     } catch (error) {
       next(error);
     }
@@ -87,21 +86,22 @@ export class VehicleController implements IVehicleController {
       const vehicleId = req.params.id;
 
       if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
       if (!vehicleId) {
-        res.status(400).json({ success: false, message: "Vehicle ID is required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
 
       await this.vehicleService.deleteVehicle(userId, vehicleId);
-      res.status(200).json({ success: true, message: "Vehicle deleted successfully" });
+      res.status(StatusCode.OK).json({ success: true, message: "Vehicle deleted successfully" });
     } catch (error) {
       next(error);
     }
   }
+
   async reapplyVehicle(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
@@ -109,17 +109,17 @@ export class VehicleController implements IVehicleController {
       const vehicleData = req.body;
 
       if (!userId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
 
       if (!vehicleId) {
-        res.status(400).json({ success: false, message: "Vehicle ID is required" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
 
       const updatedVehicle = await this.vehicleService.reapplyVehicle(userId, vehicleId, vehicleData);
-      res.status(200).json({ success: true, message: "Vehicle reapplied successfully", data: updatedVehicle });
+      res.status(StatusCode.OK).json({ success: true, message: "Vehicle reapplied successfully", data: updatedVehicle });
     } catch (error) {
       next(error);
     }

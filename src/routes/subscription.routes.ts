@@ -1,7 +1,7 @@
 import { Router } from "express";
 import container from "../di/container";
 import { TYPES } from "../di/types";
-import { ISubscriptionController } from "../controllers/interface/subscription/isubscriptionController";
+import { ISubscriptionController } from "../controllers/implimentation/subscription/isubscriptionController";
 import authMiddleware from "../middlewares/auth.middleware";
 
 const router = Router();
