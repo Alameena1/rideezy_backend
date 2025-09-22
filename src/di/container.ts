@@ -1,4 +1,3 @@
-// src/di/container.ts
 import { Container } from "inversify";
 import { TYPES } from "./types";
 import Razorpay from "razorpay";
@@ -16,7 +15,7 @@ import { IAuthController } from "../controllers/interface/auth/interface";
 import { IAuthService } from "../services/interfaces/auth/iauthService";
 import { IAuthRepository } from "../repositories/interface/user/iauthRepository";
 import { AuthController } from "../controllers/implimentation/auth.controller";
-import  AuthService  from "../services/implementation/auth.service"; 
+import AuthService from "../services/implementation/auth.service"; 
 import { AuthRepository } from "../repositories/implimentation/auth.repository"; 
 import { ITokenRepository } from "../repositories/interface/user/itokenRepository";
 import { TokenRepository } from "../repositories/implimentation/token.repository"; 
@@ -30,7 +29,7 @@ import { IUserController } from "../controllers/interface/user/interface";
 import { IUserService } from "../services/interfaces/user/iuserService";
 import { IUserRepository } from "../repositories/interface/user/iuserRepository";
 import { UserController } from "../controllers/implimentation/user.controller";
-import  UserService  from "../services/implementation/user.service";
+import UserService from "../services/implementation/user.service";
 import { UserRepository } from "../repositories/implimentation/user.repository"; 
 
 // Vehicle
@@ -38,16 +37,16 @@ import { IVehicleController } from "../controllers/interface/vehicle/ivehicleCon
 import { IVehicleService } from "../services/interfaces/vehicle/ivehicleService";
 import { IVehicleRepository } from "../repositories/interface/vehicle/ivehicleRepository";
 import { VehicleController } from "../controllers/implimentation/vehicle.controller";
-import  VehicleService  from "../services/implementation/vehicle.service"; 
+import VehicleService from "../services/implementation/vehicle.service"; 
 import { VehicleRepository } from "../repositories/implimentation/vehicle.repository"; 
 
-// Ride
-import { IRideController } from "../controllers/interface/ride/irideController";
-import { IRideService } from "../services/interfaces/ride/irideService";
-import { IRideRepository } from "../repositories/interface/ride/irideRepository";
-import { RideController } from "../controllers/implimentation/ride.controller";
-import { RideService } from "../services/implementation/ride.service"; 
-import { RideRepository } from "../repositories/implimentation/ride.repository"; 
+// Ride - REMOVED THESE IMPORTS
+// import { IRideController } from "../controllers/interface/ride/irideController";
+// import { IRideService } from "../services/interfaces/ride/irideService";
+// import { IRideRepository } from "../repositories/interface/ride/irideRepository";
+// import { RideController } from "../controllers/implimentation/ride.controller";
+// import { RideService } from "../services/implementation/ride.service"; 
+// import { RideRepository } from "../repositories/implimentation/ride.repository"; 
 import { IOSRMClient } from "../infrastructure/map-api/osrm.client";
 import { OSRMClient } from "../infrastructure/map-api/osrm.client";
 
@@ -87,11 +86,37 @@ import { NotificationRepository } from "../repositories/implimentation/notificat
 import IChatController from "../controllers/interface/chat/IChatController";
 import IChatService from "../services/interfaces/chat/IChatService";
 import IChatRepository from "../repositories/interface/chat/IChatRepository";
-import  ChatController  from "../controllers/implimentation/chat.controller";
+import ChatController from "../controllers/implimentation/chat.controller";
 import { ChatService } from "../services/implementation/chat.service"; 
 import { ChatRepository } from "../repositories/implimentation/chat.repository"; 
 
+// Initiate Ride (NEW)
+import { IInitiateRideRepository } from "../repositories/interface/ride/iinitiate-ride-repository";
+import { IInitiateRideController } from "../controllers/interface/ride/iinitiate-ride.controller";
+import { InitiateRideController } from "../controllers/implimentation/initiate-ride.controller";
+import { InitiateRideRepository } from "../repositories/implimentation/initiate-ride.repository";
+import { InitiateRideService } from "../services/implementation/initiate-ride.service";
+import { IInitiateRideService } from "../services/interfaces/ride/iinitiate-ride.service";
+
+// Join Ride (NEW)
+import { IJoinRideService } from "../services/interfaces/ride/ijoin-ride.service";
+import { JoinRideController } from "../controllers/implimentation/join-ride.controller";
+import { IJoinRideController } from "../controllers/interface/ride/ijoin-ride.controller";
+import { JoinRideRepository } from "../repositories/implimentation/join-ride.repository";
+import { IJoinRideRepository } from "../repositories/interface/ride/ijoin-ride-repository";
+import { JoinRideService } from "../services/implementation/join-ride.service";
+
 const container = new Container();
+
+// NEW: Initiate Ride bindings
+container.bind<IInitiateRideRepository>(TYPES.IInitiateRideRepository).to(InitiateRideRepository).inSingletonScope();
+container.bind<IInitiateRideService>(TYPES.IInitiateRideService).to(InitiateRideService).inSingletonScope();
+container.bind<IInitiateRideController>(TYPES.IInitiateRideController).to(InitiateRideController).inSingletonScope();
+
+// NEW: Join Ride bindings
+container.bind<IJoinRideRepository>(TYPES.IJoinRideRepository).to(JoinRideRepository).inSingletonScope();
+container.bind<IJoinRideService>(TYPES.IJoinRideService).to(JoinRideService).inSingletonScope();
+container.bind<IJoinRideController>(TYPES.IJoinRideController).to(JoinRideController).inSingletonScope();
 
 // Admin bindings
 container.bind<IAdminController>(TYPES.IAdminController).to(AdminController).inSingletonScope();
@@ -116,10 +141,7 @@ container.bind<IVehicleController>(TYPES.IVehicleController).to(VehicleControlle
 container.bind<IVehicleService>(TYPES.IVehicleService).to(VehicleService).inSingletonScope();
 container.bind<IVehicleRepository>(TYPES.IVehicleRepository).to(VehicleRepository).inSingletonScope();
 
-// Ride bindings
-container.bind<IRideController>(TYPES.IRideController).to(RideController).inSingletonScope();
-container.bind<IRideService>(TYPES.IRideService).to(RideService).inSingletonScope();
-container.bind<IRideRepository>(TYPES.IRideRepository).to(RideRepository).inSingletonScope();
+// OSRM Client binding (kept for both initiate and join ride services)
 container.bind<IOSRMClient>(TYPES.IOSRMClient).to(OSRMClient).inSingletonScope();
 
 // Subscription bindings
@@ -133,10 +155,7 @@ container.bind<IWalletService>(TYPES.IWalletService).to(WalletService).inSinglet
 container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository).inSingletonScope();
 
 // Tracking bindings
-container
-  .bind<ITrackingRepository>(TYPES.ITrackingRepository)
-  .toDynamicValue((context) => new TrackingRepository())
-  .inSingletonScope();
+container.bind<ITrackingRepository>(TYPES.ITrackingRepository).to(TrackingRepository).inSingletonScope();
 container.bind<ITrackingService>(TYPES.ITrackingService).to(TrackingService).inSingletonScope();
 container.bind<ITrackingController>(TYPES.ITrackingController).to(TrackingController).inSingletonScope();
 

@@ -3,7 +3,8 @@ import { TYPES } from "../../di/types";
 import { ISubscriptionService } from "../interfaces/subscription/isubscriptionService";
 import { ISubscriptionRepository, UserUpdate } from "../../repositories/interface/subscription/isubscriptionRepository";
 import { IWalletService } from "../interfaces/wallet/iWalletService";
-import { IRideRepository } from "../../repositories/interface/ride/irideRepository";
+import { IInitiateRideRepository } from "../../repositories/interface/ride/iinitiate-ride-repository";
+import { IJoinRideRepository } from "../../repositories/interface/ride/ijoin-ride-repository";
 import { IUserRepository } from "../../repositories/interface/user/iuserRepository";
 import Razorpay from "razorpay";
 import { createHmac } from "crypto";
@@ -13,10 +14,12 @@ import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/Subscript
 
 @injectable()
 export class SubscriptionService implements ISubscriptionService {
+  rideRepo: any;
   constructor(
     @inject(TYPES.ISubscriptionRepository) private subscriptionRepository: ISubscriptionRepository,
     @inject(TYPES.IWalletService) private walletService: IWalletService,
-    @inject(TYPES.IRideRepository) private rideRepo: IRideRepository,
+    @inject(TYPES.IInitiateRideRepository) private initiateRideRepo: IInitiateRideRepository,
+    @inject(TYPES.IJoinRideRepository) private joinRideRepo: IJoinRideRepository,
     @inject(TYPES.IUserRepository) private userRepo: IUserRepository,
     @inject("Razorpay") private razorpay: Razorpay
   ) {}
@@ -104,40 +107,20 @@ export class SubscriptionService implements ISubscriptionService {
   async canBookRide(userId: string): Promise<boolean> {
     const user = await this.subscriptionRepository.findUserById(userId);
     if (!user) {
-      throw new Error("User not found");
+      return false;
     }
 
     if ((await this.isSubscribed(userId)).isSubscribed) {
       return true;
     }
 
-    const now = new Date();
-    const lastReset = new Date(user.lastRideReset);
-    if (
-      now.getMonth() !== lastReset.getMonth() ||
-      now.getFullYear() !== lastReset.getFullYear()
-    ) {
-      await this.subscriptionRepository.updateUser(userId, {
-        $set: {
-          monthlyRideCount: 0,
-          lastRideReset: now,
-        },
-      } as UserUpdate);
-    }
-
-    const rideCount = await this.subscriptionRepository.getUserRideCount(
-      userId,
-      now.getMonth(),
-      now.getFullYear()
-    );
-
-    return rideCount < 3;
+    return user.monthlyRideCount < 3;
   }
 
   async canRegisterVehicle(userId: string): Promise<boolean> {
     const user = await this.subscriptionRepository.findUserById(userId);
     if (!user) {
-      throw new Error("User not found");
+      return false;
     }
 
     return user.vehicles.length < 2;
@@ -241,7 +224,7 @@ export class SubscriptionService implements ISubscriptionService {
   // NEW METHODS for ride limits
   async hasActiveSubscription(userId: string): Promise<boolean> {
     const user = await this.userRepo.findUserById(userId);
-    return !!(user?.subscription && user.subscription.endDate > new Date());
+    return !! (user?.subscription && user.subscription.endDate > new Date());
   }
 
   async getSubscriptionPlan(userId: string): Promise<ISubscriptionPlan | null> {
@@ -252,29 +235,34 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async getMonthlyRideCounts(userId: string): Promise<{ startCount: number; joinCount: number }> {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    
-    const monthlyStartCount = await this.rideRepo.count({
-      driverId: userId,
-      status: { $in: ["Pending", "Started", "Completed"] },
-      createdAt: {
-        $gte: new Date(currentYear, currentMonth, 1),
-        $lt: new Date(currentYear, currentMonth + 1, 1)
-      }
-    });
-    
-    const monthlyJoinCount = await this.rideRepo.count({
-      "passengers.passengerId": userId,
-      status: { $in: ["Pending", "Started", "Completed"] },
-      createdAt: {
-        $gte: new Date(currentYear, currentMonth, 1),
-        $lt: new Date(currentYear, currentMonth + 1, 1)
-      }
-    });
-    
-    return { startCount: monthlyStartCount, joinCount: monthlyJoinCount };
-  }
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const endOfMonth = new Date();
+  endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+  endOfMonth.setDate(0);
+  endOfMonth.setHours(23, 59, 59, 999);
+
+  // FIX: Add proper type casting for the count results
+  const startCountResult = await this.rideRepo.count({
+    driverId: userId,
+    status: { $in: ["Started", "Completed"] },
+    createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+  });
+
+  const joinCountResult = await this.joinRideRepo.count({
+    "passengers.passengerId": userId,
+    status: { $in: ["Started", "Completed"] },
+    createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+  });
+
+  // Convert unknown to number explicitly
+  const startCount = typeof startCountResult === 'number' ? startCountResult : 0;
+  const joinCount = typeof joinCountResult === 'number' ? joinCountResult : 0;
+
+  return { startCount, joinCount };
+}
 
   async canStartRide(userId: string): Promise<boolean> {
     const user = await this.userRepo.findUserById(userId);

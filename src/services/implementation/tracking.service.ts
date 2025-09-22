@@ -2,7 +2,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { ITrackingService } from "../interfaces/tracking/itrackingService";
 import { ITrackingRepository } from "../../repositories/interface/tracking/itrackingRepository";
-import { IRideRepository } from "../../repositories/interface/ride/irideRepository";
+import { IInitiateRideRepository } from "../../repositories/interface/ride/iinitiate-ride-repository";
 import { OSRMClient } from "../../infrastructure/map-api/osrm.client";
 import retry from "async-retry";
 import mongoose, { ClientSession, Types } from "mongoose";
@@ -15,9 +15,8 @@ interface MongoError extends Error {
 @injectable()
 export class TrackingService implements ITrackingService {
   constructor(
-    @inject(TYPES.ITrackingRepository)
-    private trackingRepo: ITrackingRepository,
-    @inject(TYPES.IRideRepository) private rideRepo: IRideRepository,
+    @inject(TYPES.ITrackingRepository) private trackingRepo: ITrackingRepository,
+    @inject(TYPES.IInitiateRideRepository) private rideRepo: IInitiateRideRepository,
     @inject(TYPES.IOSRMClient) private osrmClient: OSRMClient
   ) {
     console.log(
@@ -38,16 +37,14 @@ export class TrackingService implements ITrackingService {
       throw new Error("Invalid position coordinates");
     }
 
-    let session: mongoose.ClientSession | undefined;
     await retry(
       async (bail, attempt) => {
         console.log(
           `[TrackingService] Attempt ${attempt} to update tracking position for ride ${rideId}`
         );
         const startTime = Date.now();
+        const session: ClientSession = await this.trackingRepo.startSession();
         try {
-          let session = await this.trackingRepo.startSession();
-          if (!session) throw new Error("Failed to start MongoDB session");
           await session.withTransaction(async () => {
             const ride = await this.rideRepo.findOne(
               { _id: new Types.ObjectId(rideId) },
@@ -83,15 +80,13 @@ export class TrackingService implements ITrackingService {
             bail(err); // Stop retrying on other errors
           }
         } finally {
-          if (session) {
-            try {
-              await session.endSession();
-            } catch (endSessionError) {
-              console.error(
-                "[TrackingService] Failed to end session:",
-                endSessionError
-              );
-            }
+          try {
+            await session.endSession();
+          } catch (endSessionError) {
+            console.error(
+              "[TrackingService] Failed to end session:",
+              endSessionError
+            );
           }
         }
       },
@@ -145,7 +140,7 @@ export class TrackingService implements ITrackingService {
     driverId: string,
     initialPosition: [number, number]
   ): Promise<ITracking> {
-    const session = await this.trackingRepo.startSession();
+    const session: ClientSession = await this.trackingRepo.startSession();
     try {
       const result = await session.withTransaction(async () => {
         console.log("[TrackingService] Starting tracking for rideId:", rideId);
@@ -169,12 +164,12 @@ export class TrackingService implements ITrackingService {
         }
 
         // Initialize pickup and dropoff actions
-        const pickupActions = ride.pickupPoints.map((point) => ({
+        const pickupActions = ride.pickupPoints.map((point: { passengerId: string; location: string }) => ({
           passengerId: point.passengerId,
           location: point.location,
           status: "Pending" as "Pending" | "Completed",
         }));
-        const dropoffActions = ride.dropoffPoints.map((point) => ({
+        const dropoffActions = ride.dropoffPoints.map((point: { passengerId: string; location: string }) => ({
           passengerId: point.passengerId,
           location: point.location,
           status: "Pending" as "Pending" | "Completed",
@@ -198,7 +193,14 @@ export class TrackingService implements ITrackingService {
       console.error("[TrackingService] Error starting tracking:", error);
       throw error;
     } finally {
-      session.endSession();
+      try {
+        await session.endSession();
+      } catch (endSessionError) {
+        console.error(
+          "[TrackingService] Failed to end session:",
+          endSessionError
+        );
+      }
     }
   }
 
@@ -207,7 +209,7 @@ export class TrackingService implements ITrackingService {
     passengerId: string,
     action: "picked" | "dropped"
   ): Promise<void> {
-    const session = await this.trackingRepo.startSession();
+    const session: ClientSession = await this.trackingRepo.startSession();
     try {
       await session.withTransaction(async () => {
         const ride = await this.rideRepo.findOne(
@@ -242,7 +244,14 @@ export class TrackingService implements ITrackingService {
       console.error("[TrackingService] Error updating tracking action:", error);
       throw error;
     } finally {
-      session.endSession();
+      try {
+        await session.endSession();
+      } catch (endSessionError) {
+        console.error(
+          "[TrackingService] Failed to end session:",
+          endSessionError
+        );
+      }
     }
   }
 
@@ -274,44 +283,51 @@ export class TrackingService implements ITrackingService {
     }
   }
 
-  async stopTracking(rideId: string): Promise<void> {
-    const session = await this.trackingRepo.startSession();
-    try {
-      console.log("[TrackingService] Received rideId:", rideId);
-      await session.withTransaction(async () => {
-        const ride = await this.rideRepo.findOne(
-          { _id: new Types.ObjectId(rideId) },
-          { session }
-        );
-        if (!ride) {
-          throw new Error("Ride not found for ID: " + rideId);
-        }
-        console.log("[TrackingService] Found ride:", ride._id);
-        const tracking = await this.trackingRepo.findOneByRideId(ride._id, {
-          session,
-        });
-        if (!tracking) {
-          throw new Error("Tracking record not found for ride: " + ride._id);
-        }
-        await this.trackingRepo.updateTracking(
-          ride._id,
-          { status: "Completed" },
-          { session }
-        );
-        console.log(`[TrackingService] Stopped tracking for ride ${rideId}`);
-      });
-    } catch (error) {
-      console.error(
-        `[TrackingService] Error stopping tracking for ride ${rideId}:`,
-        {
-          rideId,
-          error: (error as Error).message,
-          stack: (error as Error).stack,
-        }
+  // In TrackingService - stopTracking method
+async stopTracking(rideId: string): Promise<void> {
+  const session: ClientSession = await this.trackingRepo.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const ride = await this.rideRepo.findOne(
+        { _id: new Types.ObjectId(rideId) },
+        { session }
       );
-      throw error;
-    } finally {
-      session.endSession();
+      if (!ride) {
+        console.log('[TrackingService] Ride not found, might already be completed');
+        return; // Just return instead of throwing error
+      }
+      
+      const tracking = await this.trackingRepo.findOneByRideId(ride._id, {
+        session,
+      });
+      
+      if (!tracking) {
+        console.log('[TrackingService] Tracking record not found, might already be completed');
+        return; // Just return instead of throwing error
+      }
+      
+      await this.trackingRepo.updateTracking(
+        ride._id,
+        { status: "Completed" },
+        { session }
+      );
+      console.log(`[TrackingService] Stopped tracking for ride ${rideId}`);
+    });
+  } catch (error) {
+    console.error(
+      `[TrackingService] Error stopping tracking for ride ${rideId}:`,
+      error
+    );
+    throw error;
+  } finally {
+    try {
+      await session.endSession();
+    } catch (endSessionError) {
+      console.error(
+        "[TrackingService] Failed to end session:",
+        endSessionError
+      );
     }
   }
+}
 }

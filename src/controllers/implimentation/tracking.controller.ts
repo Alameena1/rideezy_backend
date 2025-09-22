@@ -3,9 +3,10 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { ITrackingController } from "../interface/tracking/itrackingController";
 import { ITrackingService } from "../../services/interfaces/tracking/itrackingService";
-import { IRideService } from "../../services/interfaces/ride/irideService";
+import { IInitiateRideService } from "../../services/interfaces/ride/iinitiate-ride.service";
 import { StatusCode } from "../../constants/status-codes.enum";
 import { ResponseMessages } from "../../constants/response-messages.const";
+import { EditRideDto } from "../../dtos/edit-ride.dto";
 
 interface AuthenticatedRequest extends Request {
   user?: { userId: string; email: string };
@@ -14,11 +15,11 @@ interface AuthenticatedRequest extends Request {
 @injectable()
 export class TrackingController implements ITrackingController {
   private trackingService: ITrackingService;
-  private rideService: IRideService;
+  private rideService: IInitiateRideService;
 
   constructor(
     @inject(TYPES.ITrackingService) trackingService: ITrackingService,
-    @inject(TYPES.IRideService) rideService: IRideService
+    @inject(TYPES.IInitiateRideService) rideService: IInitiateRideService
   ) {
     this.trackingService = trackingService;
     this.rideService = rideService;
@@ -52,7 +53,8 @@ export class TrackingController implements ITrackingController {
 
       const tracking = await this.trackingService.startTracking(rideId, driverId, initialPosition);
       
-      await this.rideService.updateRide(ride.rideId || ride._id.toString(), { status: "Started" }, ride.driverId);
+      const editRideDto: EditRideDto = { status: "Started" };
+      await this.rideService.editRide(ride.rideId || ride._id.toString(), driverId, editRideDto);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -148,7 +150,8 @@ export class TrackingController implements ITrackingController {
 
       await this.trackingService.stopTracking(rideId);
       
-      await this.rideService.updateRide(ride._id.toString(), { status: "Completed" }, ride.driverId);
+      const editRideDto: EditRideDto = { status: "Completed" };
+      await this.rideService.editRide(ride._id.toString(), driverId, editRideDto);
 
       res.status(StatusCode.OK).json({
         success: true,

@@ -5,7 +5,6 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
 import vehicleRoutes from "./routes/vehicle.routes";
-import rideRoutes from "./routes/ride.routes";
 import routeRoutes from "./routes/route.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import walletRoutes from "./routes/wallet.routes";
@@ -19,7 +18,8 @@ import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { initializeSocket } from "./websocket/socket.io";
-
+import initiateRideRoutes from "./routes/initiate-ride.routes";
+import joinRideRoutes from "./routes/join-ride.routes";
 dotenv.config();
 
 const app = express();
@@ -42,7 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
-app.use("/api/rides", rideRoutes);
+// app.use("/api/rides", rideRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/route", routeRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
@@ -50,7 +50,8 @@ app.use("/api/wallet", walletRoutes);
 app.use("/api/tracking", trackingRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/chat", chatRoutes); 
-
+app.use("/api/initiate-rides", initiateRideRoutes);
+app.use("/api/join-rides", joinRideRoutes);
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 3001;

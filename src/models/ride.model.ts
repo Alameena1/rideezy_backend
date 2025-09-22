@@ -80,13 +80,15 @@ export interface RideCreationData {
   totalFuelCost: number;
   platformFee: number;
   totalRideCost: number;
-  perKmRate: number; // New: Store per-km rate
-  passengers: Passenger[];
+  perKmRate: number;
+  passengers: any[];
   status: string;
   routeGeometry?: string;
-  pickupPoints: PickupDropoffPoint[];
-  dropoffPoints: PickupDropoffPoint[];
+  pickupPoints: any[];
+  dropoffPoints: any[];
   routeCoordinates: [number, number][];
+  passengerDistances: { passengerId: string; distanceKm: number }[]; 
+  passengerCosts: { passengerId: string; cost: number }[]; 
 }
 
 const RideSchema = new Schema<IRide>(
