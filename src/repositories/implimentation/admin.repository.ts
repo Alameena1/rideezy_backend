@@ -5,6 +5,7 @@ import { IAdminRepository } from "../interface/admin/interface";
 import { BaseRepository } from "../base/base.repository";
 import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/SubscriptionPlan";
 import { RideModel } from "../../models/ride.model";
+import { PaginationQueryDtoType } from "../../dtos/admin.dto";
 
 @injectable()
 export class AdminRepository extends BaseRepository<any> implements IAdminRepository {
@@ -12,14 +13,239 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     super(UserModel);
   }
 
-  public async getAllUsers(): Promise<any[]> {
+  public async getAllUsers(params: PaginationQueryDtoType & { 
+    status?: "Active" | "Blocked"; 
+    subscriptionStatus?: "subscribed" | "non-subscribed";
+  }): Promise<{
+    data: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
     try {
-      const users = await this.model.find().select("-password");
-      return users;
+      const { page, limit, search, sortBy, sortOrder, status, subscriptionStatus } = params;
+      const skip = (page - 1) * limit;
+
+      const query: any = {};
+      
+      if (search) {
+        query.$or = [
+          { fullName: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { phone: { $regex: search, $options: 'i' } }
+        ];
+      }
+
+      if (status) {
+        query.status = status;
+      }
+
+      if (subscriptionStatus) {
+        const currentDate = new Date();
+        if (subscriptionStatus === 'subscribed') {
+          query['subscription.endDate'] = { $gt: currentDate };
+        } else {
+          query.$or = [
+            { 'subscription.endDate': { $lt: currentDate } },
+            { subscription: { $exists: false } },
+            { subscription: null }
+          ];
+        }
+      }
+
+      const sortOptions: any = {};
+      if (sortBy) {
+        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+      } else {
+        sortOptions.createdAt = -1;
+      }
+
+      const [data, totalItems] = await Promise.all([
+        UserModel.find(query)
+          .select("-password")
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limit)
+          .lean()
+          .exec(),
+        UserModel.countDocuments(query)
+      ]);
+
+      const totalPages = Math.ceil(totalItems / limit);
+      const hasNext = page < totalPages;
+      const hasPrev = page > 1;
+
+      return {
+        data,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems,
+          hasNext,
+          hasPrev,
+        },
+      };
     } catch (error) {
       throw new Error("Failed to fetch users from the database");
     }
   }
+
+  public async getAllVehicles(params: PaginationQueryDtoType & { 
+    status?: "Pending" | "Approved" | "Rejected";
+    vehicleType?: string;
+  }): Promise<{
+    data: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    try {
+      const { page, limit, search, sortBy, sortOrder, status, vehicleType } = params;
+      const skip = (page - 1) * limit;
+
+      const query: any = {};
+      
+      if (search) {
+        query.$or = [
+          { licensePlate: { $regex: search, $options: 'i' } },
+          { vehicleModel: { $regex: search, $options: 'i' } },
+          { 'user.fullName': { $regex: search, $options: 'i' } }
+        ];
+      }
+
+      if (status) {
+        query.status = status;
+      }
+
+      if (vehicleType) {
+        query.vehicleType = vehicleType;
+      }
+
+      const sortOptions: any = {};
+      if (sortBy) {
+        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+      } else {
+        sortOptions.createdAt = -1;
+      }
+
+      const [data, totalItems] = await Promise.all([
+        VehicleModel.find(query)
+          .populate({
+            path: 'user',
+            select: 'fullName email'
+          })
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limit)
+          .lean()
+          .exec(),
+        VehicleModel.countDocuments(query)
+      ]);
+
+      const totalPages = Math.ceil(totalItems / limit);
+      const hasNext = page < totalPages;
+      const hasPrev = page > 1;
+
+      return {
+        data,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems,
+          hasNext,
+          hasPrev,
+        },
+      };
+    } catch (error) {
+      throw new Error("Failed to fetch vehicles from the database");
+    }
+  }
+
+ public async getAllRides(params: PaginationQueryDtoType & { 
+  status?: "Active" | "Completed" | "Cancelled" | "Blocked";
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<{
+  data: any[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}> {
+  try {
+    const { page, limit, search, sortBy, sortOrder, status, dateFrom, dateTo } = params;
+    const skip = (page - 1) * limit;
+
+    const query: any = {};
+    
+    if (search) {
+      query.$or = [
+        { startPlaceName: { $regex: search, $options: 'i' } }, // Adjusted to match schema
+        { endPlaceName: { $regex: search, $options: 'i' } },   // Adjusted to match schema
+        { driverName: { $regex: search, $options: 'i' } }      // Use driverName instead of driver.fullName
+      ];
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (dateFrom || dateTo) {
+      query.date = {};
+      if (dateFrom) query.date.$gte = new Date(dateFrom);
+      if (dateTo) query.date.$lte = new Date(dateTo);
+    }
+
+    const sortOptions: any = {};
+    if (sortBy) {
+      sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    } else {
+      sortOptions.createdAt = -1;
+    }
+
+    const [data, totalItems] = await Promise.all([
+      RideModel.find(query)
+        .populate({
+          path: 'vehicleId',
+          select: 'licensePlate vehicleModel'
+        }) // Populate vehicleId if needed
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      RideModel.countDocuments(query)
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        hasNext,
+        hasPrev,
+      },
+    };
+  } catch (error) {
+    throw new Error(`Failed to fetch rides: ${(error as Error).message}`);
+  }
+}
 
   public async updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
     try {
@@ -32,18 +258,6 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
       throw new Error("Failed to update user status");
     }
   }
-
-  public async getAllVehicles(): Promise<any[]> {
-  try {
-    const vehicles = await VehicleModel.find().populate({
-      path: 'user',
-      select: 'fullName' // Only include the fields you need
-    });
-    return vehicles;
-  } catch (error) {
-    throw new Error("Failed to fetch vehicles from the database");
-  }
-}
 
   public async updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void> {
     try {
@@ -153,16 +367,7 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     }
   }
 
-  async getAllRides(): Promise<any[]> {
-    try {
-      const rides = await RideModel.find().lean().exec();
-      return rides;
-    } catch (error) {
-      throw new Error(`Failed to fetch rides: ${(error as Error).message}`);
-    }
-  }
-
- async getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{
+  async getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{
     metrics: {
       totalUsers: number;
       subscribedUsers: number;
@@ -183,16 +388,15 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
         $lte: currentDate,
       };
 
-      // Metrics
       const totalUsers = await UserModel.countDocuments();
       console.log("Total users:", totalUsers);
       const subscribedUsers = await UserModel.countDocuments({
         "subscription.endDate": { $gt: currentDate },
       });
       const nonSubscribedUsers = totalUsers - subscribedUsers;
-     const totalRides = await RideModel.countDocuments({ status: "Completed" });
-console.log("Total rides:", totalRides);
-      // Aggregate subscription revenue from wallet.transactions
+      const totalRides = await RideModel.countDocuments({ status: "Completed" });
+      console.log("Total rides:", totalRides);
+
       const subscriptionRevenueResult = await UserModel.aggregate([
         { $unwind: "$wallet.transactions" },
         {
@@ -206,7 +410,6 @@ console.log("Total rides:", totalRides);
       ]);
       const subscriptionRevenue = subscriptionRevenueResult[0]?.total || 0;
 
-      // Aggregate platform fee revenue from wallet.transactions (WITHDRAWAL for non-subscribed users)
       const platformFeeTransactionResult = await UserModel.aggregate([
         { $unwind: "$wallet.transactions" },
         {
@@ -220,18 +423,15 @@ console.log("Total rides:", totalRides);
       ]);
       const platformFeeFromTransactions = platformFeeTransactionResult[0]?.total || 0;
 
-      // Aggregate platform fee from completed rides (for consistency, if needed)
       const platformFeeRideResult = await RideModel.aggregate([
         { $match: { status: "COMPLETED", date: dateFilter } },
         { $group: { _id: null, total: { $sum: "$platformFee" } } },
       ]);
       const platformFeeFromRides = platformFeeRideResult[0]?.total || 0;
 
-      // Combine platform fees from transactions and rides (avoid double-counting if needed)
       const totalPlatformFee = platformFeeFromTransactions + platformFeeFromRides;
       const totalRevenue = subscriptionRevenue + totalPlatformFee;
 
-      // User Growth
       const userGrowth = await UserModel.aggregate([
         { $match: { createdAt: dateFilter } },
         {
@@ -244,25 +444,23 @@ console.log("Total rides:", totalRides);
         { $project: { month: "$_id", users: 1, _id: 0 } },
       ]);
 
-      // Ride Count
       const rideCount = await RideModel.aggregate([
-  { 
-    $match: { 
-      status: "Completed", 
-      date: { $gte: dateFilter.$gte, $lte: dateFilter.$lte }
-    } 
-  },
-  {
-    $group: {
-      _id: { $dateToString: { format: "%b", date: "$date" } },
-      rides: { $sum: 1 },
-    },
-  },
-  { $sort: { "_id": 1 } },
-  { $project: { month: "$_id", rides: 1, _id: 0 } },
-]);
+        { 
+          $match: { 
+            status: "Completed", 
+            date: { $gte: dateFilter.$gte, $lte: dateFilter.$lte }
+          } 
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%b", date: "$date" } },
+            rides: { $sum: 1 },
+          },
+        },
+        { $sort: { "_id": 1 } },
+        { $project: { month: "$_id", rides: 1, _id: 0 } },
+      ]);
 
-      // Revenue Distribution
       const revenueDistribution = [
         { name: "Subscription", value: subscriptionRevenue },
         { name: "Platform Fee", value: totalPlatformFee },

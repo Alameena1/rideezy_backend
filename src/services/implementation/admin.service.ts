@@ -8,6 +8,7 @@ import { IUser } from "../../models/user.model";
 import { ISubscriptionPlan } from "../../models/SubscriptionPlan";
 import AdminModel, { IAdmin } from "../../models/admin";
 import { SubscriptionPlanModel } from "../../models/SubscriptionPlan";
+import { PaginationQueryDtoType, RideSearchQueryDtoType, UserSearchQueryDtoType, VehicleSearchQueryDtoType } from "../../dtos/admin.dto";
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -71,16 +72,47 @@ export class AdminService implements IAdminService {
     }
   }
 
-  async getAllUsers(): Promise<any[]> {
-    return this.adminRepository.getAllUsers();
+  async getAllUsers(params: UserSearchQueryDtoType): Promise<{
+    data: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    return this.adminRepository.getAllUsers(params);
+  }
+
+  async getAllVehicles(params: VehicleSearchQueryDtoType): Promise<{
+    data: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    return this.adminRepository.getAllVehicles(params);
+  }
+
+  async getAllRides(params: RideSearchQueryDtoType): Promise<{
+    data: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    return this.adminRepository.getAllRides(params);
   }
 
   async updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
     await this.adminRepository.updateUserStatus(userId, status);
-  }
-
-  async getAllVehicles(): Promise<any[]> {
-    return this.adminRepository.getAllVehicles();
   }
 
   async updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void> {
@@ -115,7 +147,6 @@ export class AdminService implements IAdminService {
   }
 
   async createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
-    // Validate fields
     if (planData.maxStartingRides === undefined || planData.maxJoiningRides === undefined) {
       throw new Error("maxStartingRides and maxJoiningRides are required");
     }
@@ -131,7 +162,6 @@ export class AdminService implements IAdminService {
     if (planData.maxJoiningRides < 0) {
       throw new Error("Max joining rides cannot be negative");
     }
-    // Optional: upper limits
     if (planData.durationMonths > 120) {
       throw new Error("Duration cannot exceed 10 years (120 months)");
     }
@@ -148,7 +178,6 @@ export class AdminService implements IAdminService {
   }
 
   async updateSubscriptionPlan(planId: string, planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {
-    // Validate provided fields
     if (planData.durationMonths !== undefined && planData.durationMonths <= 0) {
       throw new Error("Duration must be at least 1 month");
     }
@@ -161,7 +190,6 @@ export class AdminService implements IAdminService {
     if (planData.maxJoiningRides !== undefined && planData.maxJoiningRides < 0) {
       throw new Error("Max joining rides cannot be negative");
     }
-    // Optional: upper limits
     if (planData.durationMonths !== undefined && planData.durationMonths > 120) {
       throw new Error("Duration cannot exceed 10 years (120 months)");
     }
@@ -210,10 +238,6 @@ export class AdminService implements IAdminService {
 
   async updateRideStatus(rideId: string, status: "Active" | "Blocked" | "Cancelled"): Promise<void> {
     await this.adminRepository.updateRideStatus(rideId, status);
-  }
-
-  async getAllRides(): Promise<any[]> {
-    return this.adminRepository.getAllRides();
   }
 
   async getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{

@@ -1,4 +1,6 @@
+// user.model.ts
 import { Schema, model, Document, Types } from "mongoose";
+import { Country, State } from "country-state-city";
 
 export interface IWallet {
   balance: number;
@@ -42,8 +44,8 @@ export interface IUser extends Document {
     originalPrice: number;
     startDate: Date;
     endDate: Date;
-    remainingStartRides: number; // ADD THIS FIELD
-    remainingJoinRides: number;  // ADD THIS FIELD
+    remainingStartRides: number;
+    remainingJoinRides: number;
   };
   monthlyRideCount: number;
   lastRideReset: Date;
@@ -58,19 +60,53 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
-    fullName: { type: String, required: true },
+    fullName: {
+      type: String,
+      required: true,
+      validate: {
+        validator: (v: string) => v.split(/\s+/g).length < 10,
+        message: "Full name must have less than 10 words",
+      },
+    },
     email: { type: String, required: true, unique: true },
     phoneNumber: { type: String },
     password: { type: String },
     provider: { type: String, default: "local" },
     image: { type: String },
     number: { type: String },
-    state: { type: String },
-    country: { type: String },
-    gender: { type: String },
+    state: {
+      type: String,
+      validate: {
+        validator: function (v: string) {
+          if (!this.country || !v) return true; // Allow empty state if no country
+          const country = Country.getAllCountries().find((c) => c.name === this.country);
+          if (!country) return false;
+          const states = State.getStatesOfCountry(country.isoCode);
+          return states.some((s) => s.name === v);
+        },
+        message: "Invalid state for the selected country",
+      },
+    },
+    country: {
+      type: String,
+      validate: {
+        validator: (v: string) => !v || Country.getAllCountries().some((c) => c.name === v), // Allow empty string
+        message: "Invalid country",
+      },
+    },
+    gender: {
+      type: String,
+      enum: {
+        values: ["Male", "Female", "Others"],
+        message: "Invalid gender (must be Male, Female, or Others)",
+      },
+    },
     status: { type: String, enum: ["Active", "Blocked"], default: "Active" },
     govId: {
-      idNumber: { type: String },
+      idNumber: {
+        type: String,
+        maxlength: [15, "ID number must be less than 15 characters"],
+      },
       verificationStatus: {
         type: String,
         enum: ["Pending", "Verified", "Rejected"],
@@ -89,8 +125,8 @@ const UserSchema = new Schema<IUser>(
       originalPrice: { type: Number },
       startDate: { type: Date },
       endDate: { type: Date },
-      remainingStartRides: { type: Number }, // ADD THIS FIELD
-      remainingJoinRides: { type: Number },  // ADD THIS FIELD
+      remainingStartRides: { type: Number },
+      remainingJoinRides: { type: Number },
     },
     monthlyRideCount: { type: Number, default: 0 },
     lastRideReset: { type: Date, default: Date.now },
