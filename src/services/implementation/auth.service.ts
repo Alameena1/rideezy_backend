@@ -1,3 +1,4 @@
+// services/implementation/auth.service.ts
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
 import { IAuthService, IGoogleAuthUser } from "../interfaces/auth/iauthService";
@@ -10,15 +11,20 @@ import PasswordUtil from "../../helpers/password.util";
 import { sendOTP, sendPasswordResetEmail } from "../../helpers/sendOTP.util";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../helpers/jwt.util";
 import crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
 
 @injectable()
 export default class AuthService implements IAuthService {
+  private googleClient: OAuth2Client;
+
   constructor(
     @inject(TYPES.IAuthRepository) private authRepository: IAuthRepository,
     @inject(TYPES.ITokenRepository) private tokenRepository: ITokenRepository,
     @inject(TYPES.ITempUserRepository) private tempUserRepository: ITempUserRepository,
     @inject(TYPES.IResetTokenRepository) private resetTokenRepository: IResetTokenRepository
-  ) {}
+  ) {
+    this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  }
 
   async signup(userData: ITempUserInput) {
     if (!userData.fullName || !userData.email || !userData.password || userData.password.trim() === "") {
@@ -78,7 +84,7 @@ export default class AuthService implements IAuthService {
       email: tempUser.email,
       phoneNumber: tempUser.phoneNumber,
       password: hashedPassword,
-      role: "user", // Set default role to "user"
+      role: "user",
     });
 
     await this.tempUserRepository.deleteTempUser(email);
@@ -108,27 +114,41 @@ export default class AuthService implements IAuthService {
   }
 
   async refreshToken(token: string) {
-     const decoded = verifyRefreshToken(token, "user");
-     const existingToken = await this.tokenRepository.findToken(token);
-     if (!existingToken) {
-       throw new Error("Invalid refresh token");
-     }
+    const decoded = verifyRefreshToken(token, "user");
+    const existingToken = await this.tokenRepository.findToken(token);
+    if (!existingToken) {
+      throw new Error("Invalid refresh token");
+    }
 
-     await this.tokenRepository.deleteToken(token);
-     const newAccessToken = generateAccessToken(decoded.userId, decoded.email || "", "user");
-     const newRefreshToken = generateRefreshToken(decoded.userId, "user");
+    await this.tokenRepository.deleteToken(token);
+    const newAccessToken = generateAccessToken(decoded.userId, decoded.email || "", "user");
+    const newRefreshToken = generateRefreshToken(decoded.userId, "user");
 
-     await this.tokenRepository.replaceToken(decoded.userId, newRefreshToken);
-     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
-   }
-
+    await this.tokenRepository.replaceToken(decoded.userId, newRefreshToken);
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  }
 
   async logout(refreshToken: string) {
     await this.tokenRepository.deleteToken(refreshToken);
     return { message: "Logged out successfully" };
   }
 
-  async handleGoogleAuth(googleUser: IGoogleAuthUser) {
+  async handleGoogleAuth(googleUser: IGoogleAuthUser & { idToken: string }) {
+    // Verify Google id_token
+    try {
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken: googleUser.idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload || payload.email !== googleUser.email) {
+        throw new Error("Invalid Google ID token or email mismatch");
+      }
+    } catch (error) {
+      console.error("Google ID token verification failed:", error);
+      throw new Error("Invalid Google ID token");
+    }
+
     let user = await this.authRepository.findUserByEmail(googleUser.email);
 
     if (!user) {
@@ -138,7 +158,7 @@ export default class AuthService implements IAuthService {
         phoneNumber: "",
         password: "",
         image: googleUser.image,
-        role: "user", // Set default role to "user"
+        role: "user",
       });
     }
 
@@ -146,7 +166,7 @@ export default class AuthService implements IAuthService {
     const refreshToken = generateRefreshToken(user._id.toString(), user.role);
 
     await this.tokenRepository.replaceToken(user._id.toString(), refreshToken);
-    return { user, accessToken, refreshToken };
+    return { user: { id: user._id, email: user.email, role: user.role, fullName: user.fullName, image: user.image }, accessToken, refreshToken };
   }
 
   async forgotPassword(email: string) {

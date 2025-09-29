@@ -240,12 +240,14 @@ export class AdminController implements IAdminController {
     res: Response
   ): Promise<void> => {
     try {
+      const { userId } = req.params; // Extract userId from URL path
       const updateData = this.validateRequest(UserStatusDto, req.body);
 
-      await this.adminService.updateUserStatus(
-        updateData.userId,
-        updateData.status
-      );
+      if (!userId) {
+        throw new Error("User ID is required in URL path");
+      }
+
+      await this.adminService.updateUserStatus(userId, updateData.status);
 
       res.status(StatusCode.OK).json({
         success: true,

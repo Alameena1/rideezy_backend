@@ -1,3 +1,4 @@
+// controllers/auth.controller.ts
 import { Request, Response, NextFunction } from "express";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
@@ -5,7 +6,6 @@ import { IAuthController } from "../interface/auth/interface";
 import AuthService from "../../services/implementation/auth.service";
 import { StatusCode } from "../../constants/status-codes.enum";
 import { ResponseMessages } from "../../constants/response-messages.const";
-import { generateAccessToken, verifyRefreshToken } from "../../helpers/jwt.util";
 
 @injectable()
 export class AuthController implements IAuthController {
@@ -88,30 +88,38 @@ export class AuthController implements IAuthController {
     }
   }
 
-      refreshToken = async (req: Request, res: Response): Promise<void> => {
-     const refreshToken = req.cookies.refreshToken;
-     if (!refreshToken) {
-       res.status(401).json({ message: "No refresh token" });
-       return;
-     }
+  async refreshToken(req: Request, res: Response): Promise<void> {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.REFRESH_TOKEN_REQUIRED });
+      return;
+    }
 
-     try {
-       const decoded = verifyRefreshToken(refreshToken, "admin");
-       const newAccessToken = generateAccessToken(decoded.userId, decoded.email || "", "admin");
+    try {
+      const { accessToken, refreshToken: newRefreshToken } = await this.authService.refreshToken(refreshToken);
 
-       res.cookie("adminAuthToken", newAccessToken, {
-         httpOnly: true,
-         secure: process.env.NODE_ENV === "production",
-         sameSite: "lax",
-         maxAge: 15 * 60 * 1000,
-         path: "/",
-       });
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+        path: "/",
+      });
 
-       res.status(200).json({ message: "Token refreshed" });
-     } catch (error) {
-       res.status(401).json({ message: "Invalid refresh token" });
-     }
-   };
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
+      res.status(StatusCode.OK).json({ success: true, message: "Token refreshed", accessToken, refreshToken: newRefreshToken });
+    } catch (error) {
+      res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: "Invalid refresh token" });
+    }
+  }
+
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { token } = req.body;
@@ -130,12 +138,12 @@ export class AuthController implements IAuthController {
 
   async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { fullName, email, image } = req.body as { fullName: string; email: string; image: string };
-      if (!fullName || !email || !image) {
-        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+      const { fullName, email, image, idToken } = req.body as { fullName: string; email: string; image: string; idToken: string };
+      if (!fullName || !email || !image || !idToken) {
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: "Missing required fields: fullName, email, image, idToken" });
         return;
       }
-      const { user, accessToken, refreshToken } = await this.authService.handleGoogleAuth({ fullName, email, image });
+      const { user, accessToken, refreshToken } = await this.authService.handleGoogleAuth({ fullName, email, image, idToken });
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
@@ -160,8 +168,9 @@ export class AuthController implements IAuthController {
         accessToken,
         refreshToken,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      console.error("Google auth error:", error.message);
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
     }
   }
 

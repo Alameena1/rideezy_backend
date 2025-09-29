@@ -52,6 +52,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/chat", chatRoutes); 
 app.use("/api/initiate-rides", initiateRideRoutes);
 app.use("/api/join-rides", joinRideRoutes);
+
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 3001;

@@ -19,7 +19,7 @@ export const PaginationQueryDto = z.object({
   sortOrder: z
     .enum(["asc", "desc"])
     .default("desc")
-    .transform(val => val as "asc" | "desc"),
+    .transform((val) => val as "asc" | "desc"),
 });
 
 // Explicit output types that match what your service expects
@@ -33,7 +33,6 @@ export type PaginationQueryDtoType = {
 
 // User Management DTOs
 export const UserStatusDto = z.object({
-  userId: z.string().min(1, "User ID is required"),
   status: z.enum(["Active", "Blocked"]),
 });
 
@@ -189,7 +188,6 @@ export const SubscriptionPlanResponseDto = z.object({
   updatedAt: z.date(),
 });
 
-// Response DTOs
 export const PaginatedResponseDto = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
     success: z.boolean(),
