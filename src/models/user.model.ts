@@ -153,5 +153,6 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
-const UserModel = model<IUser>("User", UserSchema);
-export default UserModel;
+// Export both the model and interface
+export const User = model<IUser>("User", UserSchema);
+export default User;

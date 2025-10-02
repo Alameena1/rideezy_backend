@@ -19,56 +19,67 @@ export class AdminService implements IAdminService {
     this.adminRepository = adminRepository;
   }
 
-  async authenticateAdmin(email: string, password: string): Promise<{
+   async authenticateAdmin(email: string, password: string): Promise<{
     accessToken: string;
     refreshToken: string;
+    adminId: string; // Add this to the return type
   }> {
-    console.log("Authenticating admin with email:", email, "and password:", password);
+    console.log("🔐 Authenticating admin with email:", email);
+    
     if (!email || !password) {
-      console.log("Missing email or password");
+      console.log("❌ Missing email or password");
       throw new Error("Email and password are required");
     }
 
     try {
       const admin = await AdminModel.findOne({ email }).exec();
-      console.log("Found admin:", admin);
+      console.log("📋 Found admin:", admin ? "Yes" : "No");
+      
       if (!admin) {
-        console.log("Admin not found for email:", email);
+        console.log("❌ Admin not found for email:", email);
         throw new Error("Invalid email or password");
       }
 
       if (!admin.password) {
-        console.log("No password set for admin:", email);
+        console.log("❌ No password set for admin:", email);
         throw new Error("Invalid email or password");
       }
 
+      console.log("🔑 Comparing passwords...");
       const passwordMatch = await bcrypt.compare(password, admin.password);
+      
       if (!passwordMatch) {
-        console.log("Password does not match for email:", email);
+        console.log("❌ Password does not match for email:", email);
         throw new Error("Invalid email or password");
       }
 
+      console.log("✅ Password matched, generating tokens...");
       const accessToken = generateAccessToken(admin._id.toString(), admin.email, "admin");
       const refreshToken = generateRefreshToken(admin._id.toString(), "admin");
 
       await this.saveRefreshToken(admin._id.toString(), refreshToken);
 
-      return { accessToken, refreshToken };
+      console.log("🎉 Admin authentication successful");
+      
+      return { 
+        accessToken, 
+        refreshToken,
+        adminId: admin._id.toString() // Make sure this is returned
+      };
     } catch (error: any) {
-      console.error("Error in authenticateAdmin:", error.message, error.stack);
+      console.error("💥 Error in authenticateAdmin:", error.message, error.stack);
       throw new Error("Server error");
     }
   }
-
   async saveRefreshToken(userId: string, refreshToken: string): Promise<void> {
     this.refreshTokens.set(refreshToken, userId);
-    console.log(`Saved refresh token for userId ${userId}`);
+    console.log(`💾 Saved refresh token for userId ${userId}`);
   }
 
   async invalidateRefreshToken(userId: string, refreshToken: string): Promise<void> {
     if (this.refreshTokens.has(refreshToken)) {
       this.refreshTokens.delete(refreshToken);
-      console.log(`Invalidated refresh token for userId ${userId}`);
+      console.log(`🗑️ Invalidated refresh token for userId ${userId}`);
     }
   }
 

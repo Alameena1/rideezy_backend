@@ -1,4 +1,3 @@
-// controllers/auth.controller.ts
 import { Request, Response, NextFunction } from "express";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
@@ -15,6 +14,55 @@ export class AuthController implements IAuthController {
     this.authService = authService;
   }
 
+  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const { email, password } = req.body;
+    try {
+      console.log("Login attempt:", { email, passwordLength: password?.length });
+      if (!email || !password) {
+        console.error("Login: Missing email or password", { email, hasPassword: !!password });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_PASSWORD_REQUIRED });
+        return;
+      }
+      const { accessToken, refreshToken, user } = await this.authService.login(email, password);
+      console.log("Login success:", { userId: user.id, email: user.email, role: user.role });
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // ~30 days
+        path: "/",
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: "/",
+      });
+
+      console.log("login success user", user);
+
+      // Include accessToken and refreshToken in the response body
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: ResponseMessages.LOGIN_SUCCESS,
+        user,
+        accessToken,
+        refreshToken,
+      });
+    } catch (error: any) {
+      console.error("Login error:", { message: error.message, email: email || "unknown" });
+      if (error.message === ResponseMessages.ACCOUNT_BLOCKED) {
+        res.status(StatusCode.FORBIDDEN).json({ success: false, message: error.message });
+        return;
+      }
+      res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.INVALID_CREDENTIALS });
+    }
+  }
+
+  // Other methods (signup, resendOTP, verifyOTP, etc.) remain unchanged
   async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const response = await this.authService.signup(req.body);
@@ -53,41 +101,6 @@ export class AuthController implements IAuthController {
     }
   }
 
-  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_PASSWORD_REQUIRED });
-        return;
-      }
-      const { accessToken, refreshToken, user } = await this.authService.login(email, password);
-
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 15 * 60 * 1000,
-        path: "/",
-      });
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/",
-      });
-
-      res.status(StatusCode.OK).json({ success: true, message: ResponseMessages.LOGIN_SUCCESS, user, accessToken, refreshToken });
-    } catch (error: any) {
-      if (error.message === ResponseMessages.ACCOUNT_BLOCKED) {
-        res.status(StatusCode.FORBIDDEN).json({ success: false, message: error.message });
-        return;
-      }
-      res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.INVALID_CREDENTIALS });
-    }
-  }
-
   async refreshToken(req: Request, res: Response): Promise<void> {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
@@ -102,7 +115,7 @@ export class AuthController implements IAuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 15 * 60 * 1000,
+        maxAge: 30 * 24 * 60 * 60 * 1000, // ~30 days
         path: "/",
       });
 
@@ -110,10 +123,9 @@ export class AuthController implements IAuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: "/",
       });
-
       res.status(StatusCode.OK).json({ success: true, message: "Token refreshed", accessToken, refreshToken: newRefreshToken });
     } catch (error) {
       res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: "Invalid refresh token" });
@@ -149,7 +161,7 @@ export class AuthController implements IAuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 15 * 60 * 1000,
+        maxAge: 30 * 24 * 60 * 60 * 1000, // ~30 days
         path: "/",
       });
 
@@ -157,7 +169,7 @@ export class AuthController implements IAuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: "/",
       });
 

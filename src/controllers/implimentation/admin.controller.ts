@@ -30,6 +30,7 @@ import {
   VehicleStatusDto,
 } from "../../dtos/admin.dto";
 import { IAdminController } from "../interface/admin/interface";
+import AdminModel from "../../models/admin";
 
 interface AuthenticatedRequest extends Request {
   admin?: { userId: string; email: string; role: string };
@@ -124,45 +125,47 @@ export class AdminController implements IAdminController {
     }
   };
 
-  adminLogin = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const loginData = this.validateRequest(AdminLoginDto, req.body);
+adminLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const loginData = this.validateRequest(AdminLoginDto, req.body);
 
-      const { accessToken, refreshToken } =
-        await this.adminService.authenticateAdmin(
-          loginData.email,
-          loginData.password
-        );
+    console.log("🔐 Admin login attempt:", { email: loginData.email });
 
-      res.cookie("adminAuthToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 15 * 60 * 1000,
-        path: "/",
-      });
+    const { accessToken, refreshToken } = await this.adminService.authenticateAdmin(
+      loginData.email,
+      loginData.password
+    );
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/",
-      });
-
-      res.status(StatusCode.OK).json({
-        success: true,
-        message: ResponseMessages.LOGIN_SUCCESS,
-        accessToken,
-      });
-    } catch (error: any) {
-      console.error("Admin login error:", error.message);
-      res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: error.message || ResponseMessages.INVALID_CREDENTIALS,
-      });
+    // Get admin details directly from database
+    const admin = await AdminModel.findOne({ email: loginData.email }).select('-password').lean();
+    if (!admin) {
+      throw new Error("Admin not found");
     }
-  };
+
+    console.log("✅ Admin login successful:", { adminId: admin._id, email: admin.email });
+
+    // Return the EXACT SAME structure as user login
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: ResponseMessages.LOGIN_SUCCESS,
+      accessToken,
+      refreshToken,
+      user: {
+        id: admin._id.toString(), // Use the ID from the database query
+        email: admin.email,
+        role: "admin",
+        fullName: "Administrator"
+      }
+    });
+
+  } catch (error: any) {
+    console.error("❌ Admin login error:", error.message);
+    res.status(StatusCode.UNAUTHORIZED).json({
+      success: false,
+      message: error.message || ResponseMessages.INVALID_CREDENTIALS,
+    });
+  }
+};
 
   refreshToken = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -240,7 +243,7 @@ export class AdminController implements IAdminController {
     res: Response
   ): Promise<void> => {
     try {
-      const { userId } = req.params; // Extract userId from URL path
+      const { userId } = req.params;
       const updateData = this.validateRequest(UserStatusDto, req.body);
 
       if (!userId) {

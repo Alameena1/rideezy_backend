@@ -1,4 +1,3 @@
-// src/routes/chat.routes.ts
 import express from "express";
 import container from "../di/container";
 import { TYPES } from "../di/types";
@@ -12,7 +11,10 @@ router.post("/conversations", authMiddleware, chatController.createConversation.
 router.get("/conversations/:conversationId", authMiddleware, chatController.getConversation.bind(chatController));
 router.get("/conversations/:conversationId/messages", authMiddleware, chatController.getMessages.bind(chatController));
 router.post("/conversations/:conversationId/messages", authMiddleware, chatController.sendMessage.bind(chatController));
+router.post("/conversations/:conversationId/image", authMiddleware, chatController.sendImageMessage.bind(chatController));
 router.get("/users/:userId/conversations", authMiddleware, chatController.getUserConversations.bind(chatController));
 router.post("/ride-conversation", authMiddleware, chatController.getOrCreateRideConversation.bind(chatController));
+router.delete("/messages/:messageId", authMiddleware, chatController.deleteMessage.bind(chatController));
+router.post("/upload-image", authMiddleware, chatController.uploadChatImage.bind(chatController));
 
 export default router;

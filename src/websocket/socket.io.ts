@@ -28,7 +28,7 @@ export const initializeSocket = (io: Server) => {
       const decoded = await new Promise<JwtPayload>((resolve, reject) => {
         jwt.verify(
           token, 
-          process.env.USER_JWT_SECRET as string, // Changed to use USER_JWT_SECRET
+          process.env.USER_JWT_SECRET as string,
           (err: jwt.VerifyErrors | null, decoded: unknown) => {
             if (err) {
               reject(err);
@@ -103,7 +103,7 @@ export const initializeSocket = (io: Server) => {
       console.log(`User ${socket.userId} left conversation ${conversationId}`);
     });
 
-    socket.on("sendMessage", (data: { conversationId: string; content: string }, callback: (error?: string) => void) => {
+    socket.on("sendMessage", (data: { conversationId: string; content: string; messageType?: 'text' | 'image' | 'file'; imageUrl?: string; fileUrl?: string; fileName?: string }, callback: (error?: string) => void) => {
       console.log(`Message attempt from ${socket.userId} in conversation ${data.conversationId}: "${data.content}"`);
       
       if (!socket.userId) {
@@ -111,13 +111,24 @@ export const initializeSocket = (io: Server) => {
         return callback("Authentication required");
       }
       
-      if (!data.content || data.content.trim().length === 0) {
+      if (!data.content && data.messageType === 'text') {
         console.error("Empty message content");
         return callback("Message content cannot be empty");
       }
       
       console.log(`Processing message from ${socket.userId} in conversation ${data.conversationId}`);
       chatController.handleSendMessage(socket, data, callback);
+    });
+
+    socket.on("deleteMessage", (data: { messageId: string }, callback: (error?: string) => void) => {
+      console.log(`Delete message attempt from ${socket.userId} for message ${data.messageId}`);
+      
+      if (!socket.userId) {
+        console.error("Unauthorized delete attempt - no user ID");
+        return callback("Authentication required");
+      }
+      
+      chatController.handleDeleteMessage(socket, data, callback);
     });
 
     socket.on("typing", (data: { conversationId: string; isTyping: boolean }) => {
@@ -143,20 +154,20 @@ export const initializeSocket = (io: Server) => {
     });
   });
 
- const refreshAccessToken = async (refreshToken: string): Promise<string> => {
-  try {
-    const response = await fetch('http://localhost:3001/api/auth/refresh-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
-    const data = await response.json();
-    if (!data.success || !data.token) {
+  const refreshAccessToken = async (refreshToken: string): Promise<string> => {
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/refresh-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      const data = await response.json();
+      if (!data.success || !data.token) {
+        throw new Error('Token refresh failed');
+      }
+      return data.token;
+    } catch (error) {
       throw new Error('Token refresh failed');
     }
-    return data.token;
-  } catch (error) {
-    throw new Error('Token refresh failed');
-  }
-};
+  };
 };

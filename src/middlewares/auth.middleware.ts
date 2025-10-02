@@ -1,4 +1,3 @@
-// middleware/authMiddleware.ts
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model"; // Adjust path to your User model
@@ -25,12 +24,11 @@ const authMiddleware: RequestHandler = async (req: AuthenticatedRequest, res: Re
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       res.status(401).json({ success: false, message: "Authorization header missing or incorrect" });
-      return;
+      return; 
     }
 
     const token = authHeader.split(" ")[1];
 
-    // Verify token
     const decoded = jwt.verify(token, USER_JWT_SECRET) as JwtPayload;
     
     if (!decoded.userId || decoded.role !== "user") {
@@ -38,23 +36,21 @@ const authMiddleware: RequestHandler = async (req: AuthenticatedRequest, res: Re
       return;
     }
 
-    // Check if user exists and is not blocked
-    const user = await User.findById(decoded.userId).select('status email name');
+    const user = await User.findById(decoded.userId).select("status email fullName");
     if (!user) {
-      res.status(403).json({ success: false, message: "User not found" });
+      res.status(404).json({ success: false, message: "User not found" });
       return;
     }
 
-    // Check if user is blocked
     if (user.status === "Blocked") {
-      res.status(403).json({ 
-        success: false, 
-        message: "You have been blocked by the admin. Please contact support.",
+      res.status(403).json({
+        success: false,
+        message: "You have been blocked by the admin, please contact support",
         isBlocked: true,
         user: {
           email: user.email,
-          name: user.fullName
-        }
+          name: user.fullName || user.email,
+        },
       });
       return;
     }
@@ -63,7 +59,7 @@ const authMiddleware: RequestHandler = async (req: AuthenticatedRequest, res: Re
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role,
-      status: user.status
+      status: user.status,
     };
     next();
   } catch (error: any) {

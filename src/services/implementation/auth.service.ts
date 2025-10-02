@@ -1,4 +1,3 @@
-// services/implementation/auth.service.ts
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
 import { IAuthService, IGoogleAuthUser } from "../interfaces/auth/iauthService";
@@ -91,27 +90,37 @@ export default class AuthService implements IAuthService {
     return { success: true, message: "User registered successfully", user: newUser };
   }
 
-  async login(email: string, password: string) {
-    const user = await this.authRepository.findUserByEmail(email);
+ async login(email: string, password: string) {
+  console.log("AuthService: Login attempt", { email });
+  const user = await this.authRepository.findUserByEmail(email);
 
-    if (!user || !user.password) {
-      throw new Error("Invalid email or password");
-    }
-    if (user.status === "Blocked") {
-      throw new Error("Your account has been blocked. Contact support.");
-    }
-
-    const isPasswordValid = await PasswordUtil.comparePasswords(password, user.password);
-    if (!isPasswordValid) {
-      throw new Error("Invalid email or password");
-    }
-
-    const accessToken = generateAccessToken(user._id.toString(), user.email, user.role);
-    const refreshToken = generateRefreshToken(user._id.toString(), user.role);
-
-    await this.tokenRepository.replaceToken(user._id.toString(), refreshToken);
-    return { accessToken, refreshToken, user: { id: user._id, email: user.email, role: user.role } };
+  if (!user) {
+    console.error("AuthService: User not found", { email });
+    throw new Error("Invalid email or password");
   }
+  if (!user.password) {
+    console.error("AuthService: User has no password set", { email, userId: user._id });
+    throw new Error("Invalid email or password");
+  }
+  if (user.status === "Blocked") {
+    console.error("AuthService: User is blocked", { email, userId: user._id });
+    throw new Error("Your account has been blocked. Contact support.");
+  }
+
+  const isPasswordValid = await PasswordUtil.comparePasswords(password, user.password);
+  console.log("AuthService: Password verification", { email, isPasswordValid });
+  if (!isPasswordValid) {
+    console.error("AuthService: Invalid password", { email });
+    throw new Error("Invalid email or password");
+  }
+
+  const accessToken = generateAccessToken(user._id.toString(), user.email, user.role);
+  const refreshToken = generateRefreshToken(user._id.toString(), user.role);
+
+  await this.tokenRepository.replaceToken(user._id.toString(), refreshToken);
+  console.log("AuthService: Login successful", { userId: user._id, email, role: user.role });
+  return { accessToken, refreshToken, user: { id: user._id, email: user.email, role: user.role } };
+}
 
   async refreshToken(token: string) {
     const decoded = verifyRefreshToken(token, "user");
