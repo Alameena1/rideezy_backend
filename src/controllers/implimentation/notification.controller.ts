@@ -70,6 +70,35 @@ export class NotificationController implements INotificationController {
     }
   }
 
+  // New methods for join request notifications
+  async triggerRideJoinAcceptedNotification(req: Request, res: Response): Promise<void> {
+    try {
+      const { rideId, userId, passengerName } = req.body;
+      if (!rideId || !userId || !passengerName) {
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+        return;
+      }
+      await this.notificationService.triggerRideJoinAcceptedNotification(rideId, userId, passengerName);
+      res.status(StatusCode.OK).json({ success: true, message: "Ride join accepted notification triggered" });
+    } catch (error) {
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
+    }
+  }
+
+  async triggerRideJoinRejectedNotification(req: Request, res: Response): Promise<void> {
+    try {
+      const { rideId, userId, rejectedPassengerId, passengerName } = req.body;
+      if (!rideId || !userId || !rejectedPassengerId || !passengerName) {
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+        return;
+      }
+      await this.notificationService.triggerRideJoinRejectedNotification(rideId, userId, rejectedPassengerId, passengerName);
+      res.status(StatusCode.OK).json({ success: true, message: "Ride join rejected notification triggered" });
+    } catch (error) {
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
+    }
+  }
+
   async getUserNotifications(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
