@@ -19,10 +19,10 @@ export class AdminService implements IAdminService {
     this.adminRepository = adminRepository;
   }
 
-   async authenticateAdmin(email: string, password: string): Promise<{
+  async authenticateAdmin(email: string, password: string): Promise<{
     accessToken: string;
     refreshToken: string;
-    adminId: string; // Add this to the return type
+    adminId: string;
   }> {
     console.log("🔐 Authenticating admin with email:", email);
     
@@ -64,13 +64,14 @@ export class AdminService implements IAdminService {
       return { 
         accessToken, 
         refreshToken,
-        adminId: admin._id.toString() // Make sure this is returned
+        adminId: admin._id.toString()
       };
     } catch (error: any) {
       console.error("💥 Error in authenticateAdmin:", error.message, error.stack);
       throw new Error("Server error");
     }
   }
+
   async saveRefreshToken(userId: string, refreshToken: string): Promise<void> {
     this.refreshTokens.set(refreshToken, userId);
     console.log(`💾 Saved refresh token for userId ${userId}`);
@@ -123,6 +124,17 @@ export class AdminService implements IAdminService {
   }
 
   async updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
+    // Prevent blocking if user has ongoing rides
+    if (status === "Blocked") {
+      const ongoingRides = await this.adminRepository.checkUserOngoingRides(userId);
+      if (ongoingRides.hasOngoingRides) {
+        throw new Error(
+          `Cannot block user. User has ${ongoingRides.ongoingRides.length} ongoing ride(s). ` +
+          `Please wait until all rides are completed.`
+        );
+      }
+    }
+    
     await this.adminRepository.updateUserStatus(userId, status);
   }
 
@@ -155,6 +167,28 @@ export class AdminService implements IAdminService {
     }
 
     return updatedUser;
+  }
+
+  async checkUserOngoingRides(userId: string): Promise<{
+    length: number;
+    hasOngoingRides: boolean;
+    ongoingRides: any[];
+    message: string;
+  }> {
+    try {
+      console.log(`🔍 Checking ongoing rides for user: ${userId}`);
+      const result = await this.adminRepository.checkUserOngoingRides(userId);
+      console.log(`📊 Ongoing rides check result:`, result);
+      
+      // Add the length property based on the ongoingRides array length
+      return {
+        ...result,
+        length: result.ongoingRides?.length || 0
+      };
+    } catch (error) {
+      console.error("❌ Error checking ongoing rides:", error);
+      throw new Error(`Failed to check user's ongoing rides: ${(error as Error).message}`);
+    }
   }
 
   async createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan> {

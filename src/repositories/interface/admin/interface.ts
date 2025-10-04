@@ -4,7 +4,7 @@ import { PaginationQueryDtoType, RideSearchQueryDtoType, UserSearchQueryDtoType,
 
 export interface IAdminRepository {
   // Updated methods with pagination and search
- getAllUsers(params: UserSearchQueryDtoType): Promise<{
+  getAllUsers(params: UserSearchQueryDtoType): Promise<{
     data: any[];
     pagination: {
       currentPage: number;
@@ -36,22 +36,25 @@ export interface IAdminRepository {
       hasPrev: boolean;
     };
   }>;
+  
   updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void>;
-  
-
-  
   updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void>;
   findUserById(userId: string): Promise<IUser | null>;
   updateUser(userId: string, updatedData: Partial<IUser>): Promise<IUser | null>;
+  
+  // New method for checking ongoing rides
+  checkUserOngoingRides(userId: string): Promise<{
+    hasOngoingRides: boolean;
+    ongoingRides: any[];
+    message: string;
+  }>;
+  
   createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan>;
   updateSubscriptionPlan(planId: string, planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan>;
   deleteSubscriptionPlan(planId: string): Promise<void>;
   getSubscriptionPlans(): Promise<ISubscriptionPlan[]>;
   updateSubscriptionPlanStatus(planId: string, status: "Active" | "Blocked"): Promise<void>;
   getRideDetails(rideId: string): Promise<any>;
-  
-
-  
   updateRideStatus(rideId: string, status: "Active" | "Blocked" | "Cancelled"): Promise<void>;
   
   getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{

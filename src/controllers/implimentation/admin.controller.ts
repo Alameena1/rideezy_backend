@@ -125,47 +125,47 @@ export class AdminController implements IAdminController {
     }
   };
 
-adminLogin = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const loginData = this.validateRequest(AdminLoginDto, req.body);
+  adminLogin = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const loginData = this.validateRequest(AdminLoginDto, req.body);
 
-    console.log("🔐 Admin login attempt:", { email: loginData.email });
+      console.log("🔐 Admin login attempt:", { email: loginData.email });
 
-    const { accessToken, refreshToken } = await this.adminService.authenticateAdmin(
-      loginData.email,
-      loginData.password
-    );
+      const { accessToken, refreshToken } = await this.adminService.authenticateAdmin(
+        loginData.email,
+        loginData.password
+      );
 
-    // Get admin details directly from database
-    const admin = await AdminModel.findOne({ email: loginData.email }).select('-password').lean();
-    if (!admin) {
-      throw new Error("Admin not found");
-    }
-
-    console.log("✅ Admin login successful:", { adminId: admin._id, email: admin.email });
-
-    // Return the EXACT SAME structure as user login
-    res.status(StatusCode.OK).json({
-      success: true,
-      message: ResponseMessages.LOGIN_SUCCESS,
-      accessToken,
-      refreshToken,
-      user: {
-        id: admin._id.toString(), // Use the ID from the database query
-        email: admin.email,
-        role: "admin",
-        fullName: "Administrator"
+      // Get admin details directly from database
+      const admin = await AdminModel.findOne({ email: loginData.email }).select('-password').lean();
+      if (!admin) {
+        throw new Error("Admin not found");
       }
-    });
 
-  } catch (error: any) {
-    console.error("❌ Admin login error:", error.message);
-    res.status(StatusCode.UNAUTHORIZED).json({
-      success: false,
-      message: error.message || ResponseMessages.INVALID_CREDENTIALS,
-    });
-  }
-};
+      console.log("✅ Admin login successful:", { adminId: admin._id, email: admin.email });
+
+      // Return the EXACT SAME structure as user login
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: ResponseMessages.LOGIN_SUCCESS,
+        accessToken,
+        refreshToken,
+        user: {
+          id: admin._id.toString(), // Use the ID from the database query
+          email: admin.email,
+          role: "admin",
+          fullName: "Administrator"
+        }
+      });
+
+    } catch (error: any) {
+      console.error("❌ Admin login error:", error.message);
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: error.message || ResponseMessages.INVALID_CREDENTIALS,
+      });
+    }
+  };
 
   refreshToken = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -541,6 +541,33 @@ adminLogin = async (req: Request, res: Response): Promise<void> => {
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: (error as Error).message });
+    }
+  };
+
+  checkUserOngoingRides = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "User ID is required",
+        });
+        return;
+      }
+
+      const result = await this.adminService.checkUserOngoingRides(userId);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      console.error("Error checking user ongoing rides:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: (error as Error).message,
+      });
     }
   };
 }

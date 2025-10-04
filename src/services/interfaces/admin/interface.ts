@@ -1,18 +1,18 @@
 import { IUser } from "../../../models/user.model";
 import { ISubscriptionPlan } from "../../../models/SubscriptionPlan";
-
-import { PaginationQueryDtoType } from "../../../dtos/admin.dto";
+import { PaginationQueryDtoType, RideSearchQueryDtoType, UserSearchQueryDtoType, VehicleSearchQueryDtoType } from "../../../dtos/admin.dto";
 
 export interface IAdminService {
   authenticateAdmin(email: string, password: string): Promise<{
     accessToken: string;
     refreshToken: string;
+    adminId: string;
   }>;
   saveRefreshToken(email: string, refreshToken: string): Promise<void>;
   invalidateRefreshToken(email: string, refreshToken: string): Promise<void>;
   
   // Updated methods with pagination and search
-  getAllUsers(params: PaginationQueryDtoType & { 
+  getAllUsers(params: UserSearchQueryDtoType & { 
     status?: "Active" | "Blocked"; 
     subscriptionStatus?: "subscribed" | "non-subscribed";
   }): Promise<{
@@ -28,7 +28,7 @@ export interface IAdminService {
   
   updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void>;
   
-  getAllVehicles(params: PaginationQueryDtoType & { 
+  getAllVehicles(params: VehicleSearchQueryDtoType & { 
     status?: "Pending" | "Approved" | "Rejected";
     vehicleType?: string;
   }): Promise<{
@@ -44,6 +44,15 @@ export interface IAdminService {
   
   updateVehicleStatus(vehicleId: string, status: "Approved" | "Rejected", note?: string): Promise<void>;
   verifyGovId(userId: string, status: "Verified" | "Rejected", rejectionNote?: string): Promise<IUser>;
+  
+  // Updated method for checking ongoing rides
+  checkUserOngoingRides(userId: string): Promise<{
+    length: number;
+    hasOngoingRides: boolean;
+    ongoingRides: any[];
+    message: string;
+  }>;
+  
   createSubscriptionPlan(planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan>;
   updateSubscriptionPlan(planId: string, planData: Partial<ISubscriptionPlan>): Promise<ISubscriptionPlan>;
   deleteSubscriptionPlan(planId: string): Promise<void>;
@@ -52,7 +61,7 @@ export interface IAdminService {
   
   getRideDetails(rideId: string): Promise<any>;
   
-  getAllRides(params: PaginationQueryDtoType & { 
+  getAllRides(params: RideSearchQueryDtoType & { 
     status?: "Active" | "Completed" | "Cancelled" | "Blocked";
     dateFrom?: string;
     dateTo?: string;

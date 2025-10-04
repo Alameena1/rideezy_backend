@@ -10,6 +10,10 @@ export interface IAdminController {
   getVehicles(req: Request, res: Response): Promise<void>;
   updateVehicleStatus(req: Request, res: Response): Promise<void>;
   verifyGovId(req: Request, res: Response): Promise<void>;
+  
+  // New method for checking ongoing rides
+  checkUserOngoingRides(req: Request, res: Response): Promise<void>;
+  
   createSubscriptionPlan(req: Request, res: Response): Promise<void>;
   updateSubscriptionPlan(req: Request, res: Response): Promise<void>;
   deleteSubscriptionPlan(req: Request, res: Response): Promise<void>;

@@ -169,83 +169,83 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     }
   }
 
- public async getAllRides(params: PaginationQueryDtoType & { 
-  status?: "Active" | "Completed" | "Cancelled" | "Blocked";
-  dateFrom?: string;
-  dateTo?: string;
-}): Promise<{
-  data: any[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}> {
-  try {
-    const { page, limit, search, sortBy, sortOrder, status, dateFrom, dateTo } = params;
-    const skip = (page - 1) * limit;
-
-    const query: any = {};
-    
-    if (search) {
-      query.$or = [
-        { startPlaceName: { $regex: search, $options: 'i' } }, // Adjusted to match schema
-        { endPlaceName: { $regex: search, $options: 'i' } },   // Adjusted to match schema
-        { driverName: { $regex: search, $options: 'i' } }      // Use driverName instead of driver.fullName
-      ];
-    }
-
-    if (status) {
-      query.status = status;
-    }
-
-    if (dateFrom || dateTo) {
-      query.date = {};
-      if (dateFrom) query.date.$gte = new Date(dateFrom);
-      if (dateTo) query.date.$lte = new Date(dateTo);
-    }
-
-    const sortOptions: any = {};
-    if (sortBy) {
-      sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
-    } else {
-      sortOptions.createdAt = -1;
-    }
-
-    const [data, totalItems] = await Promise.all([
-      RideModel.find(query)
-        .populate({
-          path: 'vehicleId',
-          select: 'licensePlate vehicleModel'
-        }) // Populate vehicleId if needed
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(limit)
-        .lean()
-        .exec(),
-      RideModel.countDocuments(query)
-    ]);
-
-    const totalPages = Math.ceil(totalItems / limit);
-    const hasNext = page < totalPages;
-    const hasPrev = page > 1;
-
-    return {
-      data,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-        hasNext,
-        hasPrev,
-      },
+  public async getAllRides(params: PaginationQueryDtoType & { 
+    status?: "Active" | "Completed" | "Cancelled" | "Blocked";
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<{
+    data: any[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      hasNext: boolean;
+      hasPrev: boolean;
     };
-  } catch (error) {
-    throw new Error(`Failed to fetch rides: ${(error as Error).message}`);
+  }> {
+    try {
+      const { page, limit, search, sortBy, sortOrder, status, dateFrom, dateTo } = params;
+      const skip = (page - 1) * limit;
+
+      const query: any = {};
+      
+      if (search) {
+        query.$or = [
+          { startPlaceName: { $regex: search, $options: 'i' } },
+          { endPlaceName: { $regex: search, $options: 'i' } },
+          { driverName: { $regex: search, $options: 'i' } }
+        ];
+      }
+
+      if (status) {
+        query.status = status;
+      }
+
+      if (dateFrom || dateTo) {
+        query.date = {};
+        if (dateFrom) query.date.$gte = new Date(dateFrom);
+        if (dateTo) query.date.$lte = new Date(dateTo);
+      }
+
+      const sortOptions: any = {};
+      if (sortBy) {
+        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+      } else {
+        sortOptions.createdAt = -1;
+      }
+
+      const [data, totalItems] = await Promise.all([
+        RideModel.find(query)
+          .populate({
+            path: 'vehicleId',
+            select: 'licensePlate vehicleModel'
+          })
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limit)
+          .lean()
+          .exec(),
+        RideModel.countDocuments(query)
+      ]);
+
+      const totalPages = Math.ceil(totalItems / limit);
+      const hasNext = page < totalPages;
+      const hasPrev = page > 1;
+
+      return {
+        data,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems,
+          hasNext,
+          hasPrev,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch rides: ${(error as Error).message}`);
+    }
   }
-}
 
   public async updateUserStatus(userId: string, status: "Active" | "Blocked"): Promise<void> {
     try {
@@ -289,6 +289,38 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
       return updatedUser;
     } catch (error) {
       throw new Error(`Failed to update user: ${(error as Error).message}`);
+    }
+  }
+
+  // New method: Check user's ongoing rides
+  public async checkUserOngoingRides(userId: string): Promise<{
+    hasOngoingRides: boolean;
+    ongoingRides: any[];
+    message: string;
+  }> {
+    try {
+      // Check for ongoing rides (rides that are Pending or Started)
+      const ongoingRides = await RideModel.find({
+        $or: [
+          { driverId: userId, status: { $in: ["Pending", "Started"] } },
+          { "passengers.passengerId": userId, status: { $in: ["Pending", "Started"] } }
+        ]
+      })
+      .select('rideId driverName startPlaceName endPlaceName status date time passengers')
+      .lean()
+      .exec();
+
+      const hasOngoingRides = ongoingRides.length > 0;
+      
+      return {
+        hasOngoingRides,
+        ongoingRides,
+        message: hasOngoingRides 
+          ? `User has ${ongoingRides.length} ongoing ride(s)` 
+          : "User has no ongoing rides"
+      };
+    } catch (error) {
+      throw new Error(`Failed to check user's ongoing rides: ${(error as Error).message}`);
     }
   }
 
