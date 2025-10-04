@@ -477,4 +477,266 @@ async updateRide(rideId: string, driverId: string, updates: { passengerId?: stri
     session.endSession();
   }
 }
+
+
+async emergencyStopRide(rideId: string, driverId: string, reason: string, currentPosition: [number, number]): Promise<IRide> {
+    const session = await this.rideRepo.startSession();
+    try {
+      const result = await session.withTransaction(async () => {
+        const ride = await this.rideRepo.findOne({ _id: new Types.ObjectId(rideId) }, { session });
+        if (!ride) throw new Error("Ride not found");
+        if (ride.driverId !== driverId) throw new Error("Unauthorized");
+        if (ride.status !== "Started") throw new Error("Only started rides can be emergency stopped");
+
+        // Calculate distance traveled and remaining distance
+        const totalDistanceTraveled = await this.calculateDistanceTraveled(ride, currentPosition);
+        const estimatedRemainingDistance = Math.max(0, ride.distanceKm - totalDistanceTraveled);
+        
+        // Calculate refund percentage based on distance traveled
+        const refundPercentage = this.calculateRefundPercentage(totalDistanceTraveled, ride.distanceKm);
+        
+        // Update ride with emergency stop details
+        const emergencyStop = {
+          reason,
+          stoppedAt: new Date(),
+          currentPosition,
+          totalDistanceTraveled,
+          estimatedRemainingDistance,
+          refundPercentage,
+        };
+
+        await this.rideRepo.updateOne(
+          { _id: new Types.ObjectId(rideId) },
+          { 
+            status: "EmergencyStopped",
+            emergencyStop,
+            currentPosition,
+            totalDistanceTraveled
+          },
+          { session }
+        );
+
+        const updatedRide = await this.rideRepo.findOne({ _id: new Types.ObjectId(rideId) }, { session });
+        if (!updatedRide) throw new Error("Updated ride not found");
+
+        // Stop tracking
+        try {
+          await this.trackingService.stopTracking(rideId);
+        } catch (error) {
+          console.warn(`[RideService] Error stopping tracking for emergency stop: ${error}`);
+        }
+
+        // Process refunds and get the total refund amount
+        const totalRefundAmount = await this.processEmergencyRefunds(rideId, session);
+
+        // Notify all passengers
+        for (const passenger of updatedRide.passengers) {
+          const refundAmount = passenger.cost * (refundPercentage / 100);
+          await this.notificationService.triggerRideCancellationNotification(
+            rideId,
+            passenger.passengerId,
+            `🚨 Ride Emergency Stop: ${reason}. You have received a ${refundPercentage}% refund (₹${refundAmount.toFixed(2)}) credited to your wallet.`
+          );
+        }
+
+        // Notify driver
+        await this.notificationService.triggerRideCancellationNotification(
+          rideId,
+          driverId,
+          `Ride emergency stopped: ${reason}. Total refund of ₹${totalRefundAmount.toFixed(2)} has been deducted from your wallet and credited to passengers.`
+        );
+
+        return updatedRide;
+      });
+      return result!;
+    } catch (error) {
+      console.error(`[RideService] Error emergency stopping ride ${rideId}:`, error);
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+
+  async processEmergencyRefunds(rideId: string, session?: any): Promise<number> { 
+    const useExternalSession = !session;
+    const internalSession = useExternalSession ? await this.rideRepo.startSession() : session;
+    
+    try {
+      if (useExternalSession) {
+        return await internalSession.withTransaction(async () => {
+          return await this._processEmergencyRefunds(rideId, internalSession);
+        });
+      } else {
+        return await this._processEmergencyRefunds(rideId, internalSession);
+      }
+    } finally {
+      if (useExternalSession) {
+        internalSession.endSession();
+      }
+    }
+  }
+
+  private async _processEmergencyRefunds(rideId: string, session: any): Promise<number> { // CHANGE RETURN TYPE TO number
+    const ride = await this.rideRepo.findOne({ _id: new Types.ObjectId(rideId) }, { session });
+    if (!ride || !ride.emergencyStop) {
+      throw new Error("Ride not found or no emergency stop recorded");
+    }
+
+    const { refundPercentage } = ride.emergencyStop;
+
+    // First, get the driver's wallet to deduct refunds from
+    const driver = await this.userRepo.findUserById(ride.driverId, { session });
+    if (!driver || !driver.wallet) {
+      throw new Error("Driver wallet not found");
+    }
+
+    let totalRefundAmount = 0;
+
+    for (const passenger of ride.passengers) {
+      try {
+        const passengerUser = await this.userRepo.findUserById(passenger.passengerId, { session });
+        if (!passengerUser || !passengerUser.wallet) {
+          console.error(`[RideService] Passenger wallet not found for: ${passenger.passengerId}`);
+          continue;
+        }
+
+        const refundAmount = passenger.cost * (refundPercentage / 100);
+        totalRefundAmount += refundAmount;
+
+        // 1. Deduct from driver's wallet
+        if (driver.wallet.balance < refundAmount) {
+          console.error(`[RideService] Insufficient balance in driver wallet for refund. Driver: ${driver.wallet.balance}, Required: ${refundAmount}`);
+          throw new Error(`Insufficient balance in driver wallet for refund processing`);
+        }
+
+        driver.wallet.balance -= refundAmount;
+        driver.wallet.transactions.push({
+          transactionId: `REFUND_DRIVER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          type: "REFUND_PAYOUT", // NOW THIS WILL WORK
+          amount: refundAmount, // Use positive amount, the type indicates it's a payout
+          status: "COMPLETED",
+          createdAt: new Date(),
+          description: `Emergency ride stop refund to passenger ${passenger.passengerName} - Ride ${ride.rideId}`
+        });
+
+        // 2. Credit to passenger's wallet
+        passengerUser.wallet.balance += refundAmount;
+        passengerUser.wallet.transactions.push({
+          transactionId: `REFUND_PASSENGER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          type: "REFUND",
+          amount: refundAmount,
+          status: "COMPLETED",
+          createdAt: new Date(),
+          description: `Emergency ride stop refund - Ride ${ride.rideId}`
+        });
+
+        // Update passenger wallet
+        await this.userRepo.updateOne(
+          { _id: passengerUser._id },
+          { $set: { wallet: passengerUser.wallet } },
+          { session }
+        );
+
+        // Update passenger refund details in ride
+        const passengerIndex = ride.passengers.findIndex(p => p.passengerId === passenger.passengerId);
+        if (passengerIndex !== -1) {
+          ride.passengers[passengerIndex].refundAmount = refundAmount;
+          ride.passengers[passengerIndex].refundStatus = "processed";
+        }
+
+        console.log(`[RideService] Refund processed for passenger ${passenger.passengerId}: ₹${refundAmount} (deducted from driver, credited to passenger)`);
+      } catch (error) {
+        console.error(`[RideService] Error processing refund for passenger ${passenger.passengerId}:`, error);
+        
+        // Mark refund as failed
+        const passengerIndex = ride.passengers.findIndex(p => p.passengerId === passenger.passengerId);
+        if (passengerIndex !== -1) {
+          ride.passengers[passengerIndex].refundStatus = "failed";
+        }
+      }
+    }
+
+    // Update driver's wallet with all deductions
+    await this.userRepo.updateOne(
+      { _id: driver._id },
+      { $set: { wallet: driver.wallet } },
+      { session }
+    );
+
+    // Update ride with refund details
+    await this.rideRepo.updateOne(
+      { _id: new Types.ObjectId(rideId) },
+      { passengers: ride.passengers },
+      { session }
+    );
+
+    console.log(`[RideService] Total refund amount processed: ₹${totalRefundAmount} deducted from driver ${ride.driverId}`);
+    
+    return totalRefundAmount; // RETURN THE TOTAL AMOUNT
+  }
+
+  private async calculateDistanceTraveled(ride: IRide, currentPosition: [number, number]): Promise<number> {
+    try {
+      // Get the route coordinates
+      const routeCoordinates = ride.routeCoordinates.map(([lng, lat]) => [lat, lng] as [number, number]);
+      
+      // Find the nearest point on the route to current position
+      let nearestIndex = 0;
+      let minDistance = Infinity;
+      
+      for (let i = 0; i < routeCoordinates.length; i++) {
+        const distance = this.calculateHaversineDistance(currentPosition, routeCoordinates[i]);
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestIndex = i;
+        }
+      }
+
+      // Calculate cumulative distance from start to nearest point
+      let totalDistance = 0;
+      for (let i = 1; i <= nearestIndex; i++) {
+        const segmentDistance = this.calculateHaversineDistance(routeCoordinates[i-1], routeCoordinates[i]);
+        totalDistance += segmentDistance;
+      }
+
+      return totalDistance;
+    } catch (error) {
+      console.error("[RideService] Error calculating distance traveled:", error);
+      // Fallback: estimate based on time if route calculation fails
+      const rideStartTime = new Date(`${ride.date.toISOString().split('T')[0]}T${ride.time}:00`);
+      const now = new Date();
+      const hoursElapsed = (now.getTime() - rideStartTime.getTime()) / (1000 * 60 * 60);
+      const estimatedDistance = hoursElapsed * 40; // Assume 40 km/h average speed
+      return Math.min(estimatedDistance, ride.distanceKm);
+    }
+  }
+
+  private calculateRefundPercentage(distanceTraveled: number, totalDistance: number): number {
+    const percentageTraveled = (distanceTraveled / totalDistance) * 100;
+    
+    // Refund logic based on distance traveled:
+    if (percentageTraveled <= 25) {
+      return 80; // 80% refund if less than 25% traveled
+    } else if (percentageTraveled <= 50) {
+      return 60; // 60% refund if 25-50% traveled
+    } else if (percentageTraveled <= 75) {
+      return 40; // 40% refund if 50-75% traveled
+    } else {
+      return 20; // 20% refund if more than 75% traveled
+    }
+  }
+
+  private calculateHaversineDistance(coord1: [number, number], coord2: [number, number]): number {
+    const R = 6371; // Earth's radius in km
+    const dLat = (coord2[0] - coord1[0]) * Math.PI / 180;
+    const dLon = (coord2[1] - coord1[1]) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(coord1[0] * Math.PI / 180) * Math.cos(coord2[0] * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+
 }

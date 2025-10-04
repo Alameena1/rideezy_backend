@@ -72,6 +72,13 @@ export const RideSearchQueryDto = PaginationQueryDto.extend({
 
 export type RideSearchQueryDtoType = z.infer<typeof RideSearchQueryDto>;
 
+// Emergency Stop DTO
+export const EmergencyStopSchema = z.object({
+  reason: z.string().min(1, "Reason is required"),
+  currentPosition: z.tuple([z.number(), z.number()]),
+});
+
+
 // Dashboard DTOs
 export const DashboardMetricsQueryDto = z.object({
   startDate: z.string().optional(),
@@ -201,10 +208,11 @@ export const PaginatedResponseDto = <T extends z.ZodTypeAny>(dataSchema: T) =>
     }),
   });
 
-// Export types for all DTOs
+// Export types for all DTOs - REMOVE DUPLICATES
 export type UserStatusDtoType = z.infer<typeof UserStatusDto>;
 export type VehicleStatusDtoType = z.infer<typeof VehicleStatusDto>;
 export type RideStatusDtoType = z.infer<typeof RideStatusDto>;
+export type EmergencyStopDtoType = z.infer<typeof EmergencyStopSchema>; // KEEP ONLY ONE
 export type AdminLoginDtoType = z.infer<typeof AdminLoginDto>;
 export type RefreshTokenDtoType = z.infer<typeof RefreshTokenDto>;
 export type LogoutDtoType = z.infer<typeof LogoutDto>;

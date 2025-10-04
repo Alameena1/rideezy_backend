@@ -13,5 +13,7 @@ router.put('/:rideId', authMiddleware, initiateRideController.editRide.bind(init
 router.delete('/:rideId', authMiddleware, initiateRideController.cancelRide.bind(initiateRideController));
 router.put("/:rideId/start-tracking", authMiddleware, initiateRideController.startTracking.bind(initiateRideController));
 router.put("/:rideId/update", authMiddleware, initiateRideController.updateRide.bind(initiateRideController));
+// Add the emergency stop route
+router.put("/:rideId/emergency-stop", authMiddleware, initiateRideController.emergencyStopRide.bind(initiateRideController));
 
 export default router;

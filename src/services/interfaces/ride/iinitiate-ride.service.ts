@@ -10,4 +10,8 @@ export interface IInitiateRideService {
   findById(rideId: string): Promise<IRide | null>;
   startTracking(rideId: string, driverId: string): Promise<IRide>;
   updateRide(rideId: string, driverId: string, updates: any): Promise<IRide>;
+  // New method for emergency stop
+  emergencyStopRide(rideId: string, driverId: string, reason: string, currentPosition: [number, number]): Promise<IRide>;
+  // Updated method to process refunds - now returns number
+  processEmergencyRefunds(rideId: string): Promise<number>; // CHANGE FROM Promise<void> TO Promise<number>
 }

@@ -5,6 +5,7 @@ import { IInitiateRideController } from "../interface/ride/iinitiate-ride.contro
 import { IInitiateRideService } from "../../services/interfaces/ride/iinitiate-ride.service";
 import { CreateRideDto, CreateRideSchema } from "../../dtos/create-ride.dto";
 import { EditRideDto, EditRideSchema } from "../../dtos/edit-ride.dto";
+import { EmergencyStopSchema } from "../../dtos/admin.dto";
 import { StatusCode } from "../../constants/status-codes.enum";
 import { ResponseMessages } from "../../constants/response-messages.const";
 import { AuthenticatedRequest } from "../../types/express";
@@ -178,6 +179,43 @@ async updateRide(req: AuthenticatedRequest, res: Response, next: NextFunction): 
     next(error);
   }
 }
+
+
+async emergencyStopRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
+        return;
+      }
+
+      const { rideId } = req.params;
+      if (!rideId) {
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+        return;
+      }
+
+      const validationResult = EmergencyStopSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, errors: validationResult.error.errors });
+        return;
+      }
+
+      const { reason, currentPosition } = validationResult.data;
+      
+      const updatedRide = await this.initiateRideService.emergencyStopRide(rideId, userId, reason, currentPosition);
+      
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: "Ride emergency stopped successfully. Refunds are being processed.",
+        data: updatedRide,
+      });
+    } catch (error: any) {
+      console.error("[RideController] Error emergency stopping ride:", error);
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+      next(error);
+    }
+  }
 
 
 }

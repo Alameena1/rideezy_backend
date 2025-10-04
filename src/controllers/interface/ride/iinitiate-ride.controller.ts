@@ -8,4 +8,5 @@ export interface IInitiateRideController {
   getRides(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
   startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
   updateRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>;
+  emergencyStopRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void>; 
 }

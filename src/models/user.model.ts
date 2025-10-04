@@ -6,7 +6,7 @@ export interface IWallet {
   balance: number;
   transactions: {
     transactionId: string;
-    type: "DEPOSIT" | "WITHDRAWAL" | "SUBSCRIPTION" | "REFUND";
+    type: "DEPOSIT" | "WITHDRAWAL" | "SUBSCRIPTION" | "REFUND" | "REFUND_PAYOUT"; // ADD REFUND_PAYOUT HERE
     amount: number;
     status: "PENDING" | "COMPLETED" | "FAILED";
     createdAt: Date;
@@ -140,7 +140,11 @@ const UserSchema = new Schema<IUser>(
       transactions: [
         {
           transactionId: { type: String, required: true },
-          type: { type: String, enum: ["DEPOSIT", "WITHDRAWAL", "SUBSCRIPTION", "REFUND"], required: true },
+          type: { 
+            type: String, 
+            enum: ["DEPOSIT", "WITHDRAWAL", "SUBSCRIPTION", "REFUND", "REFUND_PAYOUT"], // ADD REFUND_PAYOUT HERE
+            required: true 
+          },
           amount: { type: Number, required: true },
           status: { type: String, enum: ["PENDING", "COMPLETED", "FAILED"], default: "PENDING" },
           createdAt: { type: Date, default: Date.now },

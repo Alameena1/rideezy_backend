@@ -11,8 +11,10 @@ export interface Passenger {
   passengerName: string;
   pickedUp: boolean;
   droppedOff: boolean;
-  distanceKm: number; // New: Store passenger's travel distance
-  cost: number; // New: Store passenger's specific cost
+  distanceKm: number;
+  cost: number;
+  refundAmount?: number; // New: Store refund amount if ride is stopped
+  refundStatus?: "pending" | "processed" | "failed"; // New: Track refund status
 }
 
 export interface PendingRequest {
@@ -27,7 +29,16 @@ export interface PendingRequest {
   signature?: string;
   requestedAt: Date;
   status: "pending" | "accepted" | "rejected";
-  distanceKm: number; // New: Store passenger's segment distance
+  distanceKm: number;
+}
+
+export interface EmergencyStop {
+  reason: string;
+  stoppedAt: Date;
+  currentPosition: [number, number];
+  totalDistanceTraveled: number;
+  estimatedRemainingDistance: number;
+  refundPercentage: number;
 }
 
 export interface IRide extends Document {
@@ -50,9 +61,9 @@ export interface IRide extends Document {
   totalFuelCost: number;
   platformFee: number;
   totalRideCost: number;
-  perKmRate: number; // New: Store per-km rate
-  passengerDistances: { passengerId: string; distanceKm: number }[]; // New: Track distances
-  passengerCosts: { passengerId: string; cost: number }[]; // New: Track costs
+  perKmRate: number;
+  passengerDistances: { passengerId: string; distanceKm: number }[];
+  passengerCosts: { passengerId: string; cost: number }[];
   passengers: Passenger[];
   status: string;
   routeGeometry?: string;
@@ -60,6 +71,9 @@ export interface IRide extends Document {
   dropoffPoints: PickupDropoffPoint[];
   routeCoordinates: [number, number][];
   pendingRequests: PendingRequest[];
+  emergencyStop?: EmergencyStop; // New: Emergency stop details
+  currentPosition?: [number, number]; // Current vehicle position
+  totalDistanceTraveled?: number; // Total distance traveled so far
 }
 
 export interface RideCreationData {
@@ -87,8 +101,8 @@ export interface RideCreationData {
   pickupPoints: any[];
   dropoffPoints: any[];
   routeCoordinates: [number, number][];
-  passengerDistances: { passengerId: string; distanceKm: number }[]; 
-  passengerCosts: { passengerId: string; cost: number }[]; 
+  passengerDistances: { passengerId: string; distanceKm: number }[];
+  passengerCosts: { passengerId: string; cost: number }[];
 }
 
 const RideSchema = new Schema<IRide>(
@@ -110,27 +124,29 @@ const RideSchema = new Schema<IRide>(
     totalFuelCost: { type: Number, required: true },
     platformFee: { type: Number, required: true },
     totalRideCost: { type: Number, required: true },
-    perKmRate: { type: Number, required: true }, // New
+    perKmRate: { type: Number, required: true },
     passengerDistances: [
       {
         passengerId: { type: String, required: true },
         distanceKm: { type: Number, required: true },
       },
-    ], // New
+    ],
     passengerCosts: [
       {
         passengerId: { type: String, required: true },
         cost: { type: Number, required: true },
       },
-    ], // New
+    ],
     passengers: [
       {
         passengerId: { type: String, required: true },
         passengerName: { type: String, required: true },
         pickedUp: { type: Boolean, default: false },
         droppedOff: { type: Boolean, default: false },
-        distanceKm: { type: Number, required: true }, // New
-        cost: { type: Number, required: true }, // New
+        distanceKm: { type: Number, required: true },
+        cost: { type: Number, required: true },
+        refundAmount: { type: Number, default: 0 }, // New
+        refundStatus: { type: String, enum: ["pending", "processed", "failed"], default: "pending" }, // New
       },
     ],
     status: { type: String, required: true },
@@ -162,10 +178,20 @@ const RideSchema = new Schema<IRide>(
         signature: { type: String, required: false },
         requestedAt: { type: Date, default: Date.now },
         status: { type: String, enum: ["pending", "accepted", "rejected"], default: "pending" },
-        distanceKm: { type: Number, required: true }, // New
+        distanceKm: { type: Number, required: true },
       },
     ],
     routeCoordinates: { type: [[Number]], required: true },
+    emergencyStop: { // New
+      reason: { type: String },
+      stoppedAt: { type: Date },
+      currentPosition: { type: [Number] },
+      totalDistanceTraveled: { type: Number },
+      estimatedRemainingDistance: { type: Number },
+      refundPercentage: { type: Number },
+    },
+    currentPosition: { type: [Number] }, // New
+    totalDistanceTraveled: { type: Number, default: 0 }, // New
   },
   { timestamps: true }
 );
