@@ -12,6 +12,8 @@ import { ResponseMessages } from "../../constants/response-messages.const";
 import { z } from "zod";
 import {
   AdminLoginDto,
+  BlockRideSchema,
+  UnblockRideSchema,
   CreateSubscriptionPlanDto,
   DashboardMetricsQueryDto,
   GovIdVerificationDto,
@@ -454,16 +456,25 @@ export class AdminController implements IAdminController {
     }
   };
 
-  getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const plans = await this.adminService.getSubscriptionPlans();
-      res.status(StatusCode.OK).json(plans);
-    } catch (error) {
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: (error as Error).message });
-    }
-  };
+getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const queryParams = this.validateRequest(UserSearchQueryDto, req.query);
+    const ensuredParams = this.ensureRequiredParams(queryParams);
+
+    const result = await this.adminService.getSubscriptionPlans(ensuredParams);
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    res.status(StatusCode.BAD_REQUEST).json({
+      success: false,
+      message: (error as Error).message,
+    });
+  }
+};
 
   getRideDetails = async (req: Request, res: Response): Promise<void> => {
     const { rideId } = req.params;
@@ -485,7 +496,8 @@ export class AdminController implements IAdminController {
     }
   };
 
-  blockRide = async (req: Request, res: Response): Promise<void> => {
+  // UPDATED: Block ride with detailed information
+  blockRide = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const { rideId } = req.params;
 
     if (!rideId) {
@@ -496,11 +508,48 @@ export class AdminController implements IAdminController {
     }
 
     try {
-      await this.adminService.updateRideStatus(rideId, "Blocked");
+      const blockData = this.validateRequest(BlockRideSchema, req.body);
+      
+      if (!req.admin?.userId) {
+        throw new Error("Admin authentication required");
+      }
+
+      await this.adminService.blockRide(rideId, blockData, req.admin.userId);
+      
       res
         .status(StatusCode.OK)
-        .json({ success: true, message: "Ride blocked" });
+        .json({ 
+          success: true, 
+          message: "Ride blocked successfully",
+          blockDetails: blockData
+        });
     } catch (error) {
+      console.error("Error blocking ride:", error);
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: (error as Error).message });
+    }
+  };
+
+  // NEW: Unblock ride
+  unblockRide = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const { rideId } = req.params;
+
+    if (!rideId) {
+      res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+      return;
+    }
+
+    try {
+      await this.adminService.unblockRide(rideId);
+      
+      res
+        .status(StatusCode.OK)
+        .json({ success: true, message: "Ride unblocked successfully" });
+    } catch (error) {
+      console.error("Error unblocking ride:", error);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: (error as Error).message });

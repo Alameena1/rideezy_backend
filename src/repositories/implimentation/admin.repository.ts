@@ -5,7 +5,8 @@ import { IAdminRepository } from "../interface/admin/interface";
 import { BaseRepository } from "../base/base.repository";
 import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/SubscriptionPlan";
 import { RideModel } from "../../models/ride.model";
-import { PaginationQueryDtoType } from "../../dtos/admin.dto";
+import { PaginationQueryDtoType, RideSearchQueryDtoType } from "../../dtos/admin.dto";
+import { DashboardMetrics, DashboardParams } from "../../types/dashboard";
 
 @injectable()
 export class AdminRepository extends BaseRepository<any> implements IAdminRepository {
@@ -16,6 +17,7 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
   public async getAllUsers(params: PaginationQueryDtoType & { 
     status?: "Active" | "Blocked"; 
     subscriptionStatus?: "subscribed" | "non-subscribed";
+    govIdStatus?: "Pending" | "Verified" | "Rejected"; 
   }): Promise<{
     data: any[];
     pagination: {
@@ -27,7 +29,7 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     };
   }> {
     try {
-      const { page, limit, search, sortBy, sortOrder, status, subscriptionStatus } = params;
+      const { page, limit, search, sortBy, sortOrder, status, subscriptionStatus, govIdStatus } = params;
       const skip = (page - 1) * limit;
 
       const query: any = {};
@@ -36,7 +38,8 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
         query.$or = [
           { fullName: { $regex: search, $options: 'i' } },
           { email: { $regex: search, $options: 'i' } },
-          { phone: { $regex: search, $options: 'i' } }
+          { phone: { $regex: search, $options: 'i' } },
+          { 'govId.idNumber': { $regex: search, $options: 'i' } }
         ];
       }
 
@@ -57,9 +60,19 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
         }
       }
 
+      if (govIdStatus) {
+        query['govId.verificationStatus'] = govIdStatus;
+        query['govId.idNumber'] = { $exists: true, $ne: "" };
+      }
+
       const sortOptions: any = {};
       if (sortBy) {
-        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+        if (sortBy.includes('.')) {
+          const [parent, child] = sortBy.split('.');
+          sortOptions[`${parent}.${child}`] = sortOrder === 'asc' ? 1 : -1;
+        } else {
+          sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+        }
       } else {
         sortOptions.createdAt = -1;
       }
@@ -169,8 +182,8 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     }
   }
 
-  public async getAllRides(params: PaginationQueryDtoType & { 
-    status?: "Active" | "Completed" | "Cancelled" | "Blocked";
+  public async getAllRides(params: RideSearchQueryDtoType & { 
+    status?: "Pending" | "Started" | "Completed" | "Cancelled" | "EmergencyStopped" | "Blocked";
     dateFrom?: string;
     dateTo?: string;
   }): Promise<{
@@ -292,7 +305,6 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     }
   }
 
-  // New method: Check user's ongoing rides
   public async checkUserOngoingRides(userId: string): Promise<{
     hasOngoingRides: boolean;
     ongoingRides: any[];
@@ -387,7 +399,7 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     }
   }
 
-  async updateRideStatus(rideId: string, status: "Active" | "Blocked" | "Cancelled"): Promise<void> {
+  async updateRideStatus(rideId: string, status: "Pending" | "Started" | "Completed" | "Cancelled" | "EmergencyStopped" | "Blocked"): Promise<void> {
     try {
       const ride = await RideModel.findById(rideId);
       if (!ride) {
@@ -399,104 +411,187 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     }
   }
 
-  async getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{
-    metrics: {
-      totalUsers: number;
-      subscribedUsers: number;
-      nonSubscribedUsers: number;
-      totalRides: number;
-      totalRevenue: number;
-    };
-    userGrowth: { month: string; users: number }[];
-    rideCount: { month: string; rides: number }[];
-    revenueDistribution: { name: string; value: number }[];
-  }> {
-    console.log("Fetching dashboard metrics in AdminRepository");
+  // NEW: Block ride with detailed information
+  async blockRide(rideId: string, blockData: { reason: string; blockType: string; duration?: string; blockedBy: string }): Promise<void> {
     try {
-      const { startDate, endDate } = params;
+      const ride = await RideModel.findById(rideId);
+      if (!ride) {
+        throw new Error("Ride not found");
+      }
+
+      // Check if ride is already blocked
+      if (ride.status === "Blocked") {
+        throw new Error("Ride is already blocked");
+      }
+
+      // Check if ride can be blocked (only Pending or Started rides can be blocked)
+      if (!["Pending", "Started"].includes(ride.status)) {
+        throw new Error(`Cannot block a ride with status: ${ride.status}. Only Pending or Started rides can be blocked.`);
+      }
+
+      // Update ride status to Blocked and store block details
+      await RideModel.findByIdAndUpdate(rideId, { 
+        status: "Blocked",
+        blockDetails: {
+          reason: blockData.reason,
+          blockType: blockData.blockType,
+          duration: blockData.duration || "temporary",
+          blockedAt: new Date(),
+          blockedBy: blockData.blockedBy,
+          previousStatus: ride.status // Store previous status for potential unblock
+        }
+      }, { new: true });
+
+      console.log(`🚫 Ride ${rideId} blocked by admin ${blockData.blockedBy}. Reason: ${blockData.reason}`);
+    } catch (error) {
+      throw new Error(`Failed to block ride: ${(error as Error).message}`);
+    }
+  }
+
+  // NEW: Unblock ride
+  async unblockRide(rideId: string): Promise<void> {
+    try {
+      const ride = await RideModel.findById(rideId);
+      if (!ride) {
+        throw new Error("Ride not found");
+      }
+
+      if (ride.status !== "Blocked") {
+        throw new Error("Ride is not blocked");
+      }
+
+      // Restore previous status or set to Cancelled
+      const previousStatus = ride.blockDetails?.previousStatus || "Cancelled";
+      
+      await RideModel.findByIdAndUpdate(rideId, { 
+        status: previousStatus,
+        blockDetails: null
+      }, { new: true });
+
+      console.log(`✅ Ride ${rideId} unblocked. Status restored to: ${previousStatus}`);
+    } catch (error) {
+      throw new Error(`Failed to unblock ride: ${(error as Error).message}`);
+    }
+  }
+
+  async getDashboardMetrics(params: DashboardParams): Promise<DashboardMetrics> {
+    console.log("📊 Fetching enhanced dashboard metrics with params:", params);
+    
+    try {
+      const { startDate, endDate, timeRange } = params;
+      
+      let dateFilter: any = {};
       const currentDate = new Date();
-      const dateFilter = startDate && endDate ? { $gte: startDate, $lte: endDate } : {
-        $gte: new Date(currentDate.getFullYear(), currentDate.getMonth() - 5, 1),
-        $lte: currentDate,
-      };
+      
+      if (startDate && endDate) {
+        dateFilter = { $gte: startDate, $lte: endDate };
+      } else if (timeRange) {
+        const start = new Date();
+        switch (timeRange) {
+          case "7days":
+            start.setDate(start.getDate() - 7);
+            break;
+          case "30days":
+            start.setDate(start.getDate() - 30);
+            break;
+          case "90days":
+            start.setDate(start.getDate() - 90);
+            break;
+          case "1year":
+            start.setFullYear(start.getFullYear() - 1);
+            break;
+          case "all":
+            start.setFullYear(2020);
+            break;
+        }
+        dateFilter = { $gte: start, $lte: currentDate };
+      } else {
+        dateFilter = {
+          $gte: new Date(currentDate.getFullYear(), currentDate.getMonth() - 5, 1),
+          $lte: currentDate,
+        };
+      }
 
-      const totalUsers = await UserModel.countDocuments();
-      console.log("Total users:", totalUsers);
-      const subscribedUsers = await UserModel.countDocuments({
-        "subscription.endDate": { $gt: currentDate },
-      });
-      const nonSubscribedUsers = totalUsers - subscribedUsers;
-      const totalRides = await RideModel.countDocuments({ status: "Completed" });
-      console.log("Total rides:", totalRides);
+      console.log("📅 Date filter:", dateFilter);
 
-      const subscriptionRevenueResult = await UserModel.aggregate([
-        { $unwind: "$wallet.transactions" },
-        {
-          $match: {
-            "wallet.transactions.type": "SUBSCRIPTION",
-            "wallet.transactions.status": "COMPLETED",
-            "wallet.transactions.createdAt": dateFilter,
-          },
-        },
-        { $group: { _id: null, total: { $sum: "$wallet.transactions.amount" } } },
+      // Get basic metrics
+      const [
+        totalUsers,
+        subscribedUsers,
+        nonSubscribedUsers,
+        totalRides,
+        activeRides,
+        completedRides,
+        monthlyGrowth
+      ] = await Promise.all([
+        UserModel.countDocuments(),
+        UserModel.countDocuments({
+          "subscription.endDate": { $gt: currentDate },
+        }),
+        UserModel.countDocuments({
+          $or: [
+            { "subscription.endDate": { $lt: currentDate } },
+            { subscription: { $exists: false } },
+            { subscription: null }
+          ]
+        }),
+        RideModel.countDocuments(),
+        RideModel.countDocuments({ status: { $in: ["Pending", "Started"] } }),
+        RideModel.countDocuments({ status: "Completed" }),
+        this.calculateMonthlyGrowth()
       ]);
+
+      console.log("📈 Basic metrics calculated");
+
+      // Calculate revenue
+      const [subscriptionRevenueResult, platformFeeResult] = await Promise.all([
+        UserModel.aggregate([
+          { $unwind: "$wallet.transactions" },
+          {
+            $match: {
+              "wallet.transactions.type": "SUBSCRIPTION",
+              "wallet.transactions.status": "COMPLETED",
+              "wallet.transactions.createdAt": dateFilter,
+            },
+          },
+          { $group: { _id: null, total: { $sum: "$wallet.transactions.amount" } } },
+        ]),
+        RideModel.aggregate([
+          { 
+            $match: { 
+              status: "Completed",
+              date: dateFilter
+            } 
+          },
+          { 
+            $group: { 
+              _id: null, 
+              total: { $sum: "$platformFee" } 
+            } 
+          },
+        ])
+      ]);
+
       const subscriptionRevenue = subscriptionRevenueResult[0]?.total || 0;
+      const platformFee = platformFeeResult[0]?.total || 0;
+      const totalRevenue = subscriptionRevenue + platformFee;
 
-      const platformFeeTransactionResult = await UserModel.aggregate([
-        { $unwind: "$wallet.transactions" },
-        {
-          $match: {
-            "wallet.transactions.type": "WITHDRAWAL",
-            "wallet.transactions.status": "COMPLETED",
-            "wallet.transactions.createdAt": dateFilter,
-          },
-        },
-        { $group: { _id: null, total: { $sum: "$wallet.transactions.amount" } } },
-      ]);
-      const platformFeeFromTransactions = platformFeeTransactionResult[0]?.total || 0;
+      console.log("💰 Revenue calculated:", { subscriptionRevenue, platformFee, totalRevenue });
 
-      const platformFeeRideResult = await RideModel.aggregate([
-        { $match: { status: "COMPLETED", date: dateFilter } },
-        { $group: { _id: null, total: { $sum: "$platformFee" } } },
-      ]);
-      const platformFeeFromRides = platformFeeRideResult[0]?.total || 0;
-
-      const totalPlatformFee = platformFeeFromTransactions + platformFeeFromRides;
-      const totalRevenue = subscriptionRevenue + totalPlatformFee;
-
-      const userGrowth = await UserModel.aggregate([
-        { $match: { createdAt: dateFilter } },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%b", date: "$createdAt" } },
-            users: { $sum: 1 },
-          },
-        },
-        { $sort: { "_id": 1 } },
-        { $project: { month: "$_id", users: 1, _id: 0 } },
+      // Get time-based analytics
+      const [userGrowth, rideCount, platformRevenue] = await Promise.all([
+        this.getUserGrowthAnalytics(dateFilter),
+        this.getRideCountAnalytics(dateFilter),
+        this.getPlatformRevenueAnalytics(dateFilter)
       ]);
 
-      const rideCount = await RideModel.aggregate([
-        { 
-          $match: { 
-            status: "Completed", 
-            date: { $gte: dateFilter.$gte, $lte: dateFilter.$lte }
-          } 
-        },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%b", date: "$date" } },
-            rides: { $sum: 1 },
-          },
-        },
-        { $sort: { "_id": 1 } },
-        { $project: { month: "$_id", rides: 1, _id: 0 } },
-      ]);
+      console.log("📊 Analytics data fetched");
 
       const revenueDistribution = [
-        { name: "Subscription", value: subscriptionRevenue },
-        { name: "Platform Fee", value: totalPlatformFee },
-      ];
+        { name: "Subscriptions", value: subscriptionRevenue, color: "#0088FE" },
+        { name: "Platform Fees", value: platformFee, color: "#00C49F" },
+        { name: "Other", value: 0, color: "#FFBB28" },
+      ].filter(item => item.value > 0);
 
       return {
         metrics: {
@@ -505,14 +600,291 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
           nonSubscribedUsers,
           totalRides,
           totalRevenue,
+          activeRides,
+          completedRides,
+          monthlyGrowth,
         },
         userGrowth,
         rideCount,
         revenueDistribution,
+        platformRevenue,
       };
     } catch (error) {
-      console.error("Error in getDashboardMetrics:", (error as Error).message);
+      console.error("❌ Error in getDashboardMetrics:", (error as Error).message);
       throw new Error(`Failed to fetch dashboard metrics: ${(error as Error).message}`);
+    }
+  }
+
+  private async calculateMonthlyGrowth(): Promise<number> {
+    try {
+      const currentDate = new Date();
+      const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      const thisMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      
+      const [lastMonthUsers, thisMonthUsers] = await Promise.all([
+        UserModel.countDocuments({
+          createdAt: {
+            $gte: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1),
+            $lt: thisMonthStart
+          }
+        }),
+        UserModel.countDocuments({
+          createdAt: { $gte: thisMonthStart }
+        })
+      ]);
+
+      if (lastMonthUsers === 0) return thisMonthUsers > 0 ? 100 : 0;
+      
+      return ((thisMonthUsers - lastMonthUsers) / lastMonthUsers) * 100;
+    } catch (error) {
+      console.error("Error calculating monthly growth:", error);
+      return 0;
+    }
+  }
+
+  private async getUserGrowthAnalytics(dateFilter: any): Promise<{ month: string; users: number; newUsers: number }[]> {
+    try {
+      const userGrowth = await UserModel.aggregate([
+        { $match: { createdAt: dateFilter } },
+        {
+          $group: {
+            _id: { 
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" }
+            },
+            totalUsers: { $sum: 1 },
+            newUsers: { $sum: 1 }
+          },
+        },
+        { 
+          $sort: { "_id.year": 1, "_id.month": 1 } 
+        },
+        {
+          $project: {
+            month: {
+              $dateToString: {
+                format: "%b %Y",
+                date: {
+                  $dateFromParts: {
+                    year: "$_id.year",
+                    month: "$_id.month",
+                    day: 1
+                  }
+                }
+              }
+            },
+            users: "$totalUsers",
+            newUsers: "$newUsers",
+            _id: 0
+          }
+        }
+      ]);
+
+      return userGrowth;
+    } catch (error) {
+      console.error("Error in getUserGrowthAnalytics:", error);
+      return [];
+    }
+  }
+
+  private async getRideCountAnalytics(dateFilter: any): Promise<{ month: string; rides: number; completed: number; cancelled: number }[]> {
+    try {
+      const rideCount = await RideModel.aggregate([
+        { 
+          $match: { 
+            date: dateFilter 
+          } 
+        },
+        {
+          $group: {
+            _id: { 
+              year: { $year: "$date" },
+              month: { $month: "$date" }
+            },
+            totalRides: { $sum: 1 },
+            completed: {
+              $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 1, 0] }
+            },
+            cancelled: {
+              $sum: { $cond: [{ $eq: ["$status", "Cancelled"] }, 1, 0] }
+            }
+          },
+        },
+        { 
+          $sort: { "_id.year": 1, "_id.month": 1 } 
+        },
+        {
+          $project: {
+            month: {
+              $dateToString: {
+                format: "%b %Y",
+                date: {
+                  $dateFromParts: {
+                    year: "$_id.year",
+                    month: "$_id.month",
+                    day: 1
+                  }
+                }
+              }
+            },
+            rides: "$totalRides",
+            completed: "$completed",
+            cancelled: "$cancelled",
+            _id: 0
+          }
+        }
+      ]);
+
+      return rideCount;
+    } catch (error) {
+      console.error("Error in getRideCountAnalytics:", error);
+      return [];
+    }
+  }
+
+  private async getPlatformRevenueAnalytics(dateFilter: any): Promise<{ month: string; revenue: number; rides: number }[]> {
+    try {
+      const platformRevenue = await RideModel.aggregate([
+        { 
+          $match: { 
+            status: "Completed",
+            date: dateFilter
+          } 
+        },
+        {
+          $group: {
+            _id: { 
+              year: { $year: "$date" },
+              month: { $month: "$date" }
+            },
+            revenue: { $sum: "$platformFee" },
+            rides: { $sum: 1 }
+          },
+        },
+        { 
+          $sort: { "_id.year": 1, "_id.month": 1 } 
+        },
+        {
+          $project: {
+            month: {
+              $dateToString: {
+                format: "%b %Y",
+                date: {
+                  $dateFromParts: {
+                    year: "$_id.year",
+                    month: "$_id.month",
+                    day: 1
+                  }
+                }
+              }
+            },
+            revenue: 1,
+            rides: 1,
+            _id: 0
+          }
+        }
+      ]);
+
+      const subscriptionRevenue = await UserModel.aggregate([
+        { $unwind: "$wallet.transactions" },
+        {
+          $match: {
+            "wallet.transactions.type": "SUBSCRIPTION",
+            "wallet.transactions.status": "COMPLETED",
+            "wallet.transactions.createdAt": dateFilter,
+          },
+        },
+        {
+          $group: {
+            _id: { 
+              year: { $year: "$wallet.transactions.createdAt" },
+              month: { $month: "$wallet.transactions.createdAt" }
+            },
+            subscriptionRevenue: { $sum: "$wallet.transactions.amount" }
+          },
+        }
+      ]);
+
+      const combinedRevenue = platformRevenue.map(monthData => {
+        const subscription = subscriptionRevenue.find(sub => 
+          sub._id.year === monthData._id.year && sub._id.month === monthData._id.month
+        );
+        return {
+          month: monthData.month,
+          revenue: monthData.revenue + (subscription?.subscriptionRevenue || 0),
+          rides: monthData.rides
+        };
+      });
+
+      return combinedRevenue;
+    } catch (error) {
+      console.error("Error in getPlatformRevenueAnalytics:", error);
+      return [];
+    }
+  }
+
+  async getSubscriptionPlansWithPagination(params: PaginationQueryDtoType & { 
+    status?: "Active" | "Blocked";
+  }): Promise<{
+    data: ISubscriptionPlan[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    try {
+      const { page, limit, search, sortBy, sortOrder, status } = params;
+      const skip = (page - 1) * limit;
+
+      const query: any = { isDeleted: false };
+      
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } }
+        ];
+      }
+
+      if (status) {
+        query.status = status;
+      }
+
+      const sortOptions: any = {};
+      if (sortBy) {
+        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+      } else {
+        sortOptions.createdAt = -1;
+      }
+
+      const [data, totalItems] = await Promise.all([
+        SubscriptionPlanModel.find(query)
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limit)
+          .lean()
+          .exec(),
+        SubscriptionPlanModel.countDocuments(query)
+      ]);
+
+      const totalPages = Math.ceil(totalItems / limit);
+      const hasNext = page < totalPages;
+      const hasPrev = page > 1;
+
+      return {
+        data,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems,
+          hasNext,
+          hasPrev,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch subscription plans: ${(error as Error).message}`);
     }
   }
 }

@@ -21,6 +21,7 @@ export interface IAdminController {
   updateSubscriptionPlanStatus(req: Request, res: Response): Promise<void>;
   getRideDetails(req: Request, res: Response): Promise<void>;
   blockRide(req: Request, res: Response): Promise<void>;
+  unblockRide(req: Request, res: Response): Promise<void>;
   cancelRide(req: Request, res: Response): Promise<void>;
   getAllRides(req: Request, res: Response): Promise<void>;
   getDashboardMetrics(req: Request, res: Response): Promise<void>;

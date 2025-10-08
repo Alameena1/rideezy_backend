@@ -58,26 +58,31 @@ export const VehicleSearchQueryDto = PaginationQueryDto.extend({
 
 export type VehicleSearchQueryDtoType = z.infer<typeof VehicleSearchQueryDto>;
 
-// Ride Management DTOs
+// Ride Management DTOs - UPDATED with both EmergencyStopped and Blocked
 export const RideStatusDto = z.object({
   rideId: z.string().min(1, "Ride ID is required"),
-  status: z.enum(["Active", "Blocked", "Cancelled"]),
+  status: z.enum(["Pending", "Started", "Completed", "Cancelled", "EmergencyStopped", "Blocked"]),
 });
 
 export const RideSearchQueryDto = PaginationQueryDto.extend({
-  status: z.enum(["Active", "Completed", "Cancelled", "Blocked"]).optional(),
+  status: z.enum(["Pending", "Started", "Completed", "Cancelled", "EmergencyStopped", "Blocked"]).optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
 });
 
 export type RideSearchQueryDtoType = z.infer<typeof RideSearchQueryDto>;
 
-// Emergency Stop DTO
-export const EmergencyStopSchema = z.object({
-  reason: z.string().min(1, "Reason is required"),
-  currentPosition: z.tuple([z.number(), z.number()]),
+// Block Ride DTO (for admins)
+export const BlockRideSchema = z.object({
+  reason: z.string().min(1, "Block reason is required"),
+  blockType: z.enum(["safety_concern", "policy_violation", "suspicious_activity", "other"]),
+  duration: z.enum(["temporary", "permanent"]).optional().default("temporary"),
 });
 
+// Unblock Ride DTO
+export const UnblockRideSchema = z.object({
+  reason: z.string().optional().default("Ride unblocked by admin"),
+});
 
 // Dashboard DTOs
 export const DashboardMetricsQueryDto = z.object({
@@ -128,7 +133,7 @@ export const SubscriptionPlanStatusDto = z.object({
   status: z.enum(["Active", "Blocked"]),
 });
 
-// Response DTOs for entities
+// Response DTOs for entities - UPDATED RideResponseDto
 export const UserResponseDto = z.object({
   _id: z.string(),
   fullName: z.string(),
@@ -162,6 +167,7 @@ export const VehicleResponseDto = z.object({
   createdAt: z.date(),
 });
 
+// UPDATED: Use correct ride status values including Blocked
 export const RideResponseDto = z.object({
   _id: z.string(),
   driver: z.object({
@@ -175,8 +181,15 @@ export const RideResponseDto = z.object({
   from: z.string(),
   to: z.string(),
   date: z.date(),
-  status: z.enum(["Active", "Completed", "Cancelled", "Blocked"]),
+  status: z.enum(["Pending", "Started", "Completed", "Cancelled", "EmergencyStopped", "Blocked"]),
   fare: z.number(),
+  blockDetails: z.object({
+    reason: z.string(),
+    blockType: z.string(),
+    duration: z.string(),
+    blockedAt: z.date(),
+    blockedBy: z.string(),
+  }).optional(),
   createdAt: z.date(),
 });
 
@@ -208,11 +221,19 @@ export const PaginatedResponseDto = <T extends z.ZodTypeAny>(dataSchema: T) =>
     }),
   });
 
+  export const EmergencyStopSchema = z.object({
+  reason: z.string().min(1, "Reason is required"),
+  currentPosition: z.tuple([z.number(), z.number()]),
+  issueType: z.enum(["breakdown", "puncture", "accident", "medical", "other"]),
+});
+
+
 // Export types for all DTOs - REMOVE DUPLICATES
 export type UserStatusDtoType = z.infer<typeof UserStatusDto>;
 export type VehicleStatusDtoType = z.infer<typeof VehicleStatusDto>;
 export type RideStatusDtoType = z.infer<typeof RideStatusDto>;
-export type EmergencyStopDtoType = z.infer<typeof EmergencyStopSchema>; // KEEP ONLY ONE
+export type BlockRideDtoType = z.infer<typeof BlockRideSchema>;
+export type UnblockRideDtoType = z.infer<typeof UnblockRideSchema>;
 export type AdminLoginDtoType = z.infer<typeof AdminLoginDto>;
 export type RefreshTokenDtoType = z.infer<typeof RefreshTokenDto>;
 export type LogoutDtoType = z.infer<typeof LogoutDto>;
@@ -224,3 +245,4 @@ export type UserResponseDtoType = z.infer<typeof UserResponseDto>;
 export type VehicleResponseDtoType = z.infer<typeof VehicleResponseDto>;
 export type RideResponseDtoType = z.infer<typeof RideResponseDto>;
 export type SubscriptionPlanResponseDtoType = z.infer<typeof SubscriptionPlanResponseDto>;
+export type EmergencyStopDtoType = z.infer<typeof EmergencyStopSchema>;

@@ -45,6 +45,7 @@ export class InitiateRideService implements IInitiateRideService {
           }
   
           const vehicle = await this.vehicleRepo.findById(dto.vehicleId, { session });
+          console.log("qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",vehicle?.status)
           if (!vehicle) throw new Error("Vehicle not found");
           if (vehicle.user.toString() !== dto.driverId)
             throw new Error("Vehicle mismatch");

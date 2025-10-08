@@ -8,7 +8,8 @@ import { IUser } from "../../models/user.model";
 import { ISubscriptionPlan } from "../../models/SubscriptionPlan";
 import AdminModel, { IAdmin } from "../../models/admin";
 import { SubscriptionPlanModel } from "../../models/SubscriptionPlan";
-import { PaginationQueryDtoType, RideSearchQueryDtoType, UserSearchQueryDtoType, VehicleSearchQueryDtoType } from "../../dtos/admin.dto";
+import { PaginationQueryDtoType, RideSearchQueryDtoType, UserSearchQueryDtoType, VehicleSearchQueryDtoType, BlockRideDtoType } from "../../dtos/admin.dto";
+import { DashboardMetrics, DashboardParams } from "../../types/dashboard";
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -90,7 +91,7 @@ export class AdminService implements IAdminService {
       currentPage: number;
       totalPages: number;
       totalItems: number;
-      hasNext: boolean;
+      hasNext: boolean; 
       hasPrev: boolean;
     };
   }> {
@@ -262,10 +263,26 @@ export class AdminService implements IAdminService {
     await SubscriptionPlanModel.updateOne({ _id: planId }, { isDeleted: true });
   }
 
-  async getSubscriptionPlans(): Promise<ISubscriptionPlan[]> {
-    return await SubscriptionPlanModel.find({ isDeleted: false });
+async getSubscriptionPlans(): Promise<ISubscriptionPlan[]>;
+async getSubscriptionPlans(params: UserSearchQueryDtoType): Promise<{
+  data: ISubscriptionPlan[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}>;
+async getSubscriptionPlans(params?: UserSearchQueryDtoType): Promise<any> {
+  if (!params) {
+    // Return all plans without pagination (for backward compatibility)
+    return await SubscriptionPlanModel.find({ isDeleted: false }).exec();
+  } else {
+    // Return paginated results with search and filters
+    return this.adminRepository.getSubscriptionPlansWithPagination(params);
   }
-
+}
   async updateSubscriptionPlanStatus(planId: string, status: "Active" | "Blocked"): Promise<void> {
     const plan = await SubscriptionPlanModel.findById(planId);
     if (!plan) {
@@ -281,23 +298,90 @@ export class AdminService implements IAdminService {
     return await this.adminRepository.getRideDetails(rideId);
   }
 
-  async updateRideStatus(rideId: string, status: "Active" | "Blocked" | "Cancelled"): Promise<void> {
+  // UPDATED: Use correct ride status types including Blocked
+  async updateRideStatus(rideId: string, status: "Pending" | "Started" | "Completed" | "Cancelled" | "EmergencyStopped" | "Blocked"): Promise<void> {
     await this.adminRepository.updateRideStatus(rideId, status);
   }
 
-  async getDashboardMetrics(params: { startDate?: Date; endDate?: Date }): Promise<{
-    metrics: {
-      totalUsers: number;
-      subscribedUsers: number;
-      nonSubscribedUsers: number;
-      totalRides: number;
-      totalRevenue: number;
-    };
-    userGrowth: { month: string; users: number }[];
-    rideCount: { month: string; rides: number }[];
-    revenueDistribution: { name: string; value: number }[];
-  }> {
-    console.log("Fetching dashboard metrics in AdminService");
-    return await this.adminRepository.getDashboardMetrics(params);
+  // NEW: Block ride with detailed information
+  async blockRide(rideId: string, blockData: BlockRideDtoType, adminId: string): Promise<void> {
+    console.log(`🚫 Admin ${adminId} attempting to block ride ${rideId}`, blockData);
+    
+    // Validate block data
+    if (!blockData.reason || !blockData.blockType) {
+      throw new Error("Block reason and type are required");
+    }
+
+    // Get ride details to check current status
+    const ride = await this.adminRepository.getRideDetails(rideId);
+    if (!ride) {
+      throw new Error("Ride not found");
+    }
+
+    // Additional validation: Only allow blocking of Pending or Started rides
+    if (!["Pending", "Started"].includes(ride.status)) {
+      throw new Error(`Cannot block a ride with status: ${ride.status}. Only Pending or Started rides can be blocked.`);
+    }
+
+    await this.adminRepository.blockRide(rideId, {
+      ...blockData,
+      blockedBy: adminId
+    });
+
+    console.log(`✅ Ride ${rideId} successfully blocked by admin ${adminId}`);
+  }
+
+  // NEW: Unblock ride
+  async unblockRide(rideId: string): Promise<void> {
+    console.log(`🔄 Attempting to unblock ride ${rideId}`);
+    
+    // Get ride details to check current status
+    const ride = await this.adminRepository.getRideDetails(rideId);
+    if (!ride) {
+      throw new Error("Ride not found");
+    }
+
+    if (ride.status !== "Blocked") {
+      throw new Error("Ride is not blocked");
+    }
+
+    await this.adminRepository.unblockRide(rideId);
+    
+    console.log(`✅ Ride ${rideId} successfully unblocked`);
+  }
+
+  async getDashboardMetrics(params: DashboardParams): Promise<DashboardMetrics> {
+    console.log("Fetching dashboard metrics with time range:", params.timeRange);
+    
+    // Calculate date range based on timeRange
+    let startDate = params.startDate;
+    let endDate = params.endDate || new Date();
+    
+    if (!startDate && params.timeRange) {
+      startDate = new Date();
+      switch (params.timeRange) {
+        case "7days":
+          startDate.setDate(startDate.getDate() - 7);
+          break;
+        case "30days":
+          startDate.setDate(startDate.getDate() - 30);
+          break;
+        case "90days":
+          startDate.setDate(startDate.getDate() - 90);
+          break;
+        case "1year":
+          startDate.setFullYear(startDate.getFullYear() - 1);
+          break;
+        case "all":
+          startDate = new Date(0); // Beginning of time
+          break;
+      }
+    }
+
+    return await this.adminRepository.getDashboardMetrics({
+      startDate,
+      endDate,
+      timeRange: params.timeRange
+    });
   }
 }

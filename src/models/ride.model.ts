@@ -13,8 +13,8 @@ export interface Passenger {
   droppedOff: boolean;
   distanceKm: number;
   cost: number;
-  refundAmount?: number; // New: Store refund amount if ride is stopped
-  refundStatus?: "pending" | "processed" | "failed"; // New: Track refund status
+  refundAmount?: number;
+  refundStatus?: "pending" | "processed" | "failed";
 }
 
 export interface PendingRequest {
@@ -41,6 +41,19 @@ export interface EmergencyStop {
   refundPercentage: number;
 }
 
+// NEW: Block Details interface
+export interface BlockDetails {
+  reason: string;
+  blockType: string;
+  duration: string;
+  blockedAt: Date;
+  blockedBy: string;
+  previousStatus: string;
+}
+
+// Define the ride status type
+export type RideStatus = "Pending" | "Started" | "Completed" | "Cancelled" | "EmergencyStopped" | "Blocked";
+
 export interface IRide extends Document {
   createdAt: any;
   _id: Types.ObjectId;
@@ -65,15 +78,16 @@ export interface IRide extends Document {
   passengerDistances: { passengerId: string; distanceKm: number }[];
   passengerCosts: { passengerId: string; cost: number }[];
   passengers: Passenger[];
-  status: string;
+  status: RideStatus; // UPDATED: Use the defined type
   routeGeometry?: string;
   pickupPoints: PickupDropoffPoint[];
   dropoffPoints: PickupDropoffPoint[];
   routeCoordinates: [number, number][];
   pendingRequests: PendingRequest[];
-  emergencyStop?: EmergencyStop; // New: Emergency stop details
-  currentPosition?: [number, number]; // Current vehicle position
-  totalDistanceTraveled?: number; // Total distance traveled so far
+  emergencyStop?: EmergencyStop;
+  currentPosition?: [number, number];
+  totalDistanceTraveled?: number;
+  blockDetails?: BlockDetails;
 }
 
 export interface RideCreationData {
@@ -96,7 +110,7 @@ export interface RideCreationData {
   totalRideCost: number;
   perKmRate: number;
   passengers: any[];
-  status: string;
+  status: RideStatus; // UPDATED: Use the defined type instead of string
   routeGeometry?: string;
   pickupPoints: any[];
   dropoffPoints: any[];
@@ -145,11 +159,15 @@ const RideSchema = new Schema<IRide>(
         droppedOff: { type: Boolean, default: false },
         distanceKm: { type: Number, required: true },
         cost: { type: Number, required: true },
-        refundAmount: { type: Number, default: 0 }, // New
-        refundStatus: { type: String, enum: ["pending", "processed", "failed"], default: "pending" }, // New
+        refundAmount: { type: Number, default: 0 },
+        refundStatus: { type: String, enum: ["pending", "processed", "failed"], default: "pending" },
       },
     ],
-    status: { type: String, required: true },
+    status: { 
+      type: String, 
+      required: true,
+      enum: ["Pending", "Started", "Completed", "Cancelled", "EmergencyStopped", "Blocked"]
+    },
     routeGeometry: { type: String },
     pickupPoints: [
       {
@@ -182,7 +200,7 @@ const RideSchema = new Schema<IRide>(
       },
     ],
     routeCoordinates: { type: [[Number]], required: true },
-    emergencyStop: { // New
+    emergencyStop: {
       reason: { type: String },
       stoppedAt: { type: Date },
       currentPosition: { type: [Number] },
@@ -190,8 +208,16 @@ const RideSchema = new Schema<IRide>(
       estimatedRemainingDistance: { type: Number },
       refundPercentage: { type: Number },
     },
-    currentPosition: { type: [Number] }, // New
-    totalDistanceTraveled: { type: Number, default: 0 }, // New
+    currentPosition: { type: [Number] },
+    totalDistanceTraveled: { type: Number, default: 0 },
+    blockDetails: {
+      reason: { type: String },
+      blockType: { type: String },
+      duration: { type: String, default: "temporary" },
+      blockedAt: { type: Date },
+      blockedBy: { type: String }, 
+      previousStatus: { type: String }
+    }
   },
   { timestamps: true }
 );

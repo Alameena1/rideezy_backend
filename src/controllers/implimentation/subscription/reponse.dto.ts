@@ -11,7 +11,7 @@ const BaseResponseDto = z.object({
 
 /**
  * DTO for subscription plans response
- * @property {ISubscriptionPlan[]} data - Array of subscription plans
+ * @property {ISubscriptionPlan[]} data 
  */
 export const PlansResponseDto = BaseResponseDto.extend({
   data: z.array(z.any()), 
@@ -40,7 +40,7 @@ export const SubscriptionStatusResponseDto = BaseResponseDto.extend({
 
 /**
  * DTO for payment order response
- * @property {object} order - Payment order details
+ * @property {object} order 
  */
 export const OrderResponseDto = BaseResponseDto.extend({
   order: z.object({
@@ -52,13 +52,13 @@ export const OrderResponseDto = BaseResponseDto.extend({
 
 /**
  * DTO for subscription response
- * @property {object} user - Updated user data
+ * @property {object} user -
  */
 export const SubscribeResponseDto = BaseResponseDto.extend({
-  user: z.any(), // Use proper user schema if needed
+  user: z.any(), 
 });
 
-// Infer TypeScript types from Zod schemas
+
 export type PlansResponse = z.infer<typeof PlansResponseDto>;
 export type SubscriptionStatusResponse = z.infer<typeof SubscriptionStatusResponseDto>;
 export type OrderResponse = z.infer<typeof OrderResponseDto>;

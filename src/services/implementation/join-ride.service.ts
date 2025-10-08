@@ -65,6 +65,8 @@ export class JoinRideService implements IJoinRideService {
             console.error(`[${new Date().toISOString()}] Ride not found: ${rideId}`);
             throw new Error("Ride not found");
           }
+
+          
           console.log(`[${new Date().toISOString()}] Ride found:`, {
             rideId: ride.rideId,
             status: ride.status,
