@@ -15,9 +15,9 @@ interface MongoError extends Error {
 @injectable()
 export class TrackingService implements ITrackingService {
   constructor(
-    @inject(TYPES.ITrackingRepository) private trackingRepo: ITrackingRepository,
-    @inject(TYPES.IInitiateRideRepository) private rideRepo: IInitiateRideRepository,
-    @inject(TYPES.IOSRMClient) private osrmClient: OSRMClient
+    @inject(TYPES.ITrackingRepository) private _trackingRepo: ITrackingRepository,
+    @inject(TYPES.IInitiateRideRepository) private _rideRepo: IInitiateRideRepository,
+    @inject(TYPES.IOSRMClient) private _osrmClient: OSRMClient
   ) {
     console.log(
       "[TrackingService] Initialized with trackingRepo, rideRepo, and osrmClient"
@@ -43,20 +43,20 @@ export class TrackingService implements ITrackingService {
           `[TrackingService] Attempt ${attempt} to update tracking position for ride ${rideId}`
         );
         const startTime = Date.now();
-        const session: ClientSession = await this.trackingRepo.startSession();
+        const session: ClientSession = await this._trackingRepo.startSession();
         try {
           await session.withTransaction(async () => {
-            const ride = await this.rideRepo.findOne(
+            const ride = await this._rideRepo.findOne(
               { _id: new Types.ObjectId(rideId) },
               { session }
             );
             if (!ride) throw new Error("Ride not found");
-            const tracking = await this.trackingRepo.findOneByRideId(ride._id, {
+            const tracking = await this._trackingRepo.findOneByRideId(ride._id, {
               session,
             });
             if (!tracking) throw new Error("Tracking record not found");
 
-            await this.trackingRepo.updateTracking(
+            await this._trackingRepo.updateTracking(
               ride._id,
               { currentPosition: position },
               { session }
@@ -105,7 +105,7 @@ export class TrackingService implements ITrackingService {
         "[TrackingService] Fetching tracking status for rideId (MongoDB _id):",
         rideId
       );
-      const ride = await this.rideRepo.findOne({
+      const ride = await this._rideRepo.findOne({
         _id: new Types.ObjectId(rideId),
       });
       if (!ride) {
@@ -113,7 +113,7 @@ export class TrackingService implements ITrackingService {
         throw new Error("Ride not found");
       }
       console.log("[TrackingService] Resolved ride _id:", ride._id.toString());
-      const tracking = await this.trackingRepo.findOneByRideId(ride._id);
+      const tracking = await this._trackingRepo.findOneByRideId(ride._id);
       if (!tracking) {
         console.log(
           "[TrackingService] No tracking found for rideId:",
@@ -140,17 +140,17 @@ export class TrackingService implements ITrackingService {
     driverId: string,
     initialPosition: [number, number]
   ): Promise<ITracking> {
-    const session: ClientSession = await this.trackingRepo.startSession();
+    const session: ClientSession = await this._trackingRepo.startSession();
     try {
       const result = await session.withTransaction(async () => {
         console.log("[TrackingService] Starting tracking for rideId:", rideId);
-        const ride = await this.rideRepo.findOne(
+        const ride = await this._rideRepo.findOne(
           { _id: new Types.ObjectId(rideId) },
           { session }
         );
         if (!ride) throw new Error("Ride not found");
 
-        const existingTracking = await this.trackingRepo.findOneByRideId(
+        const existingTracking = await this._trackingRepo.findOneByRideId(
           ride._id,
           { session }
         );
@@ -158,7 +158,7 @@ export class TrackingService implements ITrackingService {
           throw new Error("Tracking already active for this ride");
         }
         if (existingTracking) {
-          await this.trackingRepo.deleteTracking(existingTracking.rideId, {
+          await this._trackingRepo.deleteTracking(existingTracking.rideId, {
             session,
           });
         }
@@ -175,7 +175,7 @@ export class TrackingService implements ITrackingService {
           status: "Pending" as "Pending" | "Completed",
         }));
 
-        const newTracking = await this.trackingRepo.createTracking(
+        const newTracking = await this._trackingRepo.createTracking(
           {
             rideId: ride._id,
             currentPosition: initialPosition,
@@ -209,15 +209,15 @@ export class TrackingService implements ITrackingService {
     passengerId: string,
     action: "picked" | "dropped"
   ): Promise<void> {
-    const session: ClientSession = await this.trackingRepo.startSession();
+    const session: ClientSession = await this._trackingRepo.startSession();
     try {
       await session.withTransaction(async () => {
-        const ride = await this.rideRepo.findOne(
+        const ride = await this._rideRepo.findOne(
           { _id: new Types.ObjectId(rideId) },
           { session }
         );
         if (!ride) throw new Error("Ride not found");
-        const tracking = await this.trackingRepo.findOneByRideId(ride._id, {
+        const tracking = await this._trackingRepo.findOneByRideId(ride._id, {
           session,
         });
         if (!tracking) throw new Error("Tracking record not found");
@@ -231,7 +231,7 @@ export class TrackingService implements ITrackingService {
         const status = actions.every((a) => a.status === "Completed")
           ? "Started"
           : "Paused";
-        await this.trackingRepo.updateTracking(
+        await this._trackingRepo.updateTracking(
           ride._id,
           { [updateField]: actions, status },
           { session }
@@ -261,14 +261,14 @@ export class TrackingService implements ITrackingService {
         "[TrackingService] Fetching tracking position for rideId (MongoDB _id):",
         rideId
       );
-      const ride = await this.rideRepo.findOne({
+      const ride = await this._rideRepo.findOne({
         _id: new Types.ObjectId(rideId),
       });
       if (!ride) {
         console.error("[TrackingService] Ride not found for _id:", rideId);
         throw new Error("Ride not found");
       }
-      const tracking = await this.trackingRepo.findOneByRideId(ride._id);
+      const tracking = await this._trackingRepo.findOneByRideId(ride._id);
       return tracking ? tracking.currentPosition : null;
     } catch (error) {
       console.error(
@@ -285,10 +285,10 @@ export class TrackingService implements ITrackingService {
 
   // In TrackingService - stopTracking method
 async stopTracking(rideId: string): Promise<void> {
-  const session: ClientSession = await this.trackingRepo.startSession();
+  const session: ClientSession = await this._trackingRepo.startSession();
   try {
     await session.withTransaction(async () => {
-      const ride = await this.rideRepo.findOne(
+      const ride = await this._rideRepo.findOne(
         { _id: new Types.ObjectId(rideId) },
         { session }
       );
@@ -297,7 +297,7 @@ async stopTracking(rideId: string): Promise<void> {
         return; // Just return instead of throwing error
       }
       
-      const tracking = await this.trackingRepo.findOneByRideId(ride._id, {
+      const tracking = await this._trackingRepo.findOneByRideId(ride._id, {
         session,
       });
       
@@ -306,7 +306,7 @@ async stopTracking(rideId: string): Promise<void> {
         return; // Just return instead of throwing error
       }
       
-      await this.trackingRepo.updateTracking(
+      await this._trackingRepo.updateTracking(
         ride._id,
         { status: "Completed" },
         { session }

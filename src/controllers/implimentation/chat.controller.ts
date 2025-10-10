@@ -16,7 +16,6 @@ interface JwtPayload {
   role: string;
 }
 
-// Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -33,7 +32,7 @@ const upload = multer({
 
 @injectable()
 class ChatController implements IChatController {
-  constructor(@inject(TYPES.IChatService) private chatService: IChatService) {}
+  constructor(@inject(TYPES.IChatService) private _chatService: IChatService) {}
 
   async handleSendMessage(
     socket: Socket, 
@@ -60,7 +59,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      await this.chatService.sendMessage(
+      await this._chatService.sendMessage(
         data.conversationId, 
         decoded.userId, 
         data.content, 
@@ -97,7 +96,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      await this.chatService.deleteMessage(data.messageId, decoded.userId);
+      await this._chatService.deleteMessage(data.messageId, decoded.userId);
       callback(); // Success
     } catch (error) {
       console.error("Error deleting message:", error);
@@ -125,7 +124,7 @@ class ChatController implements IChatController {
         callback("User access required");
         return;
       }
-      const hasAccess = await this.chatService.validateConversationAccess(conversationId, decoded.userId);
+      const hasAccess = await this._chatService.validateConversationAccess(conversationId, decoded.userId);
       if (!hasAccess) {
         callback("User does not have access to this conversation");
         return;
@@ -134,7 +133,7 @@ class ChatController implements IChatController {
       socket.join(`chat:${conversationId}`);
       console.log(`User ${decoded.userId} joined chat room ${conversationId}`);
 
-      const messages = await this.chatService.getMessages(conversationId, decoded.userId);
+      const messages = await this._chatService.getMessages(conversationId, decoded.userId);
       socket.emit("chatHistory", messages);
       callback();
     } catch (error) {
@@ -182,7 +181,7 @@ class ChatController implements IChatController {
         ? participants
         : [...participants, userId];
 
-      const conversation = await this.chatService.createConversation(allParticipants);
+      const conversation = await this._chatService.createConversation(allParticipants);
 
       res.status(StatusCode.CREATED).json({
         success: true,
@@ -217,7 +216,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const hasAccess = await this.chatService.validateConversationAccess(conversationId, userId);
+      const hasAccess = await this._chatService.validateConversationAccess(conversationId, userId);
       if (!hasAccess) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
@@ -226,7 +225,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const conversation = await this.chatService.getConversation(conversationId);
+      const conversation = await this._chatService.getConversation(conversationId);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -261,7 +260,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const hasAccess = await this.chatService.validateConversationAccess(conversationId, userId);
+      const hasAccess = await this._chatService.validateConversationAccess(conversationId, userId);
       if (!hasAccess) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
@@ -270,7 +269,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const messages = await this.chatService.getMessages(conversationId, userId);
+      const messages = await this._chatService.getMessages(conversationId, userId);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -314,7 +313,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const hasAccess = await this.chatService.validateConversationAccess(conversationId, userId);
+      const hasAccess = await this._chatService.validateConversationAccess(conversationId, userId);
       if (!hasAccess) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
@@ -323,7 +322,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const message = await this.chatService.sendMessage(
+      const message = await this._chatService.sendMessage(
         conversationId, 
         userId, 
         content, 
@@ -384,7 +383,7 @@ class ChatController implements IChatController {
         }
 
         try {
-          const hasAccess = await this.chatService.validateConversationAccess(conversationId, userId);
+          const hasAccess = await this._chatService.validateConversationAccess(conversationId, userId);
           if (!hasAccess) {
             return res.status(StatusCode.FORBIDDEN).json({
               success: false,
@@ -393,10 +392,10 @@ class ChatController implements IChatController {
           }
 
           // Upload image to Cloudinary
-          const imageUrl = await this.chatService.uploadImage(file.buffer, file.originalname);
+          const imageUrl = await this._chatService.uploadImage(file.buffer, file.originalname);
 
           // Send image message
-          const message = await this.chatService.sendImageMessage(conversationId, userId, imageUrl, caption);
+          const message = await this._chatService.sendImageMessage(conversationId, userId, imageUrl, caption);
 
           res.status(StatusCode.CREATED).json({
             success: true,
@@ -447,7 +446,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const conversations = await this.chatService.getUserConversations(userId);
+      const conversations = await this._chatService.getUserConversations(userId);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -498,7 +497,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const conversation = await this.chatService.getOrCreateRideConversation(rideId, authenticatedUserId, driverId);
+      const conversation = await this._chatService.getOrCreateRideConversation(rideId, authenticatedUserId, driverId);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -533,7 +532,7 @@ class ChatController implements IChatController {
         return;
       }
 
-      const deletedMessage = await this.chatService.deleteMessage(messageId, userId);
+      const deletedMessage = await this._chatService.deleteMessage(messageId, userId);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -585,7 +584,7 @@ class ChatController implements IChatController {
         }
 
         try {
-          const imageUrl = await this.chatService.uploadImage(file.buffer, file.originalname);
+          const imageUrl = await this._chatService.uploadImage(file.buffer, file.originalname);
 
           res.status(StatusCode.OK).json({
             success: true,

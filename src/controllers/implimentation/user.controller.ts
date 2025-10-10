@@ -13,10 +13,10 @@ interface AuthenticatedRequest extends Request {
 
 @injectable()
 export class UserController implements IUserController {
-  private userService: IUserService;
+  private _userService: IUserService;
 
   constructor(@inject(TYPES.IUserService) userService: IUserService) {
-    this.userService = userService;
+    this._userService = userService;
   }
 
   async getProfile(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -26,7 +26,7 @@ export class UserController implements IUserController {
         res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
         return;
       }
-      const user = await this.userService.getProfile(userId);
+      const user = await this._userService.getProfile(userId);
       res.status(StatusCode.OK).json({ success: true, data: user });
     } catch (error) {
       next(error);
@@ -64,7 +64,7 @@ export class UserController implements IUserController {
     if (updatedData.state !== undefined) updatePayload.state = updatedData.state;
     if (updatedData.govId !== undefined) updatePayload.govId = updatedData.govId;
 
-    const updatedUser = await this.userService.updateProfile(userId, updatePayload);
+    const updatedUser = await this._userService.updateProfile(userId, updatePayload);
     res.status(StatusCode.OK).json({
       success: true,
       message: "Profile updated successfully",
@@ -76,31 +76,43 @@ export class UserController implements IUserController {
 }
 
   async submitGovId(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userId = req.user?.userId;
-      const govIdData = req.body.govId;
-      if (!userId) {
-        res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
-        return;
-      }
+  try {
+    const userId = req.user?.userId;
+    const govIdData = req.body; // Changed from req.body.govId
+        console.log("popopopopopooopopopopopopop",govIdData)
 
-      // Validate govId data
-      if (!govIdData || !govIdData.idNumber || !govIdData.documentUrl) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: "Government ID data is required",
-        });
-        return;
-      }
-
-      const updatedUser = await this.userService.updateProfile(userId, govIdData);
-      res.status(StatusCode.OK).json({
-        success: true,
-        message: "Government ID submitted successfully",
-        user: updatedUser,
-      });
-    } catch (error) {
-      next(error);
+    if (!userId) {
+      res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.UNAUTHORIZED });
+      return;
     }
+    console.log("popopopopopooopopopopopopop")
+
+    // Validate govId data structure
+    if (!govIdData || !govIdData.idNumber || !govIdData.documentUrl) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: "Government ID data is required",
+      });
+      return;
+    }
+
+    // Ensure verificationStatus is set to Pending
+    const updateData = {
+      govId: {
+        ...govIdData,
+        verificationStatus: "Pending",
+        reason: govIdData.reason || ""
+      }
+    };
+
+    const updatedUser = await this._userService.updateProfile(userId, updateData);
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Government ID submitted successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    next(error);
   }
+}
 }

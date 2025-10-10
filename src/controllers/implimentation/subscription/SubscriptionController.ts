@@ -25,12 +25,12 @@ interface AuthenticatedRequest extends Request {
 
 @injectable()
 export class SubscriptionController implements ISubscriptionController {
-  private subscriptionService: ISubscriptionService;
+  private _subscriptionService: ISubscriptionService;
 
   constructor(
     @inject(TYPES.ISubscriptionService) subscriptionService: ISubscriptionService
   ) {
-    this.subscriptionService = subscriptionService;
+    this._subscriptionService = subscriptionService;
   }
 
   /**
@@ -39,7 +39,7 @@ export class SubscriptionController implements ISubscriptionController {
    */
   async getPlans(req: Request, res: Response): Promise<void> {
     try {
-      const plans = await this.subscriptionService.getAllPlans();
+      const plans = await this._subscriptionService.getAllPlans();
       // Validate response against DTO
       const response = PlansResponseDto.parse({
         success: true,
@@ -65,7 +65,7 @@ export class SubscriptionController implements ISubscriptionController {
       const validatedRequest = SubscribeRequestDto.parse(req.body);
       const { userId, planId } = validatedRequest;
 
-      const user = await this.subscriptionService.subscribeUser(userId, planId);
+      const user = await this._subscriptionService.subscribeUser(userId, planId);
       
       // Validate response against DTO
       const response = SubscribeResponseDto.parse({
@@ -103,7 +103,7 @@ export class SubscriptionController implements ISubscriptionController {
       const validatedRequest = WalletSubscribeRequestDto.parse(req.body);
       const { userId, planId } = validatedRequest;
 
-      const user = await this.subscriptionService.verifyAndSubscribe(userId, planId, "", "", "");
+      const user = await this._subscriptionService.verifyAndSubscribe(userId, planId, "", "", "");
       
       // Validate response against DTO
       const response = SubscribeResponseDto.parse({
@@ -146,7 +146,7 @@ export class SubscriptionController implements ISubscriptionController {
         return;
       }
 
-      const result = await this.subscriptionService.isSubscribed(userId);
+      const result = await this._subscriptionService.isSubscribed(userId);
       
       // Validate response against DTO
       const response = SubscriptionStatusResponseDto.parse({
@@ -174,7 +174,7 @@ export class SubscriptionController implements ISubscriptionController {
       const validatedRequest = CreateOrderRequestDto.parse(req.body);
       const { planId } = validatedRequest;
 
-      const order = await this.subscriptionService.createPaymentOrder(planId);
+      const order = await this._subscriptionService.createPaymentOrder(planId);
       
       // Validate response against DTO
       const response = OrderResponseDto.parse({
@@ -218,7 +218,7 @@ export class SubscriptionController implements ISubscriptionController {
       const validatedRequest = VerifySubscribeRequestDto.parse(req.body);
       const { userId, planId, paymentId, orderId, signature } = validatedRequest;
 
-      const result = await this.subscriptionService.verifyAndSubscribe(
+      const result = await this._subscriptionService.verifyAndSubscribe(
         userId, planId, paymentId, orderId, signature
       );
       
@@ -263,7 +263,7 @@ export class SubscriptionController implements ISubscriptionController {
         return;
       }
 
-      const result = await this.subscriptionService.isSubscribed(userId);
+      const result = await this._subscriptionService.isSubscribed(userId);
       
       // Validate response against DTO
       const response = SubscriptionStatusResponseDto.parse({

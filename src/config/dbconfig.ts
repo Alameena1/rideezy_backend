@@ -8,9 +8,13 @@ export const config = {
   osrmBaseUrl: process.env.OSRM_BASE_URL || 'http://router.project-osrm.org',
 };
 
-export const connectDB = async () => {
+export const connectDB = async (): Promise<void> => {
   try {
-    await mongoose.connect(`${process.env.MONGO_URI}`, {
+    if (!process.env.MONGO_URI) {
+      throw new Error('MONGO_URI environment variable is not defined');
+    }
+    
+    await mongoose.connect(process.env.MONGO_URI, {
       dbName: 'SpeakSwap',
     });
     console.log('✅ MongoDB Connected Successfully');

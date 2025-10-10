@@ -8,10 +8,10 @@ import { ResponseMessages } from "../../constants/response-messages.const";
 
 @injectable()
 export class NotificationController implements INotificationController {
-  private notificationService: INotificationService;
+  private _notificationService: INotificationService;
 
   constructor(@inject(TYPES.INotificationService) notificationService: INotificationService) {
-    this.notificationService = notificationService;
+    this._notificationService = notificationService;
   }
 
   async triggerRideJoinNotification(req: Request, res: Response): Promise<void> {
@@ -21,7 +21,7 @@ export class NotificationController implements INotificationController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      await this.notificationService.triggerRideJoinNotification(rideId, userId, joinedUserId);
+      await this._notificationService.triggerRideJoinNotification(rideId, userId, joinedUserId);
       res.status(StatusCode.OK).json({ success: true, message: "Notification triggered" });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
@@ -35,7 +35,7 @@ export class NotificationController implements INotificationController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      await this.notificationService.triggerRideCancellationNotification(rideId, userId);
+      await this._notificationService.triggerRideCancellationNotification(rideId, userId);
       res.status(StatusCode.OK).json({ success: true, message: "Notification triggered" });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
@@ -49,7 +49,7 @@ export class NotificationController implements INotificationController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      await this.notificationService.triggerWalletTransactionNotification(userId, amount, type as "credit" | "debit");
+      await this._notificationService.triggerWalletTransactionNotification(userId, amount, type as "credit" | "debit");
       res.status(StatusCode.OK).json({ success: true, message: "Notification triggered" });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
@@ -63,7 +63,7 @@ export class NotificationController implements INotificationController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      await this.notificationService.triggerSubscriptionExpiryNotification(userId, daysLeft);
+      await this._notificationService.triggerSubscriptionExpiryNotification(userId, daysLeft);
       res.status(StatusCode.OK).json({ success: true, message: "Notification triggered" });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
@@ -78,7 +78,7 @@ export class NotificationController implements INotificationController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      await this.notificationService.triggerRideJoinAcceptedNotification(rideId, userId, passengerName);
+      await this._notificationService.triggerRideJoinAcceptedNotification(rideId, userId, passengerName);
       res.status(StatusCode.OK).json({ success: true, message: "Ride join accepted notification triggered" });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
@@ -92,7 +92,7 @@ export class NotificationController implements INotificationController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      await this.notificationService.triggerRideJoinRejectedNotification(rideId, userId, rejectedPassengerId, passengerName);
+      await this._notificationService.triggerRideJoinRejectedNotification(rideId, userId, rejectedPassengerId, passengerName);
       res.status(StatusCode.OK).json({ success: true, message: "Ride join rejected notification triggered" });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
@@ -106,7 +106,7 @@ export class NotificationController implements INotificationController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      const notifications = await this.notificationService.getUserNotifications(userId);
+      const notifications = await this._notificationService.getUserNotifications(userId);
       res.status(StatusCode.OK).json({ success: true, notifications });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });
@@ -120,7 +120,7 @@ export class NotificationController implements INotificationController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      const notification = await this.notificationService.markAsRead(notificationId);
+      const notification = await this._notificationService.markAsRead(notificationId);
       res.status(StatusCode.OK).json({ success: true, notification });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: (error as Error).message });

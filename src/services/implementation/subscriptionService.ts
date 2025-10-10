@@ -16,12 +16,12 @@ import { SubscriptionPlanModel, ISubscriptionPlan } from "../../models/Subscript
 export class SubscriptionService implements ISubscriptionService {
   rideRepo: any;
   constructor(
-    @inject(TYPES.ISubscriptionRepository) private subscriptionRepository: ISubscriptionRepository,
-    @inject(TYPES.IWalletService) private walletService: IWalletService,
-    @inject(TYPES.IInitiateRideRepository) private initiateRideRepo: IInitiateRideRepository,
-    @inject(TYPES.IJoinRideRepository) private joinRideRepo: IJoinRideRepository,
-    @inject(TYPES.IUserRepository) private userRepo: IUserRepository,
-    @inject("Razorpay") private razorpay: Razorpay
+    @inject(TYPES.ISubscriptionRepository) private _subscriptionRepository: ISubscriptionRepository,
+    @inject(TYPES.IWalletService) private _walletService: IWalletService,
+    @inject(TYPES.IInitiateRideRepository) private _initiateRideRepo: IInitiateRideRepository,
+    @inject(TYPES.IJoinRideRepository) private _joinRideRepo: IJoinRideRepository,
+    @inject(TYPES.IUserRepository) private _userRepo: IUserRepository,
+    @inject("Razorpay") private _razorpay: Razorpay
   ) {}
 
   // EXISTING METHODS
@@ -38,7 +38,7 @@ export class SubscriptionService implements ISubscriptionService {
       throw new Error("Subscription plan is deleted");
     }
 
-    const user = await this.subscriptionRepository.findUserById(userId);
+    const user = await this._subscriptionRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -61,7 +61,7 @@ export class SubscriptionService implements ISubscriptionService {
       remainingJoinRides: plan.maxJoiningRides
     };
 
-    const updatedUser = await this.subscriptionRepository.updateUser(userId, {
+    const updatedUser = await this._subscriptionRepository.updateUser(userId, {
       $set: {
         subscription: subscriptionData,
         monthlyRideCount: 0,
@@ -74,7 +74,7 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async isSubscribed(userId: string): Promise<{ isSubscribed: boolean; subscription?: any }> {
-  const user = await this.subscriptionRepository.findUserById(userId);
+  const user = await this._subscriptionRepository.findUserById(userId);
   if (!user || !user.subscription) {
     return { isSubscribed: false };
   }
@@ -105,7 +105,7 @@ export class SubscriptionService implements ISubscriptionService {
 }
 
   async canBookRide(userId: string): Promise<boolean> {
-    const user = await this.subscriptionRepository.findUserById(userId);
+    const user = await this._subscriptionRepository.findUserById(userId);
     if (!user) {
       return false;
     }
@@ -118,7 +118,7 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async canRegisterVehicle(userId: string): Promise<boolean> {
-    const user = await this.subscriptionRepository.findUserById(userId);
+    const user = await this._subscriptionRepository.findUserById(userId);
     if (!user) {
       return false;
     }
@@ -156,7 +156,7 @@ export class SubscriptionService implements ISubscriptionService {
       };
 
       console.log("Creating Razorpay order with options:", options);
-      const order = await this.razorpay.orders.create(options);
+      const order = await this._razorpay.orders.create(options);
       console.log("Razorpay order created:", order);
 
       return {
@@ -179,7 +179,7 @@ export class SubscriptionService implements ISubscriptionService {
       throw new Error("Subscription plan is deleted");
     }
 
-    const user = await this.subscriptionRepository.findUserById(userId);
+    const user = await this._subscriptionRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -196,9 +196,9 @@ export class SubscriptionService implements ISubscriptionService {
     };
 
     // Check if payment is from wallet
-    const balance = await this.walletService.getBalance(userId);
+    const balance = await this._walletService.getBalance(userId);
     if (balance >= amount) {
-      await this.subscriptionRepository.updateUser(userId, {
+      await this._subscriptionRepository.updateUser(userId, {
         $inc: { "wallet.balance": -amount },
         $push: { "wallet.transactions": transaction },
       } as UserUpdate);
@@ -214,7 +214,7 @@ export class SubscriptionService implements ISubscriptionService {
     }
 
     // Log Razorpay payment as a transaction
-    await this.subscriptionRepository.updateUser(userId, {
+    await this._subscriptionRepository.updateUser(userId, {
       $push: { "wallet.transactions": transaction },
     } as UserUpdate);
 
@@ -223,12 +223,12 @@ export class SubscriptionService implements ISubscriptionService {
 
   // NEW METHODS for ride limits
   async hasActiveSubscription(userId: string): Promise<boolean> {
-    const user = await this.userRepo.findUserById(userId);
+    const user = await this._userRepo.findUserById(userId);
     return !! (user?.subscription && user.subscription.endDate > new Date());
   }
 
   async getSubscriptionPlan(userId: string): Promise<ISubscriptionPlan | null> {
-    const user = await this.userRepo.findUserById(userId);
+    const user = await this._userRepo.findUserById(userId);
     if (!user?.subscription) return null;
     
     return await SubscriptionPlanModel.findById(user.subscription.planId);
@@ -251,7 +251,7 @@ export class SubscriptionService implements ISubscriptionService {
     createdAt: { $gte: startOfMonth, $lt: endOfMonth }
   });
 
-  const joinCountResult = await this.joinRideRepo.count({
+  const joinCountResult = await this._joinRideRepo.count({
     "passengers.passengerId": userId,
     status: { $in: ["Started", "Completed"] },
     createdAt: { $gte: startOfMonth, $lt: endOfMonth }
@@ -265,7 +265,7 @@ export class SubscriptionService implements ISubscriptionService {
 }
 
   async canStartRide(userId: string): Promise<boolean> {
-    const user = await this.userRepo.findUserById(userId);
+    const user = await this._userRepo.findUserById(userId);
     if (!user) throw new Error("User not found");
 
     const hasActiveSubscription = await this.hasActiveSubscription(userId);
@@ -291,7 +291,7 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async canJoinRide(userId: string): Promise<boolean> {
-    const user = await this.userRepo.findUserById(userId);
+    const user = await this._userRepo.findUserById(userId);
     if (!user) throw new Error("User not found");
 
     const hasActiveSubscription = await this.hasActiveSubscription(userId);
@@ -317,7 +317,7 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async getRemainingRideCounts(userId: string): Promise<{ startRides: number; joinRides: number }> {
-    const user = await this.userRepo.findUserById(userId);
+    const user = await this._userRepo.findUserById(userId);
     if (!user) throw new Error("User not found");
 
     const hasActiveSubscription = await this.hasActiveSubscription(userId);
@@ -347,7 +347,7 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async decrementStartRideCount(userId: string): Promise<void> {
-    const user = await this.userRepo.findUserById(userId);
+    const user = await this._userRepo.findUserById(userId);
     if (!user || !user.subscription) return;
 
     const hasActiveSubscription = user.subscription.endDate > new Date();
@@ -362,7 +362,7 @@ export class SubscriptionService implements ISubscriptionService {
     
     const newRemaining = Math.max(0, currentRemaining - 1);
     
-    await this.userRepo.updateOne(
+    await this._userRepo.updateOne(
       { _id: userId },
       { 
         $set: { 
@@ -373,7 +373,7 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async decrementJoinRideCount(userId: string): Promise<void> {
-    const user = await this.userRepo.findUserById(userId);
+    const user = await this._userRepo.findUserById(userId);
     if (!user || !user.subscription) return;
 
     const hasActiveSubscription = user.subscription.endDate > new Date();
@@ -388,7 +388,7 @@ export class SubscriptionService implements ISubscriptionService {
     
     const newRemaining = Math.max(0, currentRemaining - 1);
     
-    await this.userRepo.updateOne(
+    await this._userRepo.updateOne(
       { _id: userId },
       { 
         $set: { 
@@ -399,13 +399,13 @@ export class SubscriptionService implements ISubscriptionService {
   }
 
   async resetSubscriptionRideCounts(userId: string): Promise<void> {
-    const user = await this.userRepo.findUserById(userId);
+    const user = await this._userRepo.findUserById(userId);
     if (!user || !user.subscription) return;
 
     const subscriptionPlan = await this.getSubscriptionPlan(userId);
     if (!subscriptionPlan) return;
 
-    await this.userRepo.updateOne(
+    await this._userRepo.updateOne(
       { _id: userId },
       { 
         $set: { 

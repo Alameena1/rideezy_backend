@@ -8,19 +8,19 @@ import { emitNotification } from "../../websocket/emit"; // Adjust path as neede
 
 @injectable()
 export class NotificationService implements INotificationService {
-  private notificationRepository: INotificationRepository;
-  private userRepository: IUserRepository;
+  private _notificationRepository: INotificationRepository;
+  private _userRepository: IUserRepository;
 
   constructor(
     @inject(TYPES.INotificationRepository) notificationRepository: INotificationRepository,
     @inject(TYPES.IUserRepository) userRepository: IUserRepository
   ) {
-    this.notificationRepository = notificationRepository;
-    this.userRepository = userRepository;
+    this._notificationRepository = notificationRepository;
+    this._userRepository = userRepository;
   }
 
   async triggerRideJoinNotification(rideId: string, userId: string, joinedUserId: string): Promise<void> {
-    const joinedUser = await this.userRepository.findUserById(joinedUserId);
+    const joinedUser = await this._userRepository.findUserById(joinedUserId);
     const joinedUserName = joinedUser?.fullName || joinedUserId; 
 
     const notificationData: CreateNotificationDtoType = {
@@ -31,12 +31,12 @@ export class NotificationService implements INotificationService {
       createdAt: new Date(),
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
-    await this.notificationRepository.create(validatedData);
+    await this._notificationRepository.create(validatedData);
     emitNotification(userId, validatedData);
   }
 
   async triggerRideCancellationNotification(rideId: string, userId: string, message?: string): Promise<void> {
-    const user = await this.userRepository.findUserById(userId);
+    const user = await this._userRepository.findUserById(userId);
     const userName = user?.fullName || userId; 
 
     const notificationData: CreateNotificationDtoType = {
@@ -47,7 +47,7 @@ export class NotificationService implements INotificationService {
       createdAt: new Date(),
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
-    await this.notificationRepository.create(validatedData);
+    await this._notificationRepository.create(validatedData);
     emitNotification(userId, validatedData);
   }
 
@@ -60,7 +60,7 @@ export class NotificationService implements INotificationService {
       createdAt: new Date(),
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
-    await this.notificationRepository.create(validatedData);
+    await this._notificationRepository.create(validatedData);
     emitNotification(userId, validatedData);
   }
 
@@ -73,7 +73,7 @@ export class NotificationService implements INotificationService {
       createdAt: new Date(),
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
-    await this.notificationRepository.create(validatedData);
+    await this._notificationRepository.create(validatedData);
     emitNotification(userId, validatedData);
   }
 
@@ -86,7 +86,7 @@ export class NotificationService implements INotificationService {
       createdAt: new Date(),
     };
     const validatedData = CreateNotificationDto.parse(notificationData);
-    await this.notificationRepository.create(validatedData);
+    await this._notificationRepository.create(validatedData);
     emitNotification(userId, validatedData); 
   }
 
@@ -100,16 +100,16 @@ export class NotificationService implements INotificationService {
     createdAt: new Date(),
   };
   const validatedData = CreateNotificationDto.parse(notificationData);
-  await this.notificationRepository.create(validatedData);
+  await this._notificationRepository.create(validatedData);
   emitNotification(userId, validatedData);
 }
 
   async getUserNotifications(userId: string): Promise<any[]> {
-    return this.notificationRepository.findByUserId(userId);
+    return this._notificationRepository.findByUserId(userId);
   }
 
   async markAsRead(notificationId: string): Promise<any> {
-    return this.notificationRepository.update(notificationId, { isRead: true });
+    return this._notificationRepository.update(notificationId, { isRead: true });
   }
 
 }

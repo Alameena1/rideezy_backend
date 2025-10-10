@@ -41,7 +41,7 @@ interface AuthenticatedRequest extends Request {
 @injectable()
 export class AdminController implements IAdminController {
   constructor(
-    @inject(TYPES.IAdminService) private adminService: IAdminService
+    @inject(TYPES.IAdminService) private _adminService: IAdminService
   ) {}
 
   private validateRequest<T extends z.ZodTypeAny>(schema: T, data: unknown): z.infer<T> {
@@ -72,7 +72,7 @@ export class AdminController implements IAdminController {
       const queryParams = this.validateRequest(UserSearchQueryDto, req.query);
       const ensuredParams = this.ensureRequiredParams(queryParams);
 
-      const result = await this.adminService.getAllUsers(ensuredParams);
+      const result = await this._adminService.getAllUsers(ensuredParams);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -92,7 +92,7 @@ export class AdminController implements IAdminController {
       const queryParams = this.validateRequest(VehicleSearchQueryDto, req.query);
       const ensuredParams = this.ensureRequiredParams(queryParams);
 
-      const result = await this.adminService.getAllVehicles(ensuredParams);
+      const result = await this._adminService.getAllVehicles(ensuredParams);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -112,7 +112,7 @@ export class AdminController implements IAdminController {
       const queryParams = this.validateRequest(RideSearchQueryDto, req.query);
       const ensuredParams = this.ensureRequiredParams(queryParams);
 
-      const result = await this.adminService.getAllRides(ensuredParams);
+      const result = await this._adminService.getAllRides(ensuredParams);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -133,7 +133,7 @@ export class AdminController implements IAdminController {
 
       console.log("🔐 Admin login attempt:", { email: loginData.email });
 
-      const { accessToken, refreshToken } = await this.adminService.authenticateAdmin(
+      const { accessToken, refreshToken } = await this._adminService.authenticateAdmin(
         loginData.email,
         loginData.password
       );
@@ -181,7 +181,7 @@ export class AdminController implements IAdminController {
       );
       const newRefreshToken = generateRefreshToken(decoded.userId, "admin");
 
-      await this.adminService.saveRefreshToken(decoded.userId, newRefreshToken);
+      await this._adminService.saveRefreshToken(decoded.userId, newRefreshToken);
 
       res.cookie("adminAuthToken", newAccessToken, {
         httpOnly: true,
@@ -219,7 +219,7 @@ export class AdminController implements IAdminController {
       const { refreshToken } = this.validateRequest(LogoutDto, req.body);
 
       if (refreshToken && req.admin?.userId) {
-        await this.adminService.invalidateRefreshToken(
+        await this._adminService.invalidateRefreshToken(
           req.admin.userId,
           refreshToken
         );
@@ -252,7 +252,7 @@ export class AdminController implements IAdminController {
         throw new Error("User ID is required in URL path");
       }
 
-      await this.adminService.updateUserStatus(userId, updateData.status);
+      await this._adminService.updateUserStatus(userId, updateData.status);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -277,7 +277,7 @@ export class AdminController implements IAdminController {
         ...req.body,
       });
 
-      await this.adminService.updateVehicleStatus(
+      await this._adminService.updateVehicleStatus(
         updateData.vehicleId,
         updateData.status,
         updateData.note
@@ -305,7 +305,7 @@ export class AdminController implements IAdminController {
         req.body
       );
 
-      const user = await this.adminService.verifyGovId(
+      const user = await this._adminService.verifyGovId(
         verificationData.userId,
         verificationData.status,
         verificationData.rejectionNote
@@ -334,7 +334,7 @@ export class AdminController implements IAdminController {
         req.body
       );
 
-      const plan = await this.adminService.createSubscriptionPlan(planData);
+      const plan = await this._adminService.createSubscriptionPlan(planData);
 
       res.status(StatusCode.CREATED).json({
         success: true,
@@ -360,7 +360,7 @@ export class AdminController implements IAdminController {
         req.body
       );
 
-      const plan = await this.adminService.updateSubscriptionPlan(
+      const plan = await this._adminService.updateSubscriptionPlan(
         planId,
         planData
       );
@@ -389,7 +389,7 @@ export class AdminController implements IAdminController {
         req.body
       );
 
-      await this.adminService.updateSubscriptionPlanStatus(planId, status);
+      await this._adminService.updateSubscriptionPlanStatus(planId, status);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -410,7 +410,7 @@ export class AdminController implements IAdminController {
         req.query
       );
 
-      const metrics = await this.adminService.getDashboardMetrics({
+      const metrics = await this._adminService.getDashboardMetrics({
         startDate: queryParams.startDate
           ? new Date(queryParams.startDate)
           : undefined,
@@ -445,7 +445,7 @@ export class AdminController implements IAdminController {
     }
 
     try {
-      await this.adminService.deleteSubscriptionPlan(planId);
+      await this._adminService.deleteSubscriptionPlan(planId);
       res
         .status(StatusCode.OK)
         .json({ success: true, message: "Subscription plan deleted" });
@@ -461,7 +461,7 @@ getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
     const queryParams = this.validateRequest(UserSearchQueryDto, req.query);
     const ensuredParams = this.ensureRequiredParams(queryParams);
 
-    const result = await this.adminService.getSubscriptionPlans(ensuredParams);
+    const result = await this._adminService.getSubscriptionPlans(ensuredParams);
 
     res.status(StatusCode.OK).json({
       success: true,
@@ -487,7 +487,7 @@ getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
     }
 
     try {
-      const ride = await this.adminService.getRideDetails(rideId);
+      const ride = await this._adminService.getRideDetails(rideId);
       res.status(StatusCode.OK).json(ride);
     } catch (error) {
       res
@@ -514,7 +514,7 @@ getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
         throw new Error("Admin authentication required");
       }
 
-      await this.adminService.blockRide(rideId, blockData, req.admin.userId);
+      await this._adminService.blockRide(rideId, blockData, req.admin.userId);
       
       res
         .status(StatusCode.OK)
@@ -543,7 +543,7 @@ getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
     }
 
     try {
-      await this.adminService.unblockRide(rideId);
+      await this._adminService.unblockRide(rideId);
       
       res
         .status(StatusCode.OK)
@@ -567,7 +567,7 @@ getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
     }
 
     try {
-      await this.adminService.updateRideStatus(rideId, "Cancelled");
+      await this._adminService.updateRideStatus(rideId, "Cancelled");
       res
         .status(StatusCode.OK)
         .json({ success: true, message: "Ride cancelled" });
@@ -581,7 +581,7 @@ getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
   getDashboardData = async (req: Request, res: Response): Promise<void> => {
     const { startDate, endDate } = req.query;
     try {
-      const metrics = await this.adminService.getDashboardMetrics({
+      const metrics = await this._adminService.getDashboardMetrics({
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
       });
@@ -605,7 +605,7 @@ getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
         return;
       }
 
-      const result = await this.adminService.checkUserOngoingRides(userId);
+      const result = await this._adminService.checkUserOngoingRides(userId);
 
       res.status(StatusCode.OK).json({
         success: true,

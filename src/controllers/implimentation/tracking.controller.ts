@@ -14,15 +14,15 @@ interface AuthenticatedRequest extends Request {
 
 @injectable()
 export class TrackingController implements ITrackingController {
-  private trackingService: ITrackingService;
-  private rideService: IInitiateRideService;
+  private _trackingService: ITrackingService;
+  private _rideService: IInitiateRideService;
 
   constructor(
     @inject(TYPES.ITrackingService) trackingService: ITrackingService,
     @inject(TYPES.IInitiateRideService) rideService: IInitiateRideService
   ) {
-    this.trackingService = trackingService;
-    this.rideService = rideService;
+    this._trackingService = trackingService;
+    this._rideService = rideService;
   }
 
   async startTracking(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -35,7 +35,7 @@ export class TrackingController implements ITrackingController {
         return;
       }
 
-      const ride = await this.rideService.findById(rideId);
+      const ride = await this._rideService.findById(rideId);
       if (!ride) {
         res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
@@ -51,10 +51,10 @@ export class TrackingController implements ITrackingController {
         return;
       }
 
-      const tracking = await this.trackingService.startTracking(rideId, driverId, initialPosition);
+      const tracking = await this._trackingService.startTracking(rideId, driverId, initialPosition);
       
       const editRideDto: EditRideDto = { status: "Started" };
-      await this.rideService.editRide(ride.rideId || ride._id.toString(), driverId, editRideDto);
+      await this._rideService.editRide(ride.rideId || ride._id.toString(), driverId, editRideDto);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -81,7 +81,7 @@ export class TrackingController implements ITrackingController {
         return;
       }
 
-      const ride = await this.rideService.findById(rideId);
+      const ride = await this._rideService.findById(rideId);
       if (!ride) {
         res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
@@ -98,7 +98,7 @@ export class TrackingController implements ITrackingController {
         return;
       }
 
-      await this.trackingService.updateTrackingPosition(rideId, position as [number, number]);
+      await this._trackingService.updateTrackingPosition(rideId, position as [number, number]);
       res.status(StatusCode.OK).json({ success: true, message: "Tracking position updated successfully" });
     } catch (error: any) {
       console.error("[TrackingController] Error updating tracking position:", error);
@@ -114,13 +114,13 @@ export class TrackingController implements ITrackingController {
         return;
       }
 
-      const ride = await this.rideService.findById(rideId);
+      const ride = await this._rideService.findById(rideId);
       if (!ride) {
         res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
       }
 
-      const position = await this.trackingService.getTrackingPosition(rideId);
+      const position = await this._trackingService.getTrackingPosition(rideId);
       res.status(StatusCode.OK).json({ success: true, data: position });
     } catch (error: any) {
       console.error("[TrackingController] Error fetching tracking position:", error);
@@ -138,7 +138,7 @@ export class TrackingController implements ITrackingController {
         return;
       }
 
-      const ride = await this.rideService.findById(rideId);
+      const ride = await this._rideService.findById(rideId);
       if (!ride) {
         res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
@@ -148,10 +148,10 @@ export class TrackingController implements ITrackingController {
         return;
       }
 
-      await this.trackingService.stopTracking(rideId);
+      await this._trackingService.stopTracking(rideId);
       
       const editRideDto: EditRideDto = { status: "Completed" };
-      await this.rideService.editRide(ride._id.toString(), driverId, editRideDto);
+      await this._rideService.editRide(ride._id.toString(), driverId, editRideDto);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -178,13 +178,13 @@ export class TrackingController implements ITrackingController {
         return;
       }
 
-      const ride = await this.rideService.findById(rideId);
+      const ride = await this._rideService.findById(rideId);
       if (!ride) {
         res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Ride not found" });
         return;
       }
 
-      const tracking = await this.trackingService.getTrackingStatus(rideId);
+      const tracking = await this._trackingService.getTrackingStatus(rideId);
 
       res.status(StatusCode.OK).json({
         success: true,

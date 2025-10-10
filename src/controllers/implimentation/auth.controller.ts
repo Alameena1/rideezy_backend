@@ -8,10 +8,10 @@ import { ResponseMessages } from "../../constants/response-messages.const";
 
 @injectable()
 export class AuthController implements IAuthController {
-  private authService: AuthService;
+  private _authService: AuthService;
 
   constructor(@inject(TYPES.IAuthService) authService: AuthService) {
-    this.authService = authService;
+    this._authService = authService;
   }
 
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -23,14 +23,14 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_PASSWORD_REQUIRED });
         return;
       }
-      const { accessToken, refreshToken, user } = await this.authService.login(email, password);
+      const { accessToken, refreshToken, user } = await this._authService.login(email, password);
       console.log("Login success:", { userId: user.id, email: user.email, role: user.role });
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 30 * 24 * 60 * 60 * 1000, // ~30 days
+        maxAge: 30 * 24 * 60 * 60 * 1000, 
         path: "/",
       });
 
@@ -38,7 +38,7 @@ export class AuthController implements IAuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000, 
         path: "/",
       });
 
@@ -62,10 +62,9 @@ export class AuthController implements IAuthController {
     }
   }
 
-  // Other methods (signup, resendOTP, verifyOTP, etc.) remain unchanged
   async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const response = await this.authService.signup(req.body);
+      const response = await this._authService.signup(req.body);
       res.status(StatusCode.OK).json(response);
     } catch (error) {
       next(error);
@@ -79,7 +78,7 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_REQUIRED });
         return;
       }
-      const response = await this.authService.resendOTP(email);
+      const response = await this._authService.resendOTP(email);
       res.status(StatusCode.OK).json(response);
     } catch (error) {
       next(error);
@@ -93,7 +92,8 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_OTP_REQUIRED });
         return;
       }
-      const response = await this.authService.verifyOTP(email, otp);
+      const response = await this._authService.verifyOTP(email, otp);
+      console.log("oiowjodjsoidhouh",response)
       res.status(StatusCode.OK).json(response);
     } catch (error) {
       console.log(error);
@@ -109,7 +109,7 @@ export class AuthController implements IAuthController {
     }
 
     try {
-      const { accessToken, refreshToken: newRefreshToken } = await this.authService.refreshToken(refreshToken);
+      const { accessToken, refreshToken: newRefreshToken } = await this._authService.refreshToken(refreshToken);
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
@@ -139,7 +139,7 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.REFRESH_TOKEN_REQUIRED });
         return;
       }
-      await this.authService.logout(token);
+      await this._authService.logout(token);
       res.clearCookie("accessToken", { path: "/" });
       res.clearCookie("refreshToken", { path: "/" });
       res.status(StatusCode.OK).json({ success: true, message: ResponseMessages.LOGOUT_SUCCESS });
@@ -155,7 +155,7 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: "Missing required fields: fullName, email, image, idToken" });
         return;
       }
-      const { user, accessToken, refreshToken } = await this.authService.handleGoogleAuth({ fullName, email, image, idToken });
+      const { user, accessToken, refreshToken } = await this._authService.handleGoogleAuth({ fullName, email, image, idToken });
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
@@ -193,7 +193,7 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_REQUIRED });
         return;
       }
-      const response = await this.authService.forgotPassword(email);
+      const response = await this._authService.forgotPassword(email);
       res.status(StatusCode.OK).json(response);
     } catch (error) {
       next(error);
@@ -207,7 +207,7 @@ export class AuthController implements IAuthController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.TOKEN_AND_NEW_PASSWORD_REQUIRED });
         return;
       }
-      const response = await this.authService.resetPassword(token, newPassword);
+      const response = await this._authService.resetPassword(token, newPassword);
       res.status(StatusCode.OK).json(response);
     } catch (error) {
       next(error);

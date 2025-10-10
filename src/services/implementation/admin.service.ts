@@ -355,7 +355,7 @@ async getSubscriptionPlans(params?: UserSearchQueryDtoType): Promise<any> {
     
     // Calculate date range based on timeRange
     let startDate = params.startDate;
-    let endDate = params.endDate || new Date();
+    const endDate = params.endDate || new Date();
     
     if (!startDate && params.timeRange) {
       startDate = new Date();

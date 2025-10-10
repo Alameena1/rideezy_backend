@@ -8,12 +8,12 @@ import { ResponseMessages } from "../../constants/response-messages.const";
 
 @injectable()
 export class WalletController implements IWalletController {
-  private walletService: IWalletService;
+  private _walletService: IWalletService;
 
   constructor(
     @inject(TYPES.IWalletService) walletService: IWalletService
   ) {
-    this.walletService = walletService;
+    this._walletService = walletService;
   }
 
   async getBalance(req: Request, res: Response): Promise<void> {
@@ -23,7 +23,7 @@ export class WalletController implements IWalletController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      const wallet = await this.walletService.getWallet(userId);
+      const wallet = await this._walletService.getWallet(userId);
       res.status(StatusCode.OK).json({ success: true, ...wallet });
     } catch (error) {
       console.error("[WalletController] Error fetching wallet balance:", error);
@@ -38,7 +38,7 @@ export class WalletController implements IWalletController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      const user = await this.walletService.deposit(userId, amount, paymentId, orderId, signature);
+      const user = await this._walletService.deposit(userId, amount, paymentId, orderId, signature);
       res.status(StatusCode.OK).json({ success: true, user });
     } catch (error) {
       console.error("[WalletController] Error processing deposit:", error);
@@ -53,7 +53,7 @@ export class WalletController implements IWalletController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      const user = await this.walletService.withdraw(userId, amount);
+      const user = await this._walletService.withdraw(userId, amount);
       res.status(StatusCode.OK).json({ success: true, message: "Withdrawal successful", user });
     } catch (error: any) {
       console.error("[WalletController] Error processing withdrawal:", error);
@@ -72,7 +72,7 @@ export class WalletController implements IWalletController {
         return;
       }
 
-      const result = await this.walletService.getTransactions(userId, page, limit);
+      const result = await this._walletService.getTransactions(userId, page, limit);
       res.status(StatusCode.OK).json({
         success: true,
         transactions: result.transactions,
@@ -94,7 +94,7 @@ export class WalletController implements IWalletController {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.MISSING_FIELDS });
         return;
       }
-      const order = await this.walletService.createDepositOrder(userId, amount);
+      const order = await this._walletService.createDepositOrder(userId, amount);
       res.status(StatusCode.OK).json({ success: true, order });
     } catch (error: any) {
       console.error("[WalletController] Error creating deposit order:", error);

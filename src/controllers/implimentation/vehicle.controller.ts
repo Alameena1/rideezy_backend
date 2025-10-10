@@ -12,10 +12,10 @@ interface AuthenticatedRequest extends Request {
 
 @injectable()
 export class VehicleController implements IVehicleController {
-  private vehicleService: IVehicleService;
+  private _vehicleService: IVehicleService;
 
   constructor(@inject(TYPES.IVehicleService) vehicleService: IVehicleService) {
-    this.vehicleService = vehicleService;
+    this._vehicleService = vehicleService;
   }
 
   async addVehicle(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -34,7 +34,7 @@ export class VehicleController implements IVehicleController {
         return;
       }
 
-      const newVehicle = await this.vehicleService.addVehicle(userId, vehicleData);
+      const newVehicle = await this._vehicleService.addVehicle(userId, vehicleData);
       res.status(StatusCode.CREATED).json({ success: true, message: "Vehicle added successfully", data: newVehicle });
     } catch (error) {
       next(error);
@@ -50,7 +50,7 @@ export class VehicleController implements IVehicleController {
         return;
       }
 
-      const vehicles = await this.vehicleService.getUserVehicles(userId);
+      const vehicles = await this._vehicleService.getUserVehicles(userId);
       res.status(StatusCode.OK).json({ success: true, data: vehicles });
     } catch (error) {
       next(error);
@@ -73,7 +73,7 @@ export class VehicleController implements IVehicleController {
         return;
       }
 
-      const updatedVehicle = await this.vehicleService.updateVehicle(userId, vehicleId, vehicleData);
+      const updatedVehicle = await this._vehicleService.updateVehicle(userId, vehicleId, vehicleData);
       res.status(StatusCode.OK).json({ success: true, message: "Vehicle updated successfully", data: updatedVehicle });
     } catch (error) {
       next(error);
@@ -95,7 +95,7 @@ export class VehicleController implements IVehicleController {
         return;
       }
 
-      await this.vehicleService.deleteVehicle(userId, vehicleId);
+      await this._vehicleService.deleteVehicle(userId, vehicleId);
       res.status(StatusCode.OK).json({ success: true, message: "Vehicle deleted successfully" });
     } catch (error) {
       next(error);
@@ -118,7 +118,7 @@ export class VehicleController implements IVehicleController {
         return;
       }
 
-      const updatedVehicle = await this.vehicleService.reapplyVehicle(userId, vehicleId, vehicleData);
+      const updatedVehicle = await this._vehicleService.reapplyVehicle(userId, vehicleId, vehicleData);
       res.status(StatusCode.OK).json({ success: true, message: "Vehicle reapplied successfully", data: updatedVehicle });
     } catch (error) {
       next(error);

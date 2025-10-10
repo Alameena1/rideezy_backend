@@ -13,7 +13,7 @@ import { AuthenticatedRequest } from "../../types/express";
 @injectable()
 export class InitiateRideController implements IInitiateRideController {
   constructor(
-    @inject(TYPES.IInitiateRideService) private initiateRideService: IInitiateRideService
+    @inject(TYPES.IInitiateRideService) private _initiateRideService: IInitiateRideService
   ) {}
 
   async startRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -43,7 +43,7 @@ export class InitiateRideController implements IInitiateRideController {
             };
 
             // FIX: Use initiateRideService instead of rideService
-            const ride = await this.initiateRideService.startRide(completeDto);
+            const ride = await this._initiateRideService.startRide(completeDto);
             
             res.status(StatusCode.CREATED).json({
                 success: true,
@@ -78,7 +78,7 @@ export class InitiateRideController implements IInitiateRideController {
         }
   
         const dto: EditRideDto = validationResult.data;
-        const updatedRide = await this.initiateRideService.editRide(rideId, userId, dto);
+        const updatedRide = await this._initiateRideService.editRide(rideId, userId, dto);
         console.log("edit ride controller updatedRide", updatedRide);
   
         res.status(StatusCode.OK).json({ success: true, message: "Ride updated successfully", data: updatedRide });
@@ -101,7 +101,7 @@ export class InitiateRideController implements IInitiateRideController {
           return;
         }
   
-        await this.initiateRideService.cancelRide(rideId, userId);
+        await this._initiateRideService.cancelRide(rideId, userId);
         res.status(StatusCode.OK).json({ success: true, message: "Ride cancelled successfully" });
       } catch (error) {
         next(error);
@@ -116,7 +116,7 @@ export class InitiateRideController implements IInitiateRideController {
           return;
         }
   
-        const rides = await this.initiateRideService.getRides(userId);
+        const rides = await this._initiateRideService.getRides(userId);
         res.status(StatusCode.OK).json({ success: true, data: rides });
       } catch (error) {
         next(error);
@@ -137,7 +137,7 @@ export class InitiateRideController implements IInitiateRideController {
           return;
         }
   
-        const ride = await this.initiateRideService.startTracking(rideId, userId);
+        const ride = await this._initiateRideService.startTracking(rideId, userId);
         res.status(StatusCode.OK).json({
           success: true,
           message: "Ride tracking started successfully",
@@ -171,7 +171,7 @@ async updateRide(req: AuthenticatedRequest, res: Response, next: NextFunction): 
       return;
     }
 
-    const updatedRide = await this.initiateRideService.updateRide(rideId, userId, updates);
+    const updatedRide = await this._initiateRideService.updateRide(rideId, userId, updates);
     res.status(StatusCode.OK).json({ success: true, message: "Ride updated successfully", data: updatedRide });
   } catch (error) {
     console.error("[RideController] Error updating ride:", error);
@@ -203,7 +203,7 @@ async emergencyStopRide(req: AuthenticatedRequest, res: Response, next: NextFunc
 
       const { reason, currentPosition } = validationResult.data;
       
-      const updatedRide = await this.initiateRideService.emergencyStopRide(rideId, userId, reason, currentPosition);
+      const updatedRide = await this._initiateRideService.emergencyStopRide(rideId, userId, reason, currentPosition);
       
       res.status(StatusCode.OK).json({
         success: true,

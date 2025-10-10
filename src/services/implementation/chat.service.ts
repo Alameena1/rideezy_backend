@@ -11,7 +11,7 @@ import { v2 as cloudinary } from 'cloudinary';
 
 @injectable()
 export class ChatService implements IChatService {
-  constructor(@inject(TYPES.IChatRepository) private chatRepository: IChatRepository) {
+  constructor(@inject(TYPES.IChatRepository) private _chatRepository: IChatRepository) {
     // Configure Cloudinary
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -26,16 +26,16 @@ export class ChatService implements IChatService {
     }
 
     const sortedParticipants = participants.sort();
-    let conversation = await this.chatRepository.findConversationByParticipants(sortedParticipants);
+    const conversation = await this._chatRepository.findConversationByParticipants(sortedParticipants);
     if (conversation) {
       return conversation;
     }
 
-    return await this.chatRepository.createConversation(sortedParticipants, rideId);
+    return await this._chatRepository.createConversation(sortedParticipants, rideId);
   }
 
   async getConversation(conversationId: string): Promise<IConversation> {
-    const conversation = await this.chatRepository.findConversationById(conversationId);
+    const conversation = await this._chatRepository.findConversationById(conversationId);
     
     if (!conversation) {
       throw new Error("Conversation not found");
@@ -48,7 +48,7 @@ export class ChatService implements IChatService {
     if (!hasAccess) {
       throw new Error("Access to conversation denied");
     }
-    return await this.chatRepository.findMessagesByConversationId(conversationId);
+    return await this._chatRepository.findMessagesByConversationId(conversationId);
   }
 
   async sendMessage(
@@ -65,7 +65,7 @@ export class ChatService implements IChatService {
       throw new Error("Access to conversation denied");
     }
 
-    const message = await this.chatRepository.createMessage(
+    const message = await this._chatRepository.createMessage(
       conversationId, 
       senderId, 
       content, 
@@ -76,7 +76,7 @@ export class ChatService implements IChatService {
     );
     
     // Get sender information for proper population
-    const sender = await this.chatRepository.findUserById(senderId);
+    const sender = await this._chatRepository.findUserById(senderId);
     
     // Emit the message with properly populated sender data
     const populatedMessage = {
@@ -106,7 +106,7 @@ export class ChatService implements IChatService {
   }
 
   async validateConversationAccess(conversationId: string, userId: string): Promise<boolean> {
-    const conversation = await this.chatRepository.findConversationById(conversationId);
+    const conversation = await this._chatRepository.findConversationById(conversationId);
     if (!conversation) return false;
 
     return conversation.participants.some((participant) => {
@@ -119,7 +119,7 @@ export class ChatService implements IChatService {
   }
 
   async getUserConversations(userId: string): Promise<IConversation[]> {
-    let conversations = await this.chatRepository.findUserConversations(userId);
+    const conversations = await this._chatRepository.findUserConversations(userId);
     
     for (const conv of conversations) {
       const lastMsg = await Message.findOne({ conversationId: conv._id, isDeleted: false })
@@ -145,17 +145,17 @@ export class ChatService implements IChatService {
   
   async getOrCreateRideConversation(rideId: string, userId: string, driverId: string): Promise<IConversation> {
     const participants = [userId, driverId].sort();
-    let conversation = await this.chatRepository.findConversationByParticipants(participants);
+    let conversation = await this._chatRepository.findConversationByParticipants(participants);
     if (conversation) {
       return conversation; 
     }
 
-    conversation = await this.chatRepository.createConversation(participants, rideId);
+    conversation = await this._chatRepository.createConversation(participants, rideId);
     return conversation;
   }
 
   async deleteMessage(messageId: string, userId: string): Promise<IMessage> {
-    const message = await this.chatRepository.findMessageById(messageId);
+    const message = await this._chatRepository.findMessageById(messageId);
     if (!message) {
       throw new Error("Message not found");
     }
@@ -165,7 +165,7 @@ export class ChatService implements IChatService {
       throw new Error("You can only delete your own messages");
     }
 
-    const deletedMessage = await this.chatRepository.deleteMessage(messageId, userId);
+    const deletedMessage = await this._chatRepository.deleteMessage(messageId, userId);
     if (!deletedMessage) {
       throw new Error("Failed to delete message");
     }

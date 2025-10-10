@@ -11,7 +11,7 @@ import { AuthenticatedRequest } from "../../types/express";
 @injectable()
 export class JoinRideController implements IJoinRideController {
   constructor(
-    @inject(TYPES.IJoinRideService) private joinRideService: IJoinRideService
+    @inject(TYPES.IJoinRideService) private _joinRideService: IJoinRideService
   ) {}
 
   async joinRide(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -31,7 +31,7 @@ export class JoinRideController implements IJoinRideController {
         }
   
         const dto: JoinRideDto = validationResult.data;
-        const ride = await this.joinRideService.joinRide(dto.rideId, userId, dto.pickupLocation, dto.dropoffLocation);
+        const ride = await this._joinRideService.joinRide(dto.rideId, userId, dto.pickupLocation, dto.dropoffLocation);
   
         res.status(StatusCode.OK).json({
           success: true,
@@ -51,7 +51,7 @@ export class JoinRideController implements IJoinRideController {
           return;
         }
   
-        const rides = await this.joinRideService.getJoinedRides(userId);
+        const rides = await this._joinRideService.getJoinedRides(userId);
         res.status(StatusCode.OK).json({ success: true, data: rides });
       } catch (error) {
         next(error);
@@ -72,7 +72,7 @@ export class JoinRideController implements IJoinRideController {
           return;
         }
   
-        const rides = await this.joinRideService.findNearestRides(userLocation, destination);
+        const rides = await this._joinRideService.findNearestRides(userLocation, destination);
         res.status(StatusCode.OK).json({ success: true, data: rides });
       } catch (error) {
         next(error);
@@ -93,7 +93,7 @@ export class JoinRideController implements IJoinRideController {
           return;
         }
   
-        const order = await this.joinRideService.createRidePaymentOrder(rideId, userId);
+        const order = await this._joinRideService.createRidePaymentOrder(rideId, userId);
         res.status(StatusCode.OK).json({ success: true, order });
       } catch (error: any) {
         console.error("Error in createRidePaymentOrder:", error);
@@ -124,7 +124,7 @@ export class JoinRideController implements IJoinRideController {
           return;
         }
   
-        const ride = await this.joinRideService.verifyAndJoinRide(
+        const ride = await this._joinRideService.verifyAndJoinRide(
           rideId,
           userId,
           pickupLocation,
@@ -153,7 +153,7 @@ export class JoinRideController implements IJoinRideController {
          return;
        }
  
-       await this.joinRideService.cancelJoinedRide(rideId, userId);
+       await this._joinRideService.cancelJoinedRide(rideId, userId);
        res.status(StatusCode.OK).json({ success: true, message: "Ride cancellation request processed successfully" });
      } catch (error: any) {
        console.error(`[RideController] Error cancelling joined ride ${req.params.rideId}: ${error.message}`);
@@ -180,7 +180,7 @@ export class JoinRideController implements IJoinRideController {
       }
   
       try {
-        await this.joinRideService.handleJoinRequest(rideId, driverId, passengerId, action as "accept" | "reject");
+        await this._joinRideService.handleJoinRequest(rideId, driverId, passengerId, action as "accept" | "reject");
         res.status(StatusCode.OK).json({ success: true, message: `${action === "accept" ? "Accepted" : "Rejected"} join request successfully` });
       } catch (error: any) {
         res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });

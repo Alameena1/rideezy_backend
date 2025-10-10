@@ -17,11 +17,11 @@ export class JoinRideService implements IJoinRideService {
   private razorpay!: Razorpay;
 
   constructor(
-    @inject(TYPES.IUserRepository) private userRepo: IUserRepository,
-    @inject(TYPES.IJoinRideRepository) private rideRepo: IJoinRideRepository,
-    @inject(TYPES.ISubscriptionService) private subscriptionService: ISubscriptionService,
-    @inject(TYPES.IOSRMClient) private osrmClient: IOSRMClient,
-    @inject(TYPES.INotificationService) private notificationService: INotificationService
+    @inject(TYPES.IUserRepository) private _userRepo: IUserRepository,
+    @inject(TYPES.IJoinRideRepository) private _rideRepo: IJoinRideRepository,
+    @inject(TYPES.ISubscriptionService) private _subscriptionService: ISubscriptionService,
+    @inject(TYPES.IOSRMClient) private _osrmClient: IOSRMClient,
+    @inject(TYPES.INotificationService) private _notificationService: INotificationService
   ) {
     // Initialize Razorpay with your credentials
     this.razorpay = new Razorpay({
@@ -37,13 +37,13 @@ export class JoinRideService implements IJoinRideService {
       pickupLocation: string,
       dropoffLocation: string
     ): Promise<IRide> {
-      const session = await this.rideRepo.startSession();
+      const session = await this._rideRepo.startSession();
       try {
         const result = await session.withTransaction(async () => {
           console.log(
             `[${new Date().toISOString()}] Starting joinRide transaction for rideId: ${rideId}, passengerId: ${passengerId}`
           );
-          const passenger = await this.userRepo.findUserById(passengerId, { session });
+          const passenger = await this._userRepo.findUserById(passengerId, { session });
           if (!passenger) {
             console.error(`[${new Date().toISOString()}] Passenger not found: ${passengerId}`);
             throw new Error("Passenger not found");
@@ -53,14 +53,14 @@ export class JoinRideService implements IJoinRideService {
             throw new Error("Passenger must be verified");
           }
   
-          const canJoin = await this.subscriptionService.canJoinRide(passengerId);
+          const canJoin = await this._subscriptionService.canJoinRide(passengerId);
           if (!canJoin) {
-            const { joinRides } = await this.subscriptionService.getRemainingRideCounts(passengerId);
+            const { joinRides } = await this._subscriptionService.getRemainingRideCounts(passengerId);
             console.error(`[${new Date().toISOString()}] Ride join limit exceeded for passengerId: ${passengerId}, remaining joins: ${joinRides}`);
             throw new Error(`Ride join limit exceeded. Remaining joins: ${joinRides}`);
           }
   
-          const ride = await this.rideRepo.findOne({ rideId }, { session });
+          const ride = await this._rideRepo.findOne({ rideId }, { session });
           if (!ride) {
             console.error(`[${new Date().toISOString()}] Ride not found: ${rideId}`);
             throw new Error("Ride not found");
@@ -80,7 +80,7 @@ export class JoinRideService implements IJoinRideService {
             throw new Error("Already joined");
           }
           if (new Date() >= new Date(`${ride.date.toISOString().split("T")[0]}T${ride.time}:00`)) {
-            await this.rideRepo.updateOne({ rideId }, { status: "Started" }, { session });
+            await this._rideRepo.updateOne({ rideId }, { status: "Started" }, { session });
             console.error(`[${new Date().toISOString()}] Ride ${rideId} has started`);
             throw new Error("Ride has started");
           }
@@ -96,29 +96,29 @@ export class JoinRideService implements IJoinRideService {
             throw new Error("Invalid coordinates");
           }
   
-          const pickupPlaceName = await this.osrmClient.reverseGeocode(pickupLat, pickupLng);
-          const dropoffPlaceName = await this.osrmClient.reverseGeocode(dropoffLat, dropoffLng);
+          const pickupPlaceName = await this._osrmClient.reverseGeocode(pickupLat, pickupLng);
+          const dropoffPlaceName = await this._osrmClient.reverseGeocode(dropoffLat, dropoffLng);
           console.log(`[${new Date().toISOString()}] Geocoded locations:`, { pickupPlaceName, dropoffPlaceName });
   
           const JOIN_THRESHOLD = 0.5;
           let routeCoordinates = ride.routeCoordinates || [];
           if (routeCoordinates.length < 2) {
             console.warn(`[${new Date().toISOString()}] Route coordinates missing for ride ${rideId}, fetching new route`);
-            const route = await this.osrmClient.getRoute([ride.startPoint, ride.endPoint]);
+            const route = await this._osrmClient.getRoute([ride.startPoint, ride.endPoint]);
             routeCoordinates = route.coordinates;
-            await this.rideRepo.updateOne({ rideId }, { routeCoordinates }, { session });
+            await this._rideRepo.updateOne({ rideId }, { routeCoordinates }, { session });
           }
   
-          const nearestPickupPoint = await this.osrmClient.findNearestPointOnRoute(routeCoordinates, [pickupLat, pickupLng]);
-          const pickupDistance = this.osrmClient.haversineDistance(nearestPickupPoint, [pickupLat, pickupLng]);
+          const nearestPickupPoint = await this._osrmClient.findNearestPointOnRoute(routeCoordinates, [pickupLat, pickupLng]);
+          const pickupDistance = this._osrmClient.haversineDistance(nearestPickupPoint, [pickupLat, pickupLng]);
           if (pickupDistance > JOIN_THRESHOLD) {
             console.error(`[${new Date().toISOString()}] Pickup too far for ride ${rideId}: ${pickupDistance} km`);
             throw new Error("Pickup too far");
           }
           const pickupPointStr = `${nearestPickupPoint[0]},${nearestPickupPoint[1]}`;
   
-          const nearestDropoffPoint = await this.osrmClient.findNearestPointOnRoute(routeCoordinates, [dropoffLat, dropoffLng]);
-          const dropoffDistance = this.osrmClient.haversineDistance(nearestDropoffPoint, [dropoffLat, dropoffLng]);
+          const nearestDropoffPoint = await this._osrmClient.findNearestPointOnRoute(routeCoordinates, [dropoffLat, dropoffLng]);
+          const dropoffDistance = this._osrmClient.haversineDistance(nearestDropoffPoint, [dropoffLat, dropoffLng]);
           if (dropoffDistance > JOIN_THRESHOLD) {
             console.error(`[${new Date().toISOString()}] Drop-off too far for ride ${rideId}: ${dropoffDistance} km`);
             throw new Error("Drop-off too far");
@@ -128,7 +128,7 @@ export class JoinRideService implements IJoinRideService {
           let startIndex = 0;
           let minDistStart = Infinity;
           for (let i = 0; i < routeCoordinates.length; i++) {
-            const dist = this.osrmClient.haversineDistance(routeCoordinates[i], nearestPickupPoint);
+            const dist = this._osrmClient.haversineDistance(routeCoordinates[i], nearestPickupPoint);
             if (dist < minDistStart) {
               minDistStart = dist;
               startIndex = i;
@@ -138,7 +138,7 @@ export class JoinRideService implements IJoinRideService {
           let endIndex = routeCoordinates.length - 1;
           let minDistEnd = Infinity;
           for (let i = 0; i < routeCoordinates.length; i++) {
-            const dist = this.osrmClient.haversineDistance(routeCoordinates[i], nearestDropoffPoint);
+            const dist = this._osrmClient.haversineDistance(routeCoordinates[i], nearestDropoffPoint);
             if (dist < minDistEnd) {
               minDistEnd = dist;
               endIndex = i;
@@ -152,7 +152,7 @@ export class JoinRideService implements IJoinRideService {
   
           let segmentDistanceKm = 0;
           for (let i = startIndex; i < endIndex; i++) {
-            segmentDistanceKm += this.osrmClient.haversineDistance(routeCoordinates[i], routeCoordinates[i + 1]);
+            segmentDistanceKm += this._osrmClient.haversineDistance(routeCoordinates[i], routeCoordinates[i + 1]);
           }
           console.log(
             `[${new Date().toISOString()}] Segment for passengerId: ${passengerId} in ride: ${rideId}`,
@@ -176,7 +176,7 @@ export class JoinRideService implements IJoinRideService {
             pendingRequest
           );
   
-          const updateResult = await this.rideRepo.updateOne(
+          const updateResult = await this._rideRepo.updateOne(
             { rideId },
             { $push: { pendingRequests: pendingRequest } },
             { session }
@@ -186,7 +186,7 @@ export class JoinRideService implements IJoinRideService {
             updateResult
           );
   
-          const updatedRide = await this.rideRepo.findOne({ rideId }, { session });
+          const updatedRide = await this._rideRepo.findOne({ rideId }, { session });
           if (!updatedRide) {
             console.error(`[${new Date().toISOString()}] Updated ride not found: ${rideId}`);
             throw new Error("Updated ride not found");
@@ -196,7 +196,7 @@ export class JoinRideService implements IJoinRideService {
             updatedRide.pendingRequests
           );
   
-          await this.notificationService.triggerRideJoinNotification(rideId, ride.driverId, passengerId);
+          await this._notificationService.triggerRideJoinNotification(rideId, ride.driverId, passengerId);
           return updatedRide;
         });
         return result!;
@@ -210,11 +210,11 @@ export class JoinRideService implements IJoinRideService {
     }
 
   async getJoinedRides(userId: string): Promise<JoinedRideDto[]> {
-      const acceptedRides = await this.rideRepo.find({
+      const acceptedRides = await this._rideRepo.find({
         "passengers.passengerId": userId,
       });
   
-      const pendingRides = await this.rideRepo.find({
+      const pendingRides = await this._rideRepo.find({
         "pendingRequests.passengerId": userId,
       });
   
@@ -226,13 +226,13 @@ export class JoinRideService implements IJoinRideService {
       for (const ride of allRides) {
         for (const passenger of ride.passengers) {
           if (!userMap.has(passenger.passengerId)) {
-            const user = await this.userRepo.findUserById(passenger.passengerId);
+            const user = await this._userRepo.findUserById(passenger.passengerId);
             userMap.set(passenger.passengerId, user?.fullName || "Unknown");
           }
         }
         for (const request of ride.pendingRequests) {
           if (!userMap.has(request.passengerId)) {
-            const user = await this.userRepo.findUserById(request.passengerId);
+            const user = await this._userRepo.findUserById(request.passengerId);
             userMap.set(request.passengerId, user?.fullName || "Unknown");
           }
         }
@@ -300,7 +300,7 @@ export class JoinRideService implements IJoinRideService {
       const destCoords: [number, number] = [destLat, destLng];
       const currentDateTime = new Date();
   
-      const rides = await this.rideRepo.find({ status: "Pending" });
+      const rides = await this._rideRepo.find({ status: "Pending" });
       if (!rides.length) return [];
   
       const availableRides = await Promise.all(
@@ -309,7 +309,7 @@ export class JoinRideService implements IJoinRideService {
             `${ride.date.toISOString().split("T")[0]}T${ride.time}:00`
           );
           if (currentDateTime >= rideDateTime) {
-            await this.rideRepo.updateOne(
+            await this._rideRepo.updateOne(
               { rideId: ride.rideId },
               { status: "Started" }
             );
@@ -333,12 +333,12 @@ export class JoinRideService implements IJoinRideService {
             console.warn(
               `Invalid route coordinates for ride ${ride.rideId}, fetching new route`
             );
-            const route = await this.osrmClient.getRoute(
+            const route = await this._osrmClient.getRoute(
               [ride.startPoint, ride.endPoint],
               ride.routeGeometry
             );
             routeCoordinates = route.coordinates;
-            await this.rideRepo.updateOne(
+            await this._rideRepo.updateOne(
               { rideId: ride.rideId },
               {
                 $set: {
@@ -350,30 +350,30 @@ export class JoinRideService implements IJoinRideService {
           }
   
           const nearestPointToUser =
-            await this.osrmClient.findNearestPointOnRoute(
+            await this._osrmClient.findNearestPointOnRoute(
               routeCoordinates,
               userCoords
             );
-          const distanceToRoute = this.osrmClient.haversineDistance(
+          const distanceToRoute = this._osrmClient.haversineDistance(
             nearestPointToUser,
             userCoords
           );
           if (distanceToRoute > maxDistanceToRouteKm) return null;
   
           const nearestPointToDest =
-            await this.osrmClient.findNearestPointOnRoute(
+            await this._osrmClient.findNearestPointOnRoute(
               routeCoordinates,
               destCoords
             );
-          const distanceToDest = this.osrmClient.haversineDistance(
+          const distanceToDest = this._osrmClient.haversineDistance(
             nearestPointToDest,
             destCoords
           );
           if (distanceToDest > maxDistanceToEndKm) return null;
   
           if (
-            this.osrmClient.haversineDistance(startCoords, userCoords) < 0.1 &&
-            this.osrmClient.haversineDistance(endCoords, destCoords) < 0.1
+            this._osrmClient.haversineDistance(startCoords, userCoords) < 0.1 &&
+            this._osrmClient.haversineDistance(endCoords, destCoords) < 0.1
           ) {
             return { ride, distanceToRoute, distanceToDest };
           }
@@ -382,12 +382,12 @@ export class JoinRideService implements IJoinRideService {
             destIndex = -1;
           const tolerance = 0.1;
           for (let i = 0; i < routeCoordinates.length; i++) {
-            const distToUser = this.osrmClient.haversineDistance(
+            const distToUser = this._osrmClient.haversineDistance(
               routeCoordinates[i],
               nearestPointToUser
             );
             if (distToUser < tolerance && userIndex === -1) userIndex = i;
-            const distToDest = this.osrmClient.haversineDistance(
+            const distToDest = this._osrmClient.haversineDistance(
               routeCoordinates[i],
               nearestPointToDest
             );
@@ -434,7 +434,7 @@ export class JoinRideService implements IJoinRideService {
       let ride;
   
       while (attempt < maxRetries) {
-        ride = await this.rideRepo.findOne({ rideId });
+        ride = await this._rideRepo.findOne({ rideId });
         if (!ride) {
           console.error(`[${new Date().toISOString()}] Ride not found for rideId: ${rideId}`);
           throw new Error("Ride not found");
@@ -481,7 +481,7 @@ export class JoinRideService implements IJoinRideService {
         `${ride.date.toISOString().split("T")[0]}T${ride.time}:00`
       );
       if (new Date() >= rideDateTime) {
-        await this.rideRepo.updateOne({ rideId }, { status: "Started" });
+        await this._rideRepo.updateOne({ rideId }, { status: "Started" });
         console.error(`[${new Date().toISOString()}] Ride has started for rideId: ${rideId}`);
         throw new Error("Ride started");
       }
@@ -566,18 +566,18 @@ export class JoinRideService implements IJoinRideService {
       throw new Error("Invalid signature");
     }
 
-    const session = await this.rideRepo.startSession();
+    const session = await this._rideRepo.startSession();
     try {
       const result = await session.withTransaction(async () => {
-        const ride = await this.rideRepo.findOne({ rideId }, { session });
+        const ride = await this._rideRepo.findOne({ rideId }, { session });
         if (!ride) throw new Error("Ride not found");
         if (ride.status !== "Pending") throw new Error("Ride has started or ended");
 
-        const passenger = await this.userRepo.findUserById(passengerId, { session });
+        const passenger = await this._userRepo.findUserById(passengerId, { session });
         if (!passenger) throw new Error("Passenger not found");
 
         const updatedRide = await this.joinRide(rideId, passengerId, pickupLocation, dropoffLocation);
-        await this.notificationService.triggerRideJoinNotification(
+        await this._notificationService.triggerRideJoinNotification(
           rideId,
           ride.driverId,
           passengerId
@@ -597,21 +597,21 @@ export class JoinRideService implements IJoinRideService {
   }
 
    async cancelJoinedRide(rideId: string, passengerId: string): Promise<void> {
-    const session = await this.rideRepo.startSession();
+    const session = await this._rideRepo.startSession();
     try {
       await session.withTransaction(async () => {
-        const ride = await this.rideRepo.findOne({ rideId }, { session });
+        const ride = await this._rideRepo.findOne({ rideId }, { session });
         if (!ride) throw new Error("Ride not found");
         if (!ride.passengers.some((p) => p.passengerId === passengerId))
           throw new Error("Not a passenger");
         if (ride.status !== "Pending")
           throw new Error("Only Pending rides cancellable");
 
-        const passenger = await this.userRepo.findUserById(passengerId, {
+        const passenger = await this._userRepo.findUserById(passengerId, {
           session,
         });
         if (!passenger) throw new Error("Passenger not found");
-        const driver = await this.userRepo.findUserById(ride.driverId, {
+        const driver = await this._userRepo.findUserById(ride.driverId, {
           session,
         });
         if (!driver) throw new Error("Driver not found");
@@ -629,13 +629,13 @@ export class JoinRideService implements IJoinRideService {
           status: "COMPLETED",
           createdAt: new Date(),
         });
-        await this.userRepo.updateOne(
+        await this._userRepo.updateOne(
           { _id: passenger._id },
           { $set: { wallet: passenger.wallet } },
           { session }
         );
 
-        await this.notificationService.triggerRideCancellationNotification(
+        await this._notificationService.triggerRideCancellationNotification(
           rideId,
           passengerId,
           `You have cancelled your participation in ride ${rideId}. Refund of ${passengerCost} credited to your wallet.`
@@ -658,13 +658,13 @@ export class JoinRideService implements IJoinRideService {
           status: "COMPLETED",
           createdAt: new Date(),
         });
-        await this.userRepo.updateOne(
+        await this._userRepo.updateOne(
           { _id: driver._id },
           { $set: { wallet: driver.wallet } },
           { session }
         );
 
-        await this.notificationService.triggerRideCancellationNotification(
+        await this._notificationService.triggerRideCancellationNotification(
           rideId,
           ride.driverId,
           `Passenger ${passengerId} has cancelled their participation in ride ${rideId}.`
@@ -686,7 +686,7 @@ export class JoinRideService implements IJoinRideService {
           (pc) => pc.passengerId !== passengerId
         );
 
-        await this.rideRepo.updateOne(
+        await this._rideRepo.updateOne(
           { rideId },
           {
             passengers: updatedPassengers,
@@ -731,10 +731,10 @@ export class JoinRideService implements IJoinRideService {
       throw new Error("Invalid action provided");
     }
 
-    const session = await this.rideRepo.startSession();
+    const session = await this._rideRepo.startSession();
     try {
       await session.withTransaction(async () => {
-        const ride = await this.rideRepo.findOne({ _id: rideId }, { session });
+        const ride = await this._rideRepo.findOne({ _id: rideId }, { session });
         if (!ride) {
           console.error("Ride not found for _id:", rideId);
           throw new Error("Ride not found");
@@ -773,7 +773,7 @@ export class JoinRideService implements IJoinRideService {
           }
 
           // Update passenger's wallet
-          const passenger = await this.userRepo.findUserById(passengerId, { session });
+          const passenger = await this._userRepo.findUserById(passengerId, { session });
           if (!passenger) {
             console.error("Passenger not found for passengerId:", passengerId);
             throw new Error("Passenger not found");
@@ -792,30 +792,30 @@ export class JoinRideService implements IJoinRideService {
             createdAt: new Date(),
           });
 
-          await this.userRepo.updateOne(
+          await this._userRepo.updateOne(
             { _id: passengerId },
             { $set: { wallet: passenger.wallet } },
             { session }
           );
 
           // Remove the pending request
-          await this.rideRepo.updateOne(
+          await this._rideRepo.updateOne(
             { _id: rideId },
             { $pull: { pendingRequests: { passengerId } } },
             { session }
           );
 
           // Trigger notification
-          await this.notificationService.triggerRideJoinRejectedNotification(
+          await this._notificationService.triggerRideJoinRejectedNotification(
             rideId,
             passengerId,
             passengerId,
             request.passengerName
           );
         } else if (action === "accept") {
-          const canJoin = await this.subscriptionService.canJoinRide(passengerId);
+          const canJoin = await this._subscriptionService.canJoinRide(passengerId);
           if (!canJoin) {
-            const { joinRides } = await this.subscriptionService.getRemainingRideCounts(passengerId);
+            const { joinRides } = await this._subscriptionService.getRemainingRideCounts(passengerId);
             throw new Error(`Passenger has exceeded their ride join limit. Remaining joins: ${joinRides}`);
           }
 
@@ -855,7 +855,7 @@ export class JoinRideService implements IJoinRideService {
             { passengerId, cost: passengerCost },
           ];
 
-          const driver = await this.userRepo.findUserById(ride.driverId, { session });
+          const driver = await this._userRepo.findUserById(ride.driverId, { session });
           if (!driver) throw new Error("Driver not found");
           if (!driver.wallet) throw new Error("Driver's wallet is not initialized");
           driver.wallet.balance += passengerCost;
@@ -866,15 +866,15 @@ export class JoinRideService implements IJoinRideService {
             status: "COMPLETED",
             createdAt: new Date(),
           });
-          await this.userRepo.updateOne(
+          await this._userRepo.updateOne(
             { _id: driver._id },
             { $set: { wallet: driver.wallet } },
             { session }
           );
 
-          await this.subscriptionService.decrementJoinRideCount(passengerId);
+          await this._subscriptionService.decrementJoinRideCount(passengerId);
 
-          await this.rideRepo.updateOne(
+          await this._rideRepo.updateOne(
             { _id: rideId },
             {
               $set: {
@@ -889,7 +889,7 @@ export class JoinRideService implements IJoinRideService {
             { session }
           );
 
-          await this.notificationService.triggerRideJoinAcceptedNotification(
+          await this._notificationService.triggerRideJoinAcceptedNotification(
             rideId,
             passengerId,
             request.passengerName
@@ -909,6 +909,3 @@ export class JoinRideService implements IJoinRideService {
   }
 }
 
-// function createHmac(arg0: string, arg1: string) {
-//     throw new Error("Function not implemented.");
-// }

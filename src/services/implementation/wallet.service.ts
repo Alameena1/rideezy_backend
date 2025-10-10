@@ -9,21 +9,21 @@ import UserModel, { IUser } from "../../models/user.model";
 
 @injectable()
 export class WalletService implements IWalletService {
-  private walletRepository: IWalletRepository;
-  private razorpay: Razorpay;
+  private _walletRepository: IWalletRepository;
+  private _razorpay: Razorpay;
 
   constructor(
     @inject(TYPES.IWalletRepository) walletRepository: IWalletRepository
   ) {
-    this.walletRepository = walletRepository;
-    this.razorpay = new Razorpay({
+    this._walletRepository = walletRepository;
+    this._razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_KOCURsj88Mu4Sj",
       key_secret: process.env.RAZORPAY_KEY_SECRET || "64CY4QIGucP0t33gP8JodsqI",
     });
   }
 
   async getBalance(userId: string): Promise<number> {
-    const user = await this.walletRepository.findUserById(userId);
+    const user = await this._walletRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -38,7 +38,7 @@ export class WalletService implements IWalletService {
     };
 
     try {
-      const order = await this.razorpay.orders.create(options);
+      const order = await this._razorpay.orders.create(options);
       return {
         id: order.id,
         amount: order.amount,
@@ -60,7 +60,7 @@ export class WalletService implements IWalletService {
     }
 
     const transactionId = uuidv4();
-    return await this.walletRepository.updateUser(userId, {
+    return await this._walletRepository.updateUser(userId, {
       $inc: { "wallet.balance": amount },
       $push: {
         "wallet.transactions": {
@@ -75,7 +75,7 @@ export class WalletService implements IWalletService {
   }
 
   async withdraw(userId: string, amount: number): Promise<IUser> {
-    const user = await this.walletRepository.findUserById(userId);
+    const user = await this._walletRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -85,7 +85,7 @@ export class WalletService implements IWalletService {
     }
 
     const transactionId = uuidv4();
-    return await this.walletRepository.updateUser(userId, {
+    return await this._walletRepository.updateUser(userId, {
       $inc: { "wallet.balance": -amount },
       $push: {
         "wallet.transactions": {
@@ -106,7 +106,7 @@ export class WalletService implements IWalletService {
     currentPage: number;
     balance: number;
   }> {
-    const user = await this.walletRepository.findUserById(userId);
+    const user = await this._walletRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -130,7 +130,7 @@ console.log("user.wallet.balance",user.wallet.balance)
   }
 
   async getWallet(userId: string): Promise<{ balance: number; transactions: any[] }> {
-    const user = await this.walletRepository.findUserById(userId);
+    const user = await this._walletRepository.findUserById(userId);
     if (!user) {
       throw new Error("User not found");
     }

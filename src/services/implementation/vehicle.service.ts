@@ -9,19 +9,19 @@ import UserModel from "../../models/user.model";
 
 @injectable()
 export default class VehicleService implements IVehicleService {
-  private vehicleRepository: IVehicleRepository;
-  private subscriptionService: ISubscriptionService;
+  private _vehicleRepository: IVehicleRepository;
+  private _subscriptionService: ISubscriptionService;
 
   constructor(
     @inject(TYPES.IVehicleRepository) vehicleRepository: IVehicleRepository,
     @inject(TYPES.ISubscriptionService) subscriptionService: ISubscriptionService
   ) {
-    this.vehicleRepository = vehicleRepository;
-    this.subscriptionService = subscriptionService;
+    this._vehicleRepository = vehicleRepository;
+    this._subscriptionService = subscriptionService;
   }
 
   async addVehicle(userId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle> {
-    const canRegister = await this.subscriptionService.canRegisterVehicle(userId);
+    const canRegister = await this._subscriptionService.canRegisterVehicle(userId);
     if (!canRegister) {
       throw new Error("Vehicle registration limit exceeded. Maximum 2 vehicles allowed.");
     }
@@ -32,7 +32,7 @@ export default class VehicleService implements IVehicleService {
       user: userObjectId,
       seatCapacity: vehicleData.seatCapacity || 1, // Ensure seatCapacity is included
     };
-    const createdVehicle = await this.vehicleRepository.createVehicle(vehicle);
+    const createdVehicle = await this._vehicleRepository.createVehicle(vehicle);
 
     await UserModel.findByIdAndUpdate(userId, {
       $push: { vehicles: { vehicleId: createdVehicle._id } },
@@ -45,7 +45,7 @@ export default class VehicleService implements IVehicleService {
     if (!userId) {
       throw new Error("User ID is required");
     }
-    return this.vehicleRepository.findVehiclesByUserId(userId);
+    return this._vehicleRepository.findVehiclesByUserId(userId);
   }
 
   async updateVehicle(userId: string, vehicleId: string, vehicleData: Partial<IVehicle>): Promise<IVehicle> {
@@ -56,12 +56,12 @@ export default class VehicleService implements IVehicleService {
       throw new Error("Vehicle ID is required");
     }
 
-    const existingVehicle = await this.vehicleRepository.findById(vehicleId);
+    const existingVehicle = await this._vehicleRepository.findById(vehicleId);
     if (!existingVehicle || existingVehicle.user.toString() !== userId) {
       throw new Error("Vehicle not found or unauthorized to update");
     }
 
-    const updatedVehicle = await this.vehicleRepository.updateVehicle(vehicleId, vehicleData);
+    const updatedVehicle = await this._vehicleRepository.updateVehicle(vehicleId, vehicleData);
     return updatedVehicle;
   }
 
@@ -73,12 +73,12 @@ export default class VehicleService implements IVehicleService {
       throw new Error("Vehicle ID is required");
     }
 
-    const existingVehicle = await this.vehicleRepository.findById(vehicleId);
+    const existingVehicle = await this._vehicleRepository.findById(vehicleId);
     if (!existingVehicle || existingVehicle.user.toString() !== userId) {
       throw new Error("Vehicle not found or unauthorized to delete");
     }
 
-    await this.vehicleRepository.deleteVehicle(vehicleId);
+    await this._vehicleRepository.deleteVehicle(vehicleId);
 
     await UserModel.findByIdAndUpdate(userId, {
       $pull: { vehicles: { vehicleId: new Types.ObjectId(vehicleId) } },
@@ -93,7 +93,7 @@ export default class VehicleService implements IVehicleService {
       throw new Error("Vehicle ID is required");
     }
 
-    const existingVehicle = await this.vehicleRepository.findById(vehicleId);
+    const existingVehicle = await this._vehicleRepository.findById(vehicleId);
     if (!existingVehicle || existingVehicle.user.toString() !== userId) {
       throw new Error("Vehicle not found or unauthorized to reapply");
     }
@@ -101,7 +101,7 @@ export default class VehicleService implements IVehicleService {
       throw new Error("Only rejected vehicles can be reapplied");
     }
 
-    const updatedVehicle = await this.vehicleRepository.updateVehicle(vehicleId, {
+    const updatedVehicle = await this._vehicleRepository.updateVehicle(vehicleId, {
       ...vehicleData,
       status: "Pending",
       note: "",
