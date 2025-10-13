@@ -20,6 +20,8 @@ import { Server } from "socket.io";
 import { initializeSocket } from "./websocket/socket.io";
 import initiateRideRoutes from "./routes/initiate-ride.routes";
 import joinRideRoutes from "./routes/join-ride.routes";
+import logger from "./config/logger"; // Import logger
+
 dotenv.config();
 
 const app = express();
@@ -42,7 +44,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
-// app.use("/api/rides", rideRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/route", routeRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
@@ -72,7 +73,7 @@ const io = new Server(httpServer, {
 initializeSocket(io);
 
 httpServer.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT} with WebSocket`);
+  logger.info(`Server running on http://localhost:${PORT} with WebSocket`); // Replace console.log
 });
 
 export { app, io, httpServer };

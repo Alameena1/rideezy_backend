@@ -11,10 +11,11 @@ import { sendOTP, sendPasswordResetEmail } from "../../helpers/sendOTP.util";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../helpers/jwt.util";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
+import logger from "../../config/logger";
 
 @injectable()
 export default class AuthService implements IAuthService {
-  private googleClient: OAuth2Client;
+  private _googleClient: OAuth2Client;
 
   constructor(
     @inject(TYPES.IAuthRepository) private _authRepository: IAuthRepository,
@@ -22,16 +23,20 @@ export default class AuthService implements IAuthService {
     @inject(TYPES.ITempUserRepository) private _tempUserRepository: ITempUserRepository,
     @inject(TYPES.IResetTokenRepository) private _resetTokenRepository: IResetTokenRepository
   ) {
-    this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    this._googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   }
 
   async signup(userData: ITempUserInput) {
+    logger.info(`Signup attempt for email: ${userData.email}`);
+
     if (!userData.fullName || !userData.email || !userData.password || userData.password.trim() === "") {
+      logger.warn(`Missing required fields in signup for email: ${userData.email}`);
       throw new Error("Full name, email, and a non-empty password are required.");
     }
 
     const existingUser = await this._authRepository.findUserByEmail(userData.email);
     if (existingUser) {
+      logger.warn(`User already exists during signup: ${userData.email}`);
       throw new Error("User already exists.");
     }
 
@@ -49,12 +54,17 @@ export default class AuthService implements IAuthService {
 
     await this._tempUserRepository.upsertTempUser(tempUserData);
     await sendOTP(userData.email, otp);
+    
+    logger.info(`OTP sent successfully for signup: ${userData.email}`);
     return { success: true, message: "OTP sent. Verify before registration." };
   }
 
   async resendOTP(email: string) {
+    logger.info(`Resend OTP request for email: ${email}`);
+
     const tempUser = await this._tempUserRepository.findTempUserByEmail(email);
     if (!tempUser) {
+      logger.warn(`No pending registration found for OTP resend: ${email}`);
       throw new Error("No pending registration found for this email.");
     }
 
@@ -63,17 +73,23 @@ export default class AuthService implements IAuthService {
 
     await this._tempUserRepository.updateTempUserOTP(email, otp, otpExpiresAt);
     await sendOTP(email, otp);
+    
+    logger.info(`OTP resent successfully for email: ${email}`);
     return { success: true, message: "OTP resent successfully." };
   }
 
   async verifyOTP(email: string, otp: string) {
+    logger.info(`OTP verification attempt for email: ${email}`);
+
     const tempUser = await this._tempUserRepository.findTempUserByEmail(email);
 
     if (!tempUser || !tempUser.otp || !tempUser.otpExpiresAt || new Date() > tempUser.otpExpiresAt || tempUser.otp !== otp) {
+      logger.warn(`Invalid or expired OTP for email: ${email}`);
       throw new Error("Invalid or expired OTP.");
     }
 
     if (!tempUser.password || tempUser.password.trim() === "") {
+      logger.error(`No valid password found for registration: ${email}`);
       throw new Error("No valid password found for registration.");
     }
 
@@ -87,45 +103,64 @@ export default class AuthService implements IAuthService {
     });
 
     await this._tempUserRepository.deleteTempUser(email);
+    
+    logger.info(`User registered successfully: ${email}`);
     return { success: true, message: "User registered successfully", user: newUser };
   }
 
- async login(email: string, password: string) {
-  console.log("AuthService: Login attempt", { email });
-  const user = await this._authRepository.findUserByEmail(email);
+  async login(email: string, password: string) {
+    logger.info(`Login attempt for email: ${email}`);
+    
+    const user = await this._authRepository.findUserByEmail(email);
 
-  if (!user) {
-    console.error("AuthService: User not found", { email });
-    throw new Error("Invalid email or password");
-  }
-  if (!user.password) {
-    console.error("AuthService: User has no password set", { email, userId: user._id });
-    throw new Error("Invalid email or password");
-  }
-  if (user.status === "Blocked") {
-    console.error("AuthService: User is blocked", { email, userId: user._id });
-    throw new Error("Your account has been blocked. Contact support.");
-  }
+    if (!user) {
+      logger.warn(`User not found during login: ${email}`);
+      throw new Error("Invalid email or password");
+    }
+    
+    if (!user.password) {
+      logger.error(`User has no password set: ${email}, userId: ${user._id}`);
+      throw new Error("Invalid email or password");
+    }
+    
+    if (user.status === "Blocked") {
+      logger.warn(`Blocked user attempted login: ${email}, userId: ${user._id}`);
+      throw new Error("Your account has been blocked. Contact support.");
+    }
 
-  const isPasswordValid = await PasswordUtil.comparePasswords(password, user.password);
-  console.log("AuthService: Password verification", { email, isPasswordValid });
-  if (!isPasswordValid) {
-    console.error("AuthService: Invalid password", { email });
-    throw new Error("Invalid email or password");
+    const isPasswordValid = await PasswordUtil.comparePasswords(password, user.password);
+    logger.debug(`Password verification result for ${email}: ${isPasswordValid}`);
+    
+    if (!isPasswordValid) {
+      logger.warn(`Invalid password for email: ${email}`);
+      throw new Error("Invalid email or password");
+    }
+
+    const accessToken = generateAccessToken(user._id.toString(), user.email, user.role);
+    const refreshToken = generateRefreshToken(user._id.toString(), user.role);
+
+    await this._tokenRepository.replaceToken(user._id.toString(), refreshToken);
+    
+    logger.info(`Login successful for user: ${user._id}, email: ${user.email}, role: ${user.role}`);
+    return { 
+      accessToken, 
+      refreshToken, 
+      user: { 
+        id: user._id, 
+        email: user.email, 
+        role: user.role 
+      } 
+    };
   }
-
-  const accessToken = generateAccessToken(user._id.toString(), user.email, user.role);
-  const refreshToken = generateRefreshToken(user._id.toString(), user.role);
-
-  await this._tokenRepository.replaceToken(user._id.toString(), refreshToken);
-  console.log("AuthService: Login successful", { userId: user._id, email, role: user.role });
-  return { accessToken, refreshToken, user: { id: user._id, email: user.email, role: user.role } };
-}
 
   async refreshToken(token: string) {
+    logger.debug(`Refresh token attempt`);
+
     const decoded = verifyRefreshToken(token, "user");
     const existingToken = await this._tokenRepository.findToken(token);
+    
     if (!existingToken) {
+      logger.warn(`Invalid refresh token provided`);
       throw new Error("Invalid refresh token");
     }
 
@@ -134,33 +169,40 @@ export default class AuthService implements IAuthService {
     const newRefreshToken = generateRefreshToken(decoded.userId, "user");
 
     await this._tokenRepository.replaceToken(decoded.userId, newRefreshToken);
+    
+    logger.info(`Tokens refreshed successfully for user: ${decoded.userId}`);
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 
   async logout(refreshToken: string) {
+    logger.info(`Logout request processed`);
     await this._tokenRepository.deleteToken(refreshToken);
     return { message: "Logged out successfully" };
   }
 
   async handleGoogleAuth(googleUser: IGoogleAuthUser & { idToken: string }) {
-    // Verify Google id_token
+    logger.info(`Google auth attempt for email: ${googleUser.email}`);
+
     try {
-      const ticket = await this.googleClient.verifyIdToken({
+      const ticket = await this._googleClient.verifyIdToken({
         idToken: googleUser.idToken,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
       const payload = ticket.getPayload();
+      
       if (!payload || payload.email !== googleUser.email) {
+        logger.warn(`Invalid Google ID token or email mismatch for: ${googleUser.email}`);
         throw new Error("Invalid Google ID token or email mismatch");
       }
     } catch (error) {
-      console.error("Google ID token verification failed:", error);
+      logger.error(`Google ID token verification failed for ${googleUser.email}:`, error);
       throw new Error("Invalid Google ID token");
     }
 
     let user = await this._authRepository.findUserByEmail(googleUser.email);
 
     if (!user) {
+      logger.info(`Creating new user via Google auth: ${googleUser.email}`);
       user = await this._authRepository.createUser({
         fullName: googleUser.fullName,
         email: googleUser.email,
@@ -175,12 +217,27 @@ export default class AuthService implements IAuthService {
     const refreshToken = generateRefreshToken(user._id.toString(), user.role);
 
     await this._tokenRepository.replaceToken(user._id.toString(), refreshToken);
-    return { user: { id: user._id, email: user.email, role: user.role, fullName: user.fullName, image: user.image }, accessToken, refreshToken };
+    
+    logger.info(`Google auth successful for user: ${user._id}, email: ${user.email}`);
+    return { 
+      user: { 
+        id: user._id, 
+        email: user.email, 
+        role: user.role, 
+        fullName: user.fullName, 
+        image: user.image 
+      }, 
+      accessToken, 
+      refreshToken 
+    };
   }
 
   async forgotPassword(email: string) {
+    logger.info(`Forgot password request for email: ${email}`);
+
     const user = await this._authRepository.findUserByEmail(email);
     if (!user) {
+      logger.warn(`No user found for forgot password: ${email}`);
       throw new Error("No user found with this email.");
     }
 
@@ -195,16 +252,21 @@ export default class AuthService implements IAuthService {
     const resetLink = `${process.env.FRONTEND_URL}/user/reset-password?token=${token}`;
     await sendPasswordResetEmail(email, resetLink);
 
+    logger.info(`Password reset link sent to: ${email}`);
     return { success: true, message: "Password reset link sent to your email." };
   }
 
   async resetPassword(token: string, newPassword: string) {
+    logger.info(`Reset password attempt with token`);
+
     if (!newPassword || newPassword.trim() === "") {
+      logger.warn(`Empty password provided for reset`);
       throw new Error("New password is required.");
     }
 
     const resetToken = await this._resetTokenRepository.findToken(token);
     if (!resetToken) {
+      logger.warn(`Invalid or expired reset token`);
       throw new Error("Invalid or expired reset token.");
     }
 
@@ -212,10 +274,13 @@ export default class AuthService implements IAuthService {
     const user = await this._authRepository.updatePassword(resetToken.userId, hashedPassword);
 
     if (!user) {
+      logger.error(`User not found during password reset for token`);
       throw new Error("User not found.");
     }
 
     await this._resetTokenRepository.deleteToken(token);
+    
+    logger.info(`Password reset successfully for user: ${user._id}`);
     return { success: true, message: "Password reset successfully." };
   }
 }

@@ -1,0 +1,297 @@
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 22:06:49"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-10 22:06:50"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 22:16:18"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-10 22:16:19"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 22:19:05"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-10 22:19:06"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 22:22:28"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-10 22:22:29"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 22:23:01"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-10 22:23:02"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 22:52:26"}
+{"code":"ECONNREFUSED","hostname":"_mongodb._tcp.cluster0.ukn6i.mongodb.net","level":"error","message":"❌ MongoDB Connection Failed: querySrv ECONNREFUSED _mongodb._tcp.cluster0.ukn6i.mongodb.net","service":"ride-sharing-app","stack":"Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.ukn6i.mongodb.net\n    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/promises:294:17)","syscall":"querySrv","timestamp":"2025-10-10 22:52:26"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 23:00:03"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-10 23:00:04"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-10 23:00:23"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 23:00:24"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-10 23:00:25"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-10 23:01:08"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-10 23:01:08"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-10 23:01:09"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:29"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:30"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:33"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:33"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:33"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:33"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:33"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:33"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:33"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:33"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:34"}
+{"level":"debug","message":"Retrieved 12 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:34"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:34"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:34"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:34"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:34"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:34"}
+{"level":"debug","message":"Retrieved 12 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:34"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:37"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:37"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:37"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:37"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:37"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:37"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:37"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Retrieved 12 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Retrieved 12 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Fetching conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:38"}
+{"level":"debug","message":"Conversation retrieved successfully: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:03:39"}
+{"level":"debug","message":"Sending text message to conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:04:42"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:04:42"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:04:42"}
+{"level":"info","message":"Message sent successfully: 68e943b295ce0c3bfd4268de in conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:04:42"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:53"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:53"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:53"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:53"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:54"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:54"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:54"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:54"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:54"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:54"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:54"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:08:54"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:08"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:08"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:08"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:08"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:08"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:08"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:08"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:08"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:09"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:09"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:09"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:09"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:09"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:09"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:11"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:11"}
+{"level":"debug","message":"Fetching conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:11"}
+{"level":"debug","message":"Conversation retrieved successfully: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:11"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:13"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:13"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:13"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:13"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:13"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:14"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:14"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:14"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:14"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:14"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:14"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:14"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:15"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:15"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:15"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:15"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:15"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:16"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:16"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:16"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:16"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:16"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:16"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:16"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:24"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:24"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:24"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:24"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:24"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:25"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:25"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:25"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:25"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:25"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:25"}
+{"level":"debug","message":"Retrieved 13 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:25"}
+{"level":"debug","message":"Uploading image to Cloudinary: Screenshot 2025-09-20 144226.png to folder: chat_images","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:36"}
+{"level":"info","message":"Image uploaded successfully to Cloudinary: https://res.cloudinary.com/dr9qo5q24/image/upload/v1760117980/chat_images/sn0tetmvnq5oi2rzcipn.webp","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:44"}
+{"level":"debug","message":"Sending image message to conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:44"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:44"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:44"}
+{"level":"info","message":"Message sent successfully: 68e944e095ce0c3bfd42693b in conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:44"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:59"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:59"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:59"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:59"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:09:59"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:00"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:00"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:00"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:00"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:00"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:00"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:00"}
+{"level":"debug","message":"Deleting message: 68e944e095ce0c3bfd42693b by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:28"}
+{"level":"info","message":"Message deleted successfully: 68e944e095ce0c3bfd42693b by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:29"}
+{"level":"debug","message":"Uploading image to Cloudinary: Screenshot 2025-09-24 181229.png to folder: chat_images","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:34"}
+{"level":"info","message":"Image uploaded successfully to Cloudinary: https://res.cloudinary.com/dr9qo5q24/image/upload/v1760118035/chat_images/kynmc0iooy4bzbemh9e7.webp","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:39"}
+{"level":"debug","message":"Sending image message to conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:39"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:39"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:39"}
+{"level":"info","message":"Message sent successfully: 68e9451795ce0c3bfd426955 in conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:10:39"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:48"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:48"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:48"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:48"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:48"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:48"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:48"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:49"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:49"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:49"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:49"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:11:49"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:33"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:34"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:34"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:34"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:34"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:34"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:34"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:34"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:35"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:35"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:35"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:35"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:35"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:35"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:35"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Fetching conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:36"}
+{"level":"debug","message":"Conversation retrieved successfully: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:37"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:50"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:50"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:50"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:50"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:50"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:50"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:50"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:51"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:51"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:51"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:51"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:51"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:52"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:53"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:54"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:26:54"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:25"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:25"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:25"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:25"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:26"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:26"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Fetching conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Retrieved 1 conversations for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:27"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Fetching conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Conversation retrieved successfully: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:28"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:29"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Fetching messages for conversation: 68ba637fcb66cd2e50f7a458 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Validating access for user 68b8585b8f9f86e8e0f734f5 to conversation 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Access validation result for user 68b8585b8f9f86e8e0f734f5: true","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:30"}
+{"level":"debug","message":"Retrieved 14 messages for conversation: 68ba637fcb66cd2e50f7a458","service":"ride-sharing-app","timestamp":"2025-10-10 23:27:31"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 11:36:46"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 11:36:47"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 11:36:48"}
+{"email":"alameena8841@gmail.com","level":"info","message":"Login attempt:","passwordLength":8,"service":"ride-sharing-app","timestamp":"2025-10-13 11:37:09"}
+{"level":"info","message":"Login attempt for email: alameena8841@gmail.com","service":"ride-sharing-app","timestamp":"2025-10-13 11:37:09"}
+{"level":"debug","message":"Password verification result for alameena8841@gmail.com: true","service":"ride-sharing-app","timestamp":"2025-10-13 11:37:09"}
+{"level":"info","message":"Login successful for user: 68b8585b8f9f86e8e0f734f5, email: alameena8841@gmail.com, role: user","service":"ride-sharing-app","timestamp":"2025-10-13 11:37:09"}
+{"email":"alameena8841@gmail.com","level":"info","message":"Login success:","role":"user","service":"ride-sharing-app","timestamp":"2025-10-13 11:37:09","userId":"68b8585b8f9f86e8e0f734f5"}
+{"level":"debug","message":"Login response prepared for user:","service":"ride-sharing-app","timestamp":"2025-10-13 11:37:09","userId":"68b8585b8f9f86e8e0f734f5"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 18:30:24"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 18:30:25"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 18:30:26"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 18:40:25"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 18:40:26"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 18:40:27"}
