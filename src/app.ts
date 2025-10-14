@@ -20,7 +20,10 @@ import { Server } from "socket.io";
 import { initializeSocket } from "./websocket/socket.io";
 import initiateRideRoutes from "./routes/initiate-ride.routes";
 import joinRideRoutes from "./routes/join-ride.routes";
-import logger from "./config/logger"; // Import logger
+import logger from "./config/logger";
+import cron from 'node-cron';
+import  container  from "./di/container"; // Adjust path as needed
+import { DocumentExpiryCron } from "./cron/document-expiry.cron"; // Adjust path as needed
 
 dotenv.config();
 
@@ -72,8 +75,25 @@ const io = new Server(httpServer, {
 
 initializeSocket(io);
 
+// Setup Cron Jobs
+const setupCronJobs = () => {
+  try {
+    // Run daily at 9 AM for document expiry checks
+    cron.schedule('0 9 * * *', async () => {
+      logger.info('Running document expiry cron job');
+      const documentExpiryCron = container.get<DocumentExpiryCron>(DocumentExpiryCron);
+      await documentExpiryCron.checkDocumentExpiry();
+    });
+
+    logger.info('Cron jobs initialized successfully');
+  } catch (error) {
+    logger.error('Error initializing cron jobs:', error);
+  }
+};
+
 httpServer.listen(PORT, () => {
-  logger.info(`Server running on http://localhost:${PORT} with WebSocket`); // Replace console.log
+  logger.info(`Server running on http://localhost:${PORT} with WebSocket`);
+  setupCronJobs();
 });
 
 export { app, io, httpServer };

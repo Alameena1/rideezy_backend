@@ -17,7 +17,7 @@ export interface JoinedRideDto {
   totalFuelCost: number;
   platformFee: number;
   totalRideCost: number;
-  costPerPerson: number | null; // Updated to allow null
+  costPerPerson: number | null; 
   totalPeople: number;
   passengers: { passengerId: string; passengerName: string }[];
   status: string;

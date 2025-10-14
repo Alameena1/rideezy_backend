@@ -7,15 +7,27 @@ export interface IVehicle extends Document {
   vehicleType: string;
   licensePlate: string;
   color?: string;
-  insuranceNumber?: string;
+  insurance: {
+    number: string;
+    image: string;
+    startDate: Date;
+    endDate: Date;
+    status: 'Active' | 'Expired' | 'Pending';
+  };
+  pollution: {
+    number: string;
+    image: string;
+    startDate: Date;
+    endDate: Date;
+    status: 'Active' | 'Expired' | 'Pending';
+  };
   vehicleImage: string;
-  documentImage: string;
   status: 'Pending' | 'Approved' | 'Rejected';
   note: string;
   createdAt?: Date;
   updatedAt?: Date;
   mileage: number;
-  seatCapacity: number; // New field for seat capacity
+  seatCapacity: number;
   _id: any;
 }
 
@@ -47,20 +59,62 @@ const VehicleSchema = new Schema<IVehicle>(
       type: String,
       trim: true,
     },
-    insuranceNumber: {
-      type: String,
-      trim: true,
+    insurance: {
+      number: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      image: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      startDate: {
+        type: Date,
+        required: true,
+      },
+      endDate: {
+        type: Date,
+        required: true,
+      },
+      status: {
+        type: String,
+        enum: ['Active', 'Expired', 'Pending'],
+        default: 'Pending',
+      },
+    },
+    pollution: {
+      number: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      image: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      startDate: {
+        type: Date,
+        required: true,
+      },
+      endDate: {
+        type: Date,
+        required: true,
+      },
+      status: {
+        type: String,
+        enum: ['Active', 'Expired', 'Pending'],
+        default: 'Pending',
+      },
     },
     vehicleImage: {
       type: String,
       required: true,
       trim: true,
     },
-    documentImage: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    // REMOVED: documentImage field
     status: {
       type: String,
       enum: ['Pending', 'Approved', 'Rejected'],
@@ -76,12 +130,41 @@ const VehicleSchema = new Schema<IVehicle>(
     },
     seatCapacity: {
       type: Number,
-      required: true, // Seat capacity is required
+      required: true,
       min: [1, 'Seat capacity must be at least 1'],
     },
   },
   { timestamps: true }
 );
+
+// Add index for better search performance
+VehicleSchema.index({ 
+  vehicleName: 'text', 
+  licensePlate: 'text',
+  'insurance.number': 'text',
+  'pollution.number': 'text'
+});
+
+// Middleware to update document status based on dates
+VehicleSchema.pre('save', function(next) {
+  const now = new Date();
+  
+  // Update insurance status
+  if (this.insurance.endDate < now) {
+    this.insurance.status = 'Expired';
+  } else if (this.insurance.startDate <= now && this.insurance.endDate >= now) {
+    this.insurance.status = 'Active';
+  }
+  
+  // Update pollution status
+  if (this.pollution.endDate < now) {
+    this.pollution.status = 'Expired';
+  } else if (this.pollution.startDate <= now && this.pollution.endDate >= now) {
+    this.pollution.status = 'Active';
+  }
+  
+  next();
+});
 
 const VehicleModel = model<IVehicle>('Vehicle', VehicleSchema);
 export default VehicleModel;

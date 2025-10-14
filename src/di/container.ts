@@ -40,13 +40,7 @@ import { VehicleController } from "../controllers/implimentation/vehicle.control
 import VehicleService from "../services/implementation/vehicle.service"; 
 import { VehicleRepository } from "../repositories/implimentation/vehicle.repository"; 
 
-// Ride - REMOVED THESE IMPORTS
-// import { IRideController } from "../controllers/interface/ride/irideController";
-// import { IRideService } from "../services/interfaces/ride/irideService";
-// import { IRideRepository } from "../repositories/interface/ride/irideRepository";
-// import { RideController } from "../controllers/implimentation/ride.controller";
-// import { RideService } from "../services/implementation/ride.service"; 
-// import { RideRepository } from "../repositories/implimentation/ride.repository"; 
+// OSRM
 import { IOSRMClient } from "../infrastructure/map-api/osrm.client";
 import { OSRMClient } from "../infrastructure/map-api/osrm.client";
 
@@ -90,7 +84,7 @@ import ChatController from "../controllers/implimentation/chat.controller";
 import { ChatService } from "../services/implementation/chat.service"; 
 import { ChatRepository } from "../repositories/implimentation/chat.repository"; 
 
-// Initiate Ride (NEW)
+// Initiate Ride
 import { IInitiateRideRepository } from "../repositories/interface/ride/iinitiate-ride-repository";
 import { IInitiateRideController } from "../controllers/interface/ride/iinitiate-ride.controller";
 import { InitiateRideController } from "../controllers/implimentation/initiate-ride.controller";
@@ -98,13 +92,16 @@ import { InitiateRideRepository } from "../repositories/implimentation/initiate-
 import { InitiateRideService } from "../services/implementation/initiate-ride.service";
 import { IInitiateRideService } from "../services/interfaces/ride/iinitiate-ride.service";
 
-// Join Ride (NEW)
+// Join Ride
 import { IJoinRideService } from "../services/interfaces/ride/ijoin-ride.service";
 import { JoinRideController } from "../controllers/implimentation/join-ride.controller";
 import { IJoinRideController } from "../controllers/interface/ride/ijoin-ride.controller";
 import { JoinRideRepository } from "../repositories/implimentation/join-ride.repository";
 import { IJoinRideRepository } from "../repositories/interface/ride/ijoin-ride-repository";
 import { JoinRideService } from "../services/implementation/join-ride.service";
+
+// Cron Jobs
+import { DocumentExpiryCron } from "../cron/document-expiry.cron";
 
 const container = new Container();
 
@@ -141,7 +138,7 @@ container.bind<IVehicleController>(TYPES.IVehicleController).to(VehicleControlle
 container.bind<IVehicleService>(TYPES.IVehicleService).to(VehicleService).inSingletonScope();
 container.bind<IVehicleRepository>(TYPES.IVehicleRepository).to(VehicleRepository).inSingletonScope();
 
-// OSRM Client binding (kept for both initiate and join ride services)
+// OSRM Client binding
 container.bind<IOSRMClient>(TYPES.IOSRMClient).to(OSRMClient).inSingletonScope();
 
 // Subscription bindings
@@ -168,6 +165,9 @@ container.bind<INotificationRepository>(TYPES.INotificationRepository).to(Notifi
 container.bind<IChatController>(TYPES.IChatController).to(ChatController).inSingletonScope();
 container.bind<IChatService>(TYPES.IChatService).to(ChatService).inSingletonScope();
 container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository).inSingletonScope();
+
+// Cron Jobs bindings
+container.bind<DocumentExpiryCron>(DocumentExpiryCron).to(DocumentExpiryCron).inSingletonScope();
 
 // Razorpay binding
 container.bind<Razorpay>("Razorpay").toConstantValue(

@@ -14,98 +14,127 @@ export class AdminRepository extends BaseRepository<any> implements IAdminReposi
     super(UserModel);
   }
 
-  public async getAllUsers(params: PaginationQueryDtoType & { 
-    status?: "Active" | "Blocked"; 
-    subscriptionStatus?: "subscribed" | "non-subscribed";
-    govIdStatus?: "Pending" | "Verified" | "Rejected"; 
-  }): Promise<{
-    data: any[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalItems: number;
-      hasNext: boolean;
-      hasPrev: boolean;
-    };
-  }> {
-    try {
-      const { page, limit, search, sortBy, sortOrder, status, subscriptionStatus, govIdStatus } = params;
-      const skip = (page - 1) * limit;
+public async getAllUsers(params: PaginationQueryDtoType & { 
+  status?: "Active" | "Blocked"; 
+  subscriptionStatus?: "subscribed" | "non-subscribed";
+  govIdStatus?: "Pending" | "Verified" | "Rejected"; 
+}): Promise<{
+  data: any[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}> {
+  try {
+    const { page, limit, search, sortBy, sortOrder, status, subscriptionStatus, govIdStatus } = params;
+    const skip = (page - 1) * limit;
 
-      const query: any = {};
-      
-      if (search) {
+    const query: any = {};
+    
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phoneNumber: { $regex: search, $options: 'i' } },
+        { 'govId.idNumber': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (subscriptionStatus) {
+      const currentDate = new Date();
+      if (subscriptionStatus === 'subscribed') {
+        query['subscription.endDate'] = { $gt: currentDate };
+      } else {
         query.$or = [
-          { fullName: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-          { phone: { $regex: search, $options: 'i' } },
-          { 'govId.idNumber': { $regex: search, $options: 'i' } }
+          { 'subscription.endDate': { $lt: currentDate } },
+          { subscription: { $exists: false } },
+          { subscription: null }
         ];
       }
-
-      if (status) {
-        query.status = status;
-      }
-
-      if (subscriptionStatus) {
-        const currentDate = new Date();
-        if (subscriptionStatus === 'subscribed') {
-          query['subscription.endDate'] = { $gt: currentDate };
-        } else {
-          query.$or = [
-            { 'subscription.endDate': { $lt: currentDate } },
-            { subscription: { $exists: false } },
-            { subscription: null }
-          ];
-        }
-      }
-
-      if (govIdStatus) {
-        query['govId.verificationStatus'] = govIdStatus;
-        query['govId.idNumber'] = { $exists: true, $ne: "" };
-      }
-
-      const sortOptions: any = {};
-      if (sortBy) {
-        if (sortBy.includes('.')) {
-          const [parent, child] = sortBy.split('.');
-          sortOptions[`${parent}.${child}`] = sortOrder === 'asc' ? 1 : -1;
-        } else {
-          sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
-        }
-      } else {
-        sortOptions.createdAt = -1;
-      }
-
-      const [data, totalItems] = await Promise.all([
-        UserModel.find(query)
-          .select("-password")
-          .sort(sortOptions)
-          .skip(skip)
-          .limit(limit)
-          .lean()
-          .exec(),
-        UserModel.countDocuments(query)
-      ]);
-
-      const totalPages = Math.ceil(totalItems / limit);
-      const hasNext = page < totalPages;
-      const hasPrev = page > 1;
-
-      return {
-        data,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalItems,
-          hasNext,
-          hasPrev,
-        },
-      };
-    } catch (error) {
-      throw new Error("Failed to fetch users from the database");
     }
+
+    if (govIdStatus) {
+      query['govId.verificationStatus'] = govIdStatus;
+      query['govId.idNumber'] = { $exists: true, $ne: "" };
+    }
+
+    const sortOptions: any = {};
+    if (sortBy) {
+      if (sortBy.includes('.')) {
+        const [parent, child] = sortBy.split('.');
+        sortOptions[`${parent}.${child}`] = sortOrder === 'asc' ? 1 : -1;
+      } else {
+        sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+      }
+    } else {
+      sortOptions.createdAt = -1;
+    }
+
+    const [rawData, totalItems] = await Promise.all([
+      UserModel.find(query)
+        .select("-password -wallet.transactions -monthlyRideCount -lastRideReset -vehicles -__v")
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      UserModel.countDocuments(query)
+    ]);
+
+    const data = rawData.map(user => ({
+  _id: user._id.toString(),
+  fullName: user.fullName || "Unknown",
+  email: user.email || "N/A",
+  phoneNumber: user.phoneNumber || "N/A",
+  status: user.status || "Active",
+  govId: user.govId ? {
+    verificationStatus: user.govId.verificationStatus || "Pending",
+    reason: user.govId.reason || "",
+    idNumber: user.govId.idNumber || "",
+    documentUrl: user.govId.documentUrl || ""
+  } : undefined,
+  subscription: user.subscription ? {
+    isSubscribed: new Date(user.subscription.endDate) > new Date(),
+    planId: user.subscription.planId?.toString() || user.subscription.planId, 
+    planName: user.subscription.planName,
+    startDate: user.subscription.startDate,
+    endDate: user.subscription.endDate,
+    remainingJoinRides: user.subscription.remainingJoinRides || 0
+  } : { isSubscribed: false },
+  wallet: user.wallet ? {
+    balance: user.wallet.balance || 0
+  } : { balance: 0 },
+  totalRides: 0,
+  hasOngoingRides: false,
+  createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
+  updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : user.updatedAt
+}));
+
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        hasNext,
+        hasPrev,
+      },
+    };
+  } catch (error) {
+    throw new Error("Failed to fetch users from the database");
   }
+}
 
   public async getAllVehicles(params: PaginationQueryDtoType & { 
     status?: "Pending" | "Approved" | "Rejected";

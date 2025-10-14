@@ -1,9 +1,14 @@
 import { injectable } from "inversify";
-import { ClientSession } from "mongoose";
+import { ClientSession, Types } from "mongoose";
 import { IVehicleRepository } from "../interface/vehicle/ivehicleRepository";
 import { IVehicle } from "../../models/vehicle.modal";
 import VehicleModel from "../../models/vehicle.modal";
 import { BaseRepository } from "../base/base.repository";
+
+interface VehicleListResult {
+  vehicles: IVehicle[];
+  totalCount: number;
+}
 
 @injectable()
 export class VehicleRepository extends BaseRepository<IVehicle> implements IVehicleRepository {
@@ -15,13 +20,40 @@ export class VehicleRepository extends BaseRepository<IVehicle> implements IVehi
     return this.create(data, options);
   }
 
-  async findVehiclesByUserId(userId: string, options?: { session: ClientSession }): Promise<IVehicle[]> {
-    return this.find({ user: userId }, options);
+  async findVehiclesByUserId(
+    userId: string, 
+    skip: number = 0, 
+    limit: number = 10, 
+    search: string = '',
+    options?: { session: ClientSession }
+  ): Promise<VehicleListResult> {
+    const query: any = { user: new Types.ObjectId(userId) };
+
+    if (search) {
+      query.$or = [
+        { vehicleName: { $regex: search, $options: 'i' } },
+        { licensePlate: { $regex: search, $options: 'i' } },
+        { 'insurance.number': { $regex: search, $options: 'i' } },
+        { 'pollution.number': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const [vehicles, totalCount] = await Promise.all([
+      this.findWithQueryBuilder(query, {
+        session: options?.session,
+        sort: { createdAt: -1 },
+        skip,
+        limit
+      }),
+      this.count(query, options)
+    ]);
+
+    return { vehicles, totalCount };
   }
 
   async findById(vehicleId: string, options?: { session: ClientSession }): Promise<IVehicle | null> {
-    console.log("[VehicleRepository] Finding vehicle with ID:", vehicleId); // Debug log
-    return super.findById(vehicleId, options); // Delegate to BaseRepository
+    console.log("[VehicleRepository] Finding vehicle with ID:", vehicleId);
+    return super.findById(vehicleId, options);
   }
 
   async updateVehicle(
@@ -41,5 +73,37 @@ export class VehicleRepository extends BaseRepository<IVehicle> implements IVehi
     if (!success) {
       throw new Error("Vehicle not found");
     }
+  }
+
+  async findVehiclesWithExpiringDocuments(expiryDate: Date): Promise<IVehicle[]> {
+    const query = {
+      $or: [
+        { 'insurance.endDate': { $lte: expiryDate } },
+        { 'pollution.endDate': { $lte: expiryDate } }
+      ]
+    };
+    
+    return this.findWithQueryBuilder(query, {
+      populate: 'user'
+    });
+  }
+
+  async updateExpiredDocumentStatuses(): Promise<void> {
+    const now = new Date();
+    
+    await this.updateMany(
+      {
+        $or: [
+          { 'insurance.endDate': { $lt: now }, 'insurance.status': { $ne: 'Expired' } },
+          { 'pollution.endDate': { $lt: now }, 'pollution.status': { $ne: 'Expired' } }
+        ]
+      },
+      {
+        $set: {
+          'insurance.status': 'Expired',
+          'pollution.status': 'Expired'
+        }
+      }
+    );
   }
 }

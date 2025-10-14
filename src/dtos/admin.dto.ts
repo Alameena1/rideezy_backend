@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+// Helper to handle both string and Date types
+const dateSchema = z.union([z.string(), z.date()]).transform((val) => {
+  if (val instanceof Date) {
+    return val.toISOString();
+  }
+  return val;
+});
+
+// Helper to handle ObjectId (both string and object)
+const objectIdSchema = z.union([z.string(), z.object({ 
+  toString: z.function().returns(z.string()) 
+})]).transform((val) => {
+  if (typeof val === 'object' && val !== null && 'toString' in val) {
+    return val.toString();
+  }
+  return val;
+});
+
 // Base query parameters with proper transformation and required types
 export const PaginationQueryDto = z.object({
   page: z
@@ -39,10 +57,42 @@ export const UserStatusDto = z.object({
 export const UserSearchQueryDto = PaginationQueryDto.extend({
   status: z.enum(["Active", "Blocked"]).optional(),
   subscriptionStatus: z.enum(["subscribed", "non-subscribed"]).optional(),
+  govIdStatus: z.enum(["Pending", "Verified", "Rejected"]).optional(),
+});
+
+// User Response DTO - UPDATED with proper planId handling
+export const UserResponseDto = z.object({
+  _id: z.string(),
+  fullName: z.string(),
+  email: z.string(),
+  phoneNumber: z.string().optional(),
+  status: z.enum(["Active", "Blocked"]),
+  govId: z.object({
+    verificationStatus: z.enum(["Pending", "Verified", "Rejected"]),
+    reason: z.string().optional(),
+    idNumber: z.string().optional(),
+    documentUrl: z.string().optional(),
+  }).optional(),
+  subscription: z.object({
+    isSubscribed: z.boolean(),
+    planId: objectIdSchema.optional(),
+    planName: z.string().optional(),
+    startDate: dateSchema.optional(),
+    endDate: dateSchema.optional(),
+    remainingJoinRides: z.number().optional(),
+  }).optional(),
+  wallet: z.object({
+    balance: z.number(),
+  }).optional(),
+  totalRides: z.number().optional(),
+  hasOngoingRides: z.boolean().optional(),
+  createdAt: dateSchema,
+  updatedAt: dateSchema.optional(),
 });
 
 // Explicit type that matches service expectations
 export type UserSearchQueryDtoType = z.infer<typeof UserSearchQueryDto>;
+export type UserResponseDtoType = z.infer<typeof UserResponseDto>;
 
 // Vehicle Management DTOs
 export const VehicleStatusDto = z.object({
@@ -56,7 +106,43 @@ export const VehicleSearchQueryDto = PaginationQueryDto.extend({
   vehicleType: z.string().optional(),
 });
 
+// Vehicle Response DTO - UPDATED with proper date handling
+export const VehicleResponseDto = z.object({
+  _id: z.string(),
+  user: z.object({
+    _id: z.string(),
+    fullName: z.string(),
+    email: z.string(),
+  }),
+  vehicleName: z.string(),
+  vehicleType: z.string(),
+  licensePlate: z.string(),
+  color: z.string(),
+  insurance: z.object({
+    number: z.string(),
+    image: z.string(),
+    startDate: dateSchema,
+    endDate: dateSchema,
+    status: z.enum(["Active", "Expired", "Pending"]),
+  }),
+  pollution: z.object({
+    number: z.string(),
+    image: z.string(),
+    startDate: dateSchema,
+    endDate: dateSchema,
+    status: z.enum(["Active", "Expired", "Pending"]),
+  }),
+  vehicleImage: z.string(),
+  status: z.enum(["Pending", "Approved", "Rejected"]),
+  note: z.string().optional(),
+  mileage: z.number(),
+  seatCapacity: z.number(),
+  createdAt: dateSchema,
+  updatedAt: dateSchema.optional(),
+});
+
 export type VehicleSearchQueryDtoType = z.infer<typeof VehicleSearchQueryDto>;
+export type VehicleResponseDtoType = z.infer<typeof VehicleResponseDto>;
 
 // Ride Management DTOs - UPDATED with both EmergencyStopped and Blocked
 export const RideStatusDto = z.object({
@@ -70,7 +156,59 @@ export const RideSearchQueryDto = PaginationQueryDto.extend({
   dateTo: z.string().optional(),
 });
 
+// Ride Response DTO - UPDATED with proper date handling
+export const RideResponseDto = z.object({
+  _id: z.string(),
+  rideId: z.string(),
+  driverId: z.string(),
+  driverName: z.string(),
+  vehicleId: z.string().or(z.object({
+    _id: z.string(),
+    licensePlate: z.string(),
+  })),
+  date: dateSchema,
+  time: z.string(),
+  startPoint: z.string(),
+  startPlaceName: z.string(),
+  endPoint: z.string(),
+  endPlaceName: z.string(),
+  distanceKm: z.number(),
+  fuelPrice: z.number(),
+  passengerCount: z.number(),
+  totalFuelCost: z.number(),
+  costPerPerson: z.number(),
+  totalPeople: z.number(),
+  status: z.enum(["Pending", "Started", "Completed", "Cancelled", "EmergencyStopped", "Blocked"]),
+  platformFee: z.number().optional(),
+  passengers: z.array(z.object({
+    passengerId: z.string(),
+    passengerName: z.string(),
+    pickedUp: z.boolean().optional(),
+    droppedOff: z.boolean().optional(),
+  })),
+  pickupPoints: z.array(z.object({
+    passengerId: z.string(),
+    location: z.string(),
+    placeName: z.string(),
+  })),
+  dropoffPoints: z.array(z.object({
+    passengerId: z.string(),
+    location: z.string(),
+    placeName: z.string(),
+  })),
+  routeGeometry: z.string().optional(),
+  blockDetails: z.object({
+    reason: z.string(),
+    blockType: z.string(),
+    duration: z.string(),
+    blockedAt: dateSchema,
+    blockedBy: z.string(),
+  }).optional(),
+  createdAt: dateSchema,
+});
+
 export type RideSearchQueryDtoType = z.infer<typeof RideSearchQueryDto>;
+export type RideResponseDtoType = z.infer<typeof RideResponseDto>;
 
 // Block Ride DTO (for admins)
 export const BlockRideSchema = z.object({
@@ -88,12 +226,10 @@ export const UnblockRideSchema = z.object({
 export const DashboardMetricsQueryDto = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  timeRange: z.enum(["7days", "30days", "90days", "1year", "all"]).optional(),
 });
 
-export type DashboardMetricsQueryDtoType = {
-  startDate?: string;
-  endDate?: string;
-};
+export type DashboardMetricsQueryDtoType = z.infer<typeof DashboardMetricsQueryDto>;
 
 // Auth DTOs
 export const AdminLoginDto = z.object({
@@ -133,66 +269,7 @@ export const SubscriptionPlanStatusDto = z.object({
   status: z.enum(["Active", "Blocked"]),
 });
 
-// Response DTOs for entities - UPDATED RideResponseDto
-export const UserResponseDto = z.object({
-  _id: z.string(),
-  fullName: z.string(),
-  email: z.string(),
-  phone: z.string().optional(),
-  status: z.enum(["Active", "Blocked"]),
-  subscription: z.object({
-    isSubscribed: z.boolean(),
-    planId: z.string().optional(),
-    startDate: z.date().optional(),
-    endDate: z.date().optional(),
-  }).optional(),
-  govId: z.object({
-    verificationStatus: z.enum(["Pending", "Verified", "Rejected"]),
-    reason: z.string().optional(),
-  }).optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
-export const VehicleResponseDto = z.object({
-  _id: z.string(),
-  user: z.object({
-    _id: z.string(),
-    fullName: z.string(),
-  }),
-  vehicleType: z.string(),
-  licensePlate: z.string(),
-  status: z.enum(["Pending", "Approved", "Rejected"]),
-  note: z.string().optional(),
-  createdAt: z.date(),
-});
-
-// UPDATED: Use correct ride status values including Blocked
-export const RideResponseDto = z.object({
-  _id: z.string(),
-  driver: z.object({
-    _id: z.string(),
-    fullName: z.string(),
-  }),
-  passengers: z.array(z.object({
-    user: z.string(),
-    status: z.string(),
-  })),
-  from: z.string(),
-  to: z.string(),
-  date: z.date(),
-  status: z.enum(["Pending", "Started", "Completed", "Cancelled", "EmergencyStopped", "Blocked"]),
-  fare: z.number(),
-  blockDetails: z.object({
-    reason: z.string(),
-    blockType: z.string(),
-    duration: z.string(),
-    blockedAt: z.date(),
-    blockedBy: z.string(),
-  }).optional(),
-  createdAt: z.date(),
-});
-
+// Subscription Plan Response DTO - UPDATED with proper date handling
 export const SubscriptionPlanResponseDto = z.object({
   _id: z.string(),
   name: z.string(),
@@ -204,10 +281,11 @@ export const SubscriptionPlanResponseDto = z.object({
   features: z.array(z.string()),
   status: z.enum(["Active", "Blocked"]),
   isDeleted: z.boolean(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: dateSchema,
+  updatedAt: dateSchema.optional(),
 });
 
+// Response DTOs for paginated responses
 export const PaginatedResponseDto = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
     success: z.boolean(),
@@ -221,14 +299,67 @@ export const PaginatedResponseDto = <T extends z.ZodTypeAny>(dataSchema: T) =>
     }),
   });
 
-  export const EmergencyStopSchema = z.object({
+export const EmergencyStopSchema = z.object({
   reason: z.string().min(1, "Reason is required"),
   currentPosition: z.tuple([z.number(), z.number()]),
   issueType: z.enum(["breakdown", "puncture", "accident", "medical", "other"]),
 });
 
+// Dashboard Response DTO
+export const DashboardMetricsResponseDto = z.object({
+  success: z.boolean(),
+  metrics: z.object({
+    totalUsers: z.number(),
+    subscribedUsers: z.number(),
+    nonSubscribedUsers: z.number(),
+    totalRides: z.number(),
+    totalRevenue: z.number(),
+    activeRides: z.number(),
+    completedRides: z.number(),
+    monthlyGrowth: z.number(),
+  }),
+  userGrowth: z.array(z.object({
+    month: z.string(),
+    users: z.number(),
+    newUsers: z.number(),
+  })),
+  rideCount: z.array(z.object({
+    month: z.string(),
+    rides: z.number(),
+    completed: z.number(),
+    cancelled: z.number(),
+  })),
+  revenueDistribution: z.array(z.object({
+    name: z.string(),
+    value: z.number(),
+    color: z.string(),
+  })),
+  platformRevenue: z.array(z.object({
+    month: z.string(),
+    revenue: z.number(),
+    rides: z.number(),
+  })),
+});
 
-// Export types for all DTOs - REMOVE DUPLICATES
+// Ongoing Rides Response DTO
+export const OngoingRidesResponseDto = z.object({
+  success: z.boolean(),
+  hasOngoingRides: z.boolean(),
+  ongoingRides: z.array(z.object({
+    _id: z.string(),
+    rideId: z.string(),
+    driverName: z.string(),
+    startPlaceName: z.string(),
+    endPlaceName: z.string(),
+    status: z.string(),
+    date: dateSchema,
+    time: z.string(),
+  })),
+  message: z.string(),
+  length: z.number(),
+});
+
+// Export types for all DTOs
 export type UserStatusDtoType = z.infer<typeof UserStatusDto>;
 export type VehicleStatusDtoType = z.infer<typeof VehicleStatusDto>;
 export type RideStatusDtoType = z.infer<typeof RideStatusDto>;
@@ -241,8 +372,7 @@ export type GovIdVerificationDtoType = z.infer<typeof GovIdVerificationDto>;
 export type CreateSubscriptionPlanDtoType = z.infer<typeof CreateSubscriptionPlanDto>;
 export type UpdateSubscriptionPlanDtoType = z.infer<typeof UpdateSubscriptionPlanDto>;
 export type SubscriptionPlanStatusDtoType = z.infer<typeof SubscriptionPlanStatusDto>;
-export type UserResponseDtoType = z.infer<typeof UserResponseDto>;
-export type VehicleResponseDtoType = z.infer<typeof VehicleResponseDto>;
-export type RideResponseDtoType = z.infer<typeof RideResponseDto>;
 export type SubscriptionPlanResponseDtoType = z.infer<typeof SubscriptionPlanResponseDto>;
 export type EmergencyStopDtoType = z.infer<typeof EmergencyStopSchema>;
+export type DashboardMetricsResponseDtoType = z.infer<typeof DashboardMetricsResponseDto>;
+export type OngoingRidesResponseDtoType = z.infer<typeof OngoingRidesResponseDto>;

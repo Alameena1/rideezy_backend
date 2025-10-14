@@ -295,3 +295,287 @@
 {"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 18:40:25"}
 {"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 18:40:26"}
 {"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 18:40:27"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 19:26:28"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 19:26:28"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 19:26:29"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 20:07:49"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 20:07:50"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:07:50"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:07:51"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:08:08"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:10:51"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:10:59"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:12:34"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:12:34"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:12:34"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:12:45"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:12:47"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:12:49"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:12:50"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:15:36"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:15:36"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:15:36"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:15:36"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 20:32:46"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 20:32:46"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:32:46"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:32:48"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:33:24"}
+{"level":"warn","message":"Vehicle registration limit exceeded for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:33:25"}
+{"level":"error","message":"Error adding vehicle for user 68b8585b8f9f86e8e0f734f5: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.","service":"ride-sharing-app","stack":"Error: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.\n    at VehicleService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:35:15)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 20:33:25"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:36:32"}
+{"level":"warn","message":"Vehicle registration limit exceeded for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:36:32"}
+{"level":"error","message":"Error adding vehicle for user 68b8585b8f9f86e8e0f734f5: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.","service":"ride-sharing-app","stack":"Error: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.\n    at VehicleService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:35:15)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 20:36:32"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:49:58"}
+{"level":"warn","message":"Vehicle registration limit exceeded for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:49:58"}
+{"level":"error","message":"Error adding vehicle for user 68b8585b8f9f86e8e0f734f5: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.","service":"ride-sharing-app","stack":"Error: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.\n    at VehicleService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:35:15)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 20:49:58"}
+{"level":"debug","message":"Retrieved 0 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:50:09"}
+{"level":"debug","message":"Retrieved 0 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:50:10"}
+{"level":"debug","message":"Retrieved 0 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 20:50:10"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:51:21"}
+{"level":"warn","message":"Vehicle registration limit exceeded for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:51:21"}
+{"level":"error","message":"Error adding vehicle for user 68b8585b8f9f86e8e0f734f5: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.","service":"ride-sharing-app","stack":"Error: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.\n    at VehicleService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:35:15)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 20:51:21"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 20:52:34"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 20:52:35"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:52:35"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:52:36"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:52:54"}
+{"level":"warn","message":"Vehicle registration limit exceeded for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:52:54"}
+{"level":"error","message":"Error adding vehicle for user 68b8585b8f9f86e8e0f734f5: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.","service":"ride-sharing-app","stack":"Error: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.\n    at VehicleService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:36:15)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 20:52:54"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:31"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:31"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:31"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:33"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:34"}
+{"level":"error","message":"Error adding vehicle for user 68b8585b8f9f86e8e0f734f5: Failed to create document: Vehicle validation failed: documentImage: Path `documentImage` is required.","service":"ride-sharing-app","stack":"Error: Failed to create document: Vehicle validation failed: documentImage: Path `documentImage` is required.\n    at VehicleRepository.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:30:13)\n    at Generator.throw (<anonymous>)\n    at rejected (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:15:65)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 20:53:34"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:57"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:57"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:57"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:53:58"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:54:19"}
+{"level":"warn","message":"Vehicle registration limit exceeded for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:54:19"}
+{"level":"error","message":"Error adding vehicle for user 68b8585b8f9f86e8e0f734f5: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.","service":"ride-sharing-app","stack":"Error: Vehicle registration limit exceeded. Maximum 2 vehicles allowed.\n    at VehicleService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:36:15)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\vehicle.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 20:54:19"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 20:57:38"}
+{"level":"error","message":"Error adding vehicle for user 68b8585b8f9f86e8e0f734f5: Failed to create document: Vehicle validation failed: documentImage: Path `documentImage` is required.","service":"ride-sharing-app","stack":"Error: Failed to create document: Vehicle validation failed: documentImage: Path `documentImage` is required.\n    at VehicleRepository.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:30:13)\n    at Generator.throw (<anonymous>)\n    at rejected (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:15:65)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 20:57:38"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 20:59:48"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 20:59:48"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:59:48"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 20:59:50"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 21:00:08"}
+{"level":"info","message":"Vehicle added successfully: 68ed1b00b0556889bd1b1b42 for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 21:00:08"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:00:09"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:00:09"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:01:47"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:07:06"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:07:06"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:07:06"}
+{"level":"error","message":"Error updating vehicle 68ed1b00b0556889bd1b1b42 for user 68b8585b8f9f86e8e0f734f5: Failed to update document: Validation failed: pollution.image: Path `pollution.image` is required., insurance.image: Path `insurance.image` is required.","service":"ride-sharing-app","stack":"Error: Failed to update document: Validation failed: pollution.image: Path `pollution.image` is required., insurance.image: Path `insurance.image` is required.\n    at VehicleRepository.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:132:13)\n    at Generator.throw (<anonymous>)\n    at rejected (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:15:65)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 21:07:19"}
+{"level":"error","message":"Error updating vehicle 68ed1b00b0556889bd1b1b42 for user 68b8585b8f9f86e8e0f734f5: Failed to update document: Validation failed: pollution.image: Path `pollution.image` is required., insurance.image: Path `insurance.image` is required.","service":"ride-sharing-app","stack":"Error: Failed to update document: Validation failed: pollution.image: Path `pollution.image` is required., insurance.image: Path `insurance.image` is required.\n    at VehicleRepository.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:132:13)\n    at Generator.throw (<anonymous>)\n    at rejected (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:15:65)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 21:07:30"}
+{"level":"error","message":"Error updating vehicle 68ed1b00b0556889bd1b1b42 for user 68b8585b8f9f86e8e0f734f5: Failed to update document: Validation failed: pollution.image: Path `pollution.image` is required.","service":"ride-sharing-app","stack":"Error: Failed to update document: Validation failed: pollution.image: Path `pollution.image` is required.\n    at VehicleRepository.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:132:13)\n    at Generator.throw (<anonymous>)\n    at rejected (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:15:65)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 21:08:02"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:08:26"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:08:29"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:09:34"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:09:34"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:09:35"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:09:35"}
+{"level":"error","message":"Error updating vehicle 68ed1b00b0556889bd1b1b42 for user 68b8585b8f9f86e8e0f734f5: Failed to update document: Validation failed: pollution.image: Path `pollution.image` is required., insurance.image: Path `insurance.image` is required.","service":"ride-sharing-app","stack":"Error: Failed to update document: Validation failed: pollution.image: Path `pollution.image` is required., insurance.image: Path `insurance.image` is required.\n    at VehicleRepository.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:132:13)\n    at Generator.throw (<anonymous>)\n    at rejected (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\repositories\\base\\base.repository.ts:15:65)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-13 21:09:48"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 21:21:21"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 21:21:21"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 21:21:21"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 21:21:23"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 21:21:32"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 21:21:33"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 21:21:33"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 21:21:34"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:15"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:15"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:15"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:18"}
+{"level":"info","message":"Vehicle updated successfully: 68ed1b00b0556889bd1b1b42 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:26"}
+{"level":"info","message":"Vehicle updated successfully: 68ed1b00b0556889bd1b1b42 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:26"}
+{"level":"info","message":"Vehicle updated successfully: 68ed1b00b0556889bd1b1b42 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:37"}
+{"level":"info","message":"Vehicle updated successfully: 68ed1b00b0556889bd1b1b42 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:38"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:54"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:54"}
+{"level":"debug","message":"Retrieved 1 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:24:55"}
+{"level":"info","message":"Adding vehicle for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 21:26:21"}
+{"level":"info","message":"Vehicle added successfully: 68ed2126ac6b906dc4a13dce for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-13 21:26:22"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:26:22"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:26:22"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:26:30"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:26:33"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 21:26:38"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 22:03:50"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 22:03:50"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 22:03:51"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 22:05:05"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 22:05:05"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-13 22:05:05"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 09:30:10"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 09:30:11"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 09:30:11"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 09:30:12"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 09:42:55"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 09:42:56"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:00:03"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:00:03"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:01:29"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:01:30"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:01:30"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:01:30"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:04:47"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:04:47"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:04:47"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:05:19"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:05:19"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:05:19"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:06:05"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:06:05"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:06:05"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:06:40"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:06:41"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:06:41"}
+{"level":"info","message":"Vehicle updated successfully: 68ed2126ac6b906dc4a13dce by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:06:55"}
+{"level":"info","message":"Vehicle updated successfully: 68ed2126ac6b906dc4a13dce by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:06:56"}
+{"level":"info","message":"Vehicle updated successfully: 68ed2126ac6b906dc4a13dce by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:07:35"}
+{"level":"info","message":"Vehicle reapplied successfully: 68ed2126ac6b906dc4a13dce by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:07:35"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:07:35"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:07:53"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:07:54"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:31"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:31"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:31"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:32"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:44"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:44"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:44"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:46"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:08:46"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:09:53"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:09:53"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:20:20"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:20:20"}
+{"level":"info","message":"Starting ride creation process for driver: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:21:02"}
+{"level":"debug","message":"Validating documents for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:21:02"}
+{"errors":[],"isValid":true,"level":"debug","message":"Document validation result for 68ed2126ac6b906dc4a13dce:","service":"ride-sharing-app","timestamp":"2025-10-14 10:21:03"}
+{"level":"debug","message":"Vehicle lookup result: Found","service":"ride-sharing-app","timestamp":"2025-10-14 10:21:03"}
+{"distanceKm":17.224700000000002,"level":"debug","message":"Calculated ride costs for RIDE_1760417467034","perKmRate":66.59589717092315,"service":"ride-sharing-app","timestamp":"2025-10-14 10:21:07","totalRideCost":1147.09435}
+{"level":"info","message":"Ride created successfully: RIDE_1760417467034 for driver: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:21:07"}
+{"level":"debug","message":"Getting rides for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:21:33"}
+{"level":"debug","message":"Retrieved 8 rides for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:21:33"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:22:05"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:22:05"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:22:06"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:22:06"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:23:27"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:23:27"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:23:27"}
+{"level":"info","message":"Vehicle updated successfully: 68ed1b00b0556889bd1b1b42 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:23:49"}
+{"level":"info","message":"Vehicle updated successfully: 68ed1b00b0556889bd1b1b42 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:23:49"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:24"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:24"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:25"}
+{"level":"info","message":"Vehicle updated successfully: 68ed1b00b0556889bd1b1b42 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:29"}
+{"level":"info","message":"Vehicle updated successfully: 68ed1b00b0556889bd1b1b42 by user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:30"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:38"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:38"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:38"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:47"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:26:48"}
+{"level":"info","message":"Starting ride creation process for driver: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:27:41"}
+{"level":"debug","message":"Validating documents for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:27:41"}
+{"level":"warn","message":"Pollution certificate expired for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:27:41"}
+{"errors":["Pollution certificate has expired"],"isValid":false,"level":"debug","message":"Document validation result for 68ed2126ac6b906dc4a13dce:","service":"ride-sharing-app","timestamp":"2025-10-14 10:27:41"}
+{"errors":["Pollution certificate has expired"],"level":"warn","message":"Vehicle document validation failed for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:27:41"}
+{"level":"error","message":"Error starting ride for driver 68b8585b8f9f86e8e0f734f5: Cannot start ride: Pollution certificate has expired","service":"ride-sharing-app","stack":"Error: Cannot start ride: Pollution certificate has expired\n    at InitiateRideService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\initiate-ride.service.ts:69:17)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\initiate-ride.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-14 10:27:41"}
+{"level":"info","message":"Starting ride creation process for driver: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:21"}
+{"level":"debug","message":"Validating documents for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:21"}
+{"level":"warn","message":"Insurance expired for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:21"}
+{"errors":["Insurance has expired"],"isValid":false,"level":"debug","message":"Document validation result for 68ed2126ac6b906dc4a13dce:","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:21"}
+{"errors":["Insurance has expired"],"level":"warn","message":"Vehicle document validation failed for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:21"}
+{"level":"error","message":"Error starting ride for driver 68b8585b8f9f86e8e0f734f5: Cannot start ride: Insurance has expired","service":"ride-sharing-app","stack":"Error: Cannot start ride: Insurance has expired\n    at InitiateRideService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\initiate-ride.service.ts:69:17)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\initiate-ride.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-14 10:28:21"}
+{"level":"info","message":"Starting ride creation process for driver: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:26"}
+{"level":"debug","message":"Validating documents for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:26"}
+{"level":"warn","message":"Insurance expired for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:26"}
+{"errors":["Insurance has expired"],"isValid":false,"level":"debug","message":"Document validation result for 68ed2126ac6b906dc4a13dce:","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:26"}
+{"errors":["Insurance has expired"],"level":"warn","message":"Vehicle document validation failed for vehicle: 68ed2126ac6b906dc4a13dce","service":"ride-sharing-app","timestamp":"2025-10-14 10:28:26"}
+{"level":"error","message":"Error starting ride for driver 68b8585b8f9f86e8e0f734f5: Cannot start ride: Insurance has expired","service":"ride-sharing-app","stack":"Error: Cannot start ride: Insurance has expired\n    at InitiateRideService.<anonymous> (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\initiate-ride.service.ts:69:17)\n    at Generator.next (<anonymous>)\n    at fulfilled (C:\\Users\\AL AMEEN\\OneDrive\\Desktop\\Backend\\src\\services\\implementation\\initiate-ride.service.ts:17:58)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-10-14 10:28:26"}
+{"email":"alameena8841@gmail.com","level":"info","message":"Login attempt:","passwordLength":8,"service":"ride-sharing-app","timestamp":"2025-10-14 10:31:30"}
+{"level":"info","message":"Login attempt for email: alameena8841@gmail.com","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:30"}
+{"level":"debug","message":"Password verification result for alameena8841@gmail.com: true","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:30"}
+{"level":"info","message":"Login successful for user: 68b8585b8f9f86e8e0f734f5, email: alameena8841@gmail.com, role: user","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:30"}
+{"email":"alameena8841@gmail.com","level":"info","message":"Login success:","role":"user","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:30","userId":"68b8585b8f9f86e8e0f734f5"}
+{"level":"debug","message":"Login response prepared for user:","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:30","userId":"68b8585b8f9f86e8e0f734f5"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:44"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:44"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:44"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 10:31:44"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 10:34:56"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 10:34:56"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:34:56"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:34:57"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 10:49:25"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 10:49:26"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:49:26"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:49:27"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 10:57:49"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 10:57:50"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:57:50"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:57:51"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 10:59:13"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 10:59:13"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:59:13"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:59:14"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 10:59:51"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 10:59:52"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:59:52"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 10:59:53"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 11:04:26"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 11:04:27"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:04:27"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:04:28"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 11:05:22"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 11:05:22"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:05:22"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:05:23"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 11:10:03"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 11:10:03"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:10:03"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:10:05"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 11:10:52"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 11:10:52"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:10:52"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:10:53"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 11:11:11"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 11:11:11"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:11:11"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:11:12"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 11:11:25"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 11:11:26"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:11:26"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:11:27"}
+{"level":"info","message":"ChatService initialized with Cloudinary configuration","service":"ride-sharing-app","timestamp":"2025-10-14 11:45:44"}
+{"level":"info","message":"Server running on http://localhost:3001 with WebSocket","service":"ride-sharing-app","timestamp":"2025-10-14 11:45:45"}
+{"level":"info","message":"Cron jobs initialized successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:45:45"}
+{"level":"info","message":"✅ MongoDB Connected Successfully","service":"ride-sharing-app","timestamp":"2025-10-14 11:45:46"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:29:33"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:29:34"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:29:34"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:29:34"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:30:32"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:30:33"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:30:33"}
+{"level":"debug","message":"Getting rides for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 16:30:39"}
+{"level":"debug","message":"Retrieved 8 rides for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 16:30:39"}
+{"level":"debug","message":"Getting rides for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 16:30:40"}
+{"level":"debug","message":"Retrieved 8 rides for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 16:30:40"}
+{"level":"debug","message":"Getting rides for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:00"}
+{"level":"debug","message":"Retrieved 8 rides for user: 68b8585b8f9f86e8e0f734f5","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:00"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:09"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:09"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:10"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:10"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:15"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:21"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:24"}
+{"level":"debug","message":"Retrieved 2 vehicles for user: 68b8585b8f9f86e8e0f734f5, page: 1","service":"ride-sharing-app","timestamp":"2025-10-14 16:35:29"}

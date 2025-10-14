@@ -14,9 +14,9 @@ export interface CreateRideDto {
   distance: number;
   routeGeometry?: string;
   platformFee?: number;
-  totalFuelCost?: number; // Optional, calculated in service
-  totalRideCost?: number; // Optional, calculated in service
-  costPerPerson?: number; // Optional, calculated in service
+  totalFuelCost?: number; 
+  totalRideCost?: number; 
+  costPerPerson?: number; 
 }
 
 export const CreateRideSchema = z.object({

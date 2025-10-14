@@ -8,7 +8,7 @@ import { IUser } from "../../models/user.model";
 import { ISubscriptionPlan } from "../../models/SubscriptionPlan";
 import AdminModel, { IAdmin } from "../../models/admin";
 import { SubscriptionPlanModel } from "../../models/SubscriptionPlan";
-import { PaginationQueryDtoType, RideSearchQueryDtoType, UserSearchQueryDtoType, VehicleSearchQueryDtoType, BlockRideDtoType } from "../../dtos/admin.dto";
+import { PaginationQueryDtoType, RideSearchQueryDtoType, UserSearchQueryDtoType, VehicleSearchQueryDtoType, BlockRideDtoType, UserResponseDto, UserResponseDtoType } from "../../dtos/admin.dto";
 import { DashboardMetrics, DashboardParams } from "../../types/dashboard";
 
 @injectable()
@@ -85,18 +85,44 @@ export class AdminService implements IAdminService {
     }
   }
 
-  async getAllUsers(params: UserSearchQueryDtoType): Promise<{
-    data: any[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalItems: number;
-      hasNext: boolean; 
-      hasPrev: boolean;
-    };
-  }> {
-    return this.adminRepository.getAllUsers(params);
-  }
+
+async getAllUsers(params: UserSearchQueryDtoType): Promise<{
+  data: UserResponseDtoType[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    hasNext: boolean; 
+    hasPrev: boolean;
+  };
+}> {
+  const result = await this.adminRepository.getAllUsers(params);
+  
+  // Use safeParse for more lenient validation
+  const validatedData = result.data.map(user => {
+    const validation = UserResponseDto.safeParse(user);
+    if (validation.success) {
+      return validation.data;
+    } else {
+      console.warn('User validation warning:', validation.error.errors);
+      // Manual transformation for problematic fields
+      return {
+        ...user,
+        subscription: user.subscription ? {
+          ...user.subscription,
+          planId: user.subscription.planId?.toString() || user.subscription.planId
+        } : undefined,
+        createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
+        updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : user.updatedAt
+      } as UserResponseDtoType;
+    }
+  });
+
+  return {
+    data: validatedData,
+    pagination: result.pagination
+  };
+}
 
   async getAllVehicles(params: VehicleSearchQueryDtoType): Promise<{
     data: any[];

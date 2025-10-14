@@ -30,6 +30,7 @@ import {
   VehicleSearchQueryDto,
   VehicleSearchQueryDtoType,
   VehicleStatusDto,
+  UserResponseDto,
 } from "../../dtos/admin.dto";
 import { IAdminController } from "../interface/admin/interface";
 import AdminModel from "../../models/admin";
@@ -67,25 +68,34 @@ export class AdminController implements IAdminController {
     };
   }
 
-  getUsers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    try {
-      const queryParams = this.validateRequest(UserSearchQueryDto, req.query);
-      const ensuredParams = this.ensureRequiredParams(queryParams);
+getUsers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const queryParams = this.validateRequest(UserSearchQueryDto, req.query);
+    const ensuredParams = this.ensureRequiredParams(queryParams);
 
-      const result = await this._adminService.getAllUsers(ensuredParams);
+    const result = await this._adminService.getAllUsers(ensuredParams);
 
-      res.status(StatusCode.OK).json({
-        success: true,
-        data: result.data,
-        pagination: result.pagination,
-      });
-    } catch (error) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: (error as Error).message,
-      });
-    }
-  };
+    // Ensure consistent response structure
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Users fetched successfully",
+      data: result.data,
+      pagination: {
+        currentPage: result.pagination.currentPage,
+        totalPages: result.pagination.totalPages,
+        totalItems: result.pagination.totalItems,
+        hasNext: result.pagination.hasNext,
+        hasPrev: result.pagination.hasPrev,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getUsers:', error);
+    res.status(StatusCode.BAD_REQUEST).json({
+      success: false,
+      message: (error as Error).message,
+    });
+  }
+};
 
   getVehicles = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
