@@ -1,10 +1,9 @@
 import { Router } from "express";
-import container from "../di/container"; 
-import { IAuthController } from "../controllers/interface/auth/interface"; 
-import { TYPES } from "../di/types"; 
+import container from "../di/container";
+import { IAuthController } from "../controllers/interface/auth/interface";
+import { TYPES } from "../di/types";
 
 const router = Router();
-
 
 const authController = container.get<IAuthController>(TYPES.IAuthController);
 
@@ -15,5 +14,7 @@ router.post("/login", authController.login.bind(authController));
 router.post("/refresh-token", authController.refreshToken.bind(authController));
 router.post("/logout", authController.logout.bind(authController));
 router.post("/google-auth", authController.googleAuth.bind(authController));
+router.post("/forgot-password", authController.forgotPassword.bind(authController)); 
+router.post("/reset-password", authController.resetPassword.bind(authController)); 
 
 export default router;

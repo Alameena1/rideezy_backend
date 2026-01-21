@@ -1,0 +1,6 @@
+dist/
+node_modules/
+*.js
+kerala-latest.osm*
+logs/
+.env

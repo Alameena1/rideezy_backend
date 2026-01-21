@@ -1,20 +1,5 @@
-class CustomError extends Error{
-    constructor(message){
-        super(message)
-    }
-}
-class NewError extends CustomError{
-    constructor(meessage){
-        super("message")
-    }
-}
-try {
-    throw new Error("In new errror")
-    
-} catch (error) {
-    if (error instanceof NewError) {
-        console.log(error.message)
-    } else {
-        console.log("false")
-    }
-}
+const bcrypt = require("bcrypt");
+bcrypt.hash("Al@12345", 10, (err, hash) => {
+  if (err) console.error(err);
+  console.log("hashed: ",hash);
+});

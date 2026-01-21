@@ -1,4 +1,3 @@
-// repositories/implementation/token.repository.ts
 import { injectable } from "inversify";
 import TokenModel from "../../models/token.model";
 import { ITokenRepository } from "../interface/user/itokenRepository";

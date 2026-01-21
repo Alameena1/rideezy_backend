@@ -1,39 +1,78 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
+import User from "../models/user.model"; // Adjust path to your User model
 
-const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
+const USER_JWT_SECRET = process.env.USER_JWT_SECRET || "usersecret123";
 
-const authMiddleware: RequestHandler = (req, res, next) => {
+interface JwtPayload {
+  userId: string;
+  email: string;
+  role: string;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+    role: string;
+    status?: string;
+  };
+}
+
+const authMiddleware: RequestHandler = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      res
-        .status(401)
-        .json({ message: "Authorization header missing or incorrect" });
-      return;
+      res.status(401).json({ success: false, message: "Authorization header missing or incorrect" });
+      return; 
     }
 
     const token = authHeader.split(" ")[1];
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-      console.log("err?.message", err?.message);
-      if (err) {
-        if (err.name === "TokenExpiredError") {
-          res
-            .status(401)
-            .json({ message: "Access token expired, please refresh" });
-          return;
-        }
-        res.status(401).json({ message: "Invalid token" });
-        return;
-      }
+    const decoded = jwt.verify(token, USER_JWT_SECRET) as JwtPayload;
+    
+    if (!decoded.userId || decoded.role !== "user") {
+      res.status(403).json({ success: false, message: "User access required" });
+      return;
+    }
 
-      (req as any).user = decoded;
+    const user = await User.findById(decoded.userId).select("status email fullName");
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
 
-      next();
-    });
-  } catch (error) {
-    res.status(401).json({ message: "Authentication failed" });
+    if (user.status === "Blocked") {
+      res.status(403).json({
+        success: false,
+        message: "You have been blocked by the admin, please contact support",
+        isBlocked: true,
+        user: {
+          email: user.email,
+          name: user.fullName || user.email,
+        },
+      });
+      return;
+    }
+
+    req.user = {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+      status: user.status,
+    };
+    next();
+  } catch (error: any) {
+    console.error("Auth Middleware Error:", error);
+    if (error.name === "TokenExpiredError") {
+      res.status(401).json({ success: false, message: "Access token expired, please refresh" });
+      return;
+    }
+    if (error.name === "JsonWebTokenError") {
+      res.status(401).json({ success: false, message: "Invalid token" });
+      return;
+    }
+    res.status(401).json({ success: false, message: "Authentication failed" });
   }
 };
 

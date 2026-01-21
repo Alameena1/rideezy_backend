@@ -1,58 +1,33 @@
-import { Request, Response, NextFunction, RequestHandler } from "express";
-import jwt, { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express";
+import { verifyAccessToken } from "../helpers/jwt.util";
 
-declare global {
-  namespace Express {
-    interface Request {
-      admin?: {
-        userId?: string;
-        email?: string;
-        [key: string]: any;
-      };
-    }
-  }
+interface AuthenticatedRequest extends Request {
+  admin?: { userId: string; email: string; role: string };
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
+export const adminAuthMiddleware = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
-if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in environment variables");
-}
-
-const adminAuthMiddleware: RequestHandler = (req, res, next): void => {
-  try {
-    console.log("req.cookies",req.cookies)
-    const authHeader = req.headers.authorization;
-    const tokenFromCookie = req.cookies?.adminAuthToken;
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : tokenFromCookie;
-    if (!token) {
-      res.status(401).json({ message: "Admin authorization token missing" });
-      return;
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId?: string;
-      email?: string;
-      [key: string]: any;
-    };
-
-    req.admin = decoded;
-    next();
-  } catch (error) {
-    if (error instanceof TokenExpiredError) {
-      res
-        .status(401)
-        .json({ message: "Admin access token expired, please refresh" });
-      return;
-    } else if (error instanceof JsonWebTokenError) {
-      res.status(401).json({ message: "Invalid admin token" });
-      return;
-    }
-    res.status(401).json({ message: "Admin authentication failed" });
+  if (!token) {
+    res.status(401).json({ message: "No token provided" });
     return;
   }
-};
 
-export default adminAuthMiddleware;
+  try {
+    const decoded = verifyAccessToken(token, "admin");
+    req.admin = {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    };
+    next();
+  } catch (error) {
+    console.error("Admin auth middleware error:", error);
+    res.status(401).json({ message: "Invalid or expired token" });
+  }
+};

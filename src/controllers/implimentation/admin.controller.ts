@@ -1,57 +1,197 @@
 import { Request, Response } from "express";
+import { inject, injectable } from "inversify";
 import { IAdminService } from "../../services/interfaces/admin/interface";
-import { IAdminController } from "../interface/admin/interface";
-import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
-import jwt from "jsonwebtoken";
-import { generateAccessToken } from "../../helpers/jwt.util";
+import {
+  verifyRefreshToken,
+  generateAccessToken,
+  generateRefreshToken,
+} from "../../helpers/jwt.util";
+import { StatusCode } from "../../constants/status-codes.enum";
+import { ResponseMessages } from "../../constants/response-messages.const";
+import { z } from "zod";
+import {
+  AdminLoginDto,
+  BlockRideSchema,
+  UnblockRideSchema,
+  CreateSubscriptionPlanDto,
+  DashboardMetricsQueryDto,
+  GovIdVerificationDto,
+  LogoutDto,
+  PaginationQueryDtoType,
+  RefreshTokenDto,
+  RideSearchQueryDto,
+  RideSearchQueryDtoType,
+  SubscriptionPlanStatusDto,
+  UpdateSubscriptionPlanDto,
+  UserSearchQueryDto,
+  UserSearchQueryDtoType,
+  UserStatusDto,
+  VehicleSearchQueryDto,
+  VehicleSearchQueryDtoType,
+  VehicleStatusDto,
+  UserResponseDto,
+} from "../../dtos/admin.dto";
+import { IAdminController } from "../interface/admin/interface";
+import AdminModel from "../../models/admin";
+
+interface AuthenticatedRequest extends Request {
+  admin?: { userId: string; email: string; role: string };
+}
 
 @injectable()
 export class AdminController implements IAdminController {
-  private adminService: IAdminService;
+  constructor(
+    @inject(TYPES.IAdminService) private _adminService: IAdminService
+  ) {}
 
-  constructor(@inject(TYPES.IAdminService) adminService: IAdminService) {
-    this.adminService = adminService;
+  private validateRequest<T extends z.ZodTypeAny>(schema: T, data: unknown): z.infer<T> {
+    try {
+      return schema.parse(data);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage = error.errors
+          .map((err) => `${err.path.join(".")}: ${err.message}`)
+          .join(", ");
+        throw new Error(`Validation failed: ${errorMessage}`);
+      }
+      throw error;
+    }
   }
 
-  adminLogin = async (req: Request, res: Response): Promise<void> => {
-    const { email, password } = req.body;
+  private ensureRequiredParams<T extends PaginationQueryDtoType>(params: T): T {
+    return {
+      ...params,
+      page: params.page || 1,
+      limit: params.limit || 10,
+      sortOrder: params.sortOrder || "desc",
+    };
+  }
+
+getUsers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const queryParams = this.validateRequest(UserSearchQueryDto, req.query);
+    const ensuredParams = this.ensureRequiredParams(queryParams);
+
+    const result = await this._adminService.getAllUsers(ensuredParams);
+
+    // Ensure consistent response structure
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Users fetched successfully",
+      data: result.data,
+      pagination: {
+        currentPage: result.pagination.currentPage,
+        totalPages: result.pagination.totalPages,
+        totalItems: result.pagination.totalItems,
+        hasNext: result.pagination.hasNext,
+        hasPrev: result.pagination.hasPrev,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getUsers:', error);
+    res.status(StatusCode.BAD_REQUEST).json({
+      success: false,
+      message: (error as Error).message,
+    });
+  }
+};
+
+  getVehicles = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const { accessToken, refreshToken } = await this.adminService.authenticateAdmin(email, password);
-    console.log("eouyfgb",accessToken)
+      const queryParams = this.validateRequest(VehicleSearchQueryDto, req.query);
+      const ensuredParams = this.ensureRequiredParams(queryParams);
 
-      res.cookie("adminAuthToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 15 * 60 * 1000,
-        path: "/",
+      const result = await this._adminService.getAllVehicles(ensuredParams);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: result.data,
+        pagination: result.pagination,
       });
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: "/",
-      });
-
-      res.status(200).json({ message: "Login successful" });
     } catch (error) {
-      res.status(401).json({ message: "Invalid credentials" });
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    }
+  };
+
+  getAllRides = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const queryParams = this.validateRequest(RideSearchQueryDto, req.query);
+      const ensuredParams = this.ensureRequiredParams(queryParams);
+
+      const result = await this._adminService.getAllRides(ensuredParams);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: result.data,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    }
+  };
+
+  adminLogin = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const loginData = this.validateRequest(AdminLoginDto, req.body);
+
+      console.log("🔐 Admin login attempt:", { email: loginData.email });
+
+      const { accessToken, refreshToken } = await this._adminService.authenticateAdmin(
+        loginData.email,
+        loginData.password
+      );
+
+      // Get admin details directly from database
+      const admin = await AdminModel.findOne({ email: loginData.email }).select('-password').lean();
+      if (!admin) {
+        throw new Error("Admin not found");
+      }
+
+      console.log("✅ Admin login successful:", { adminId: admin._id, email: admin.email });
+
+      // Return the EXACT SAME structure as user login
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: ResponseMessages.LOGIN_SUCCESS,
+        accessToken,
+        refreshToken,
+        user: {
+          id: admin._id.toString(), // Use the ID from the database query
+          email: admin.email,
+          role: "admin",
+          fullName: "Administrator"
+        }
+      });
+
+    } catch (error: any) {
+      console.error("❌ Admin login error:", error.message);
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: error.message || ResponseMessages.INVALID_CREDENTIALS,
+      });
     }
   };
 
   refreshToken = async (req: Request, res: Response): Promise<void> => {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      res.status(401).json({ message: "No refresh token" });
-      return;
-    }
-
     try {
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { email: string };
-      const newAccessToken = generateAccessToken(decoded.email);
+      const { refreshToken } = this.validateRequest(RefreshTokenDto, req.body);
+
+      const decoded = verifyRefreshToken(refreshToken, "admin");
+      const newAccessToken = generateAccessToken(
+        decoded.userId,
+        decoded.email || "",
+        "admin"
+      );
+      const newRefreshToken = generateRefreshToken(decoded.userId, "admin");
+
+      await this._adminService.saveRefreshToken(decoded.userId, newRefreshToken);
 
       res.cookie("adminAuthToken", newAccessToken, {
         httpOnly: true,
@@ -61,66 +201,432 @@ export class AdminController implements IAdminController {
         path: "/",
       });
 
-      res.status(200).json({ message: "Token refreshed" });
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: "Token refreshed",
+        token: newAccessToken,
+        refreshToken: newRefreshToken,
+      });
     } catch (error) {
-      res.status(401).json({ message: "Invalid refresh token" });
+      console.error("Refresh token error:", error);
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
     }
   };
 
-  logout = async (req: Request, res: Response): Promise<void> => {
-    const refreshToken = req.cookies.refreshToken;
-    if (refreshToken) {
-      try {
-        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as { email: string };
-        // If using refresh token rotation with a database, invalidate the refresh token
-        await this.adminService.invalidateRefreshToken?.(decoded.email, refreshToken);
-      } catch (error) {
-        console.error("Error verifying refresh token during logout:", error);
+  logout = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const { refreshToken } = this.validateRequest(LogoutDto, req.body);
+
+      if (refreshToken && req.admin?.userId) {
+        await this._adminService.invalidateRefreshToken(
+          req.admin.userId,
+          refreshToken
+        );
       }
-    }
 
-    res.clearCookie("adminAuthToken", { path: "/" });
-    res.clearCookie("refreshToken", { path: "/" });
-    res.status(200).json({ message: "Logged out successfully" });
-  };
+      res.clearCookie("adminAuthToken", { path: "/" });
+      res.clearCookie("refreshToken", { path: "/" });
 
-  getUsers = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const users = await this.adminService.getAllUsers();
-      res.status(200).json({ message: "Users retrieved successfully", users });
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: ResponseMessages.LOGOUT_SUCCESS,
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve users" });
-    }
-  };
-
-  toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
-    const { userId } = req.params;
-    const { status } = req.body;
-    try {
-      await this.adminService.toggleUserStatus(userId, status);
-      res.status(200).json({ message: `User status updated to ${status}` });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update user status" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: (error as Error).message,
+      });
     }
   };
 
-  getVehicles = async (req: Request, res: Response): Promise<void> => {
+  updateUserStatus = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
-      const vehicles = await this.adminService.getAllVehicles();
-      res.status(200).json({ message: "Vehicles retrieved successfully", vehicles });
+      const { userId } = req.params;
+      const updateData = this.validateRequest(UserStatusDto, req.body);
+
+      if (!userId) {
+        throw new Error("User ID is required in URL path");
+      }
+
+      await this._adminService.updateUserStatus(userId, updateData.status);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: `User status updated to ${updateData.status}`,
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve vehicles" });
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
     }
   };
 
-  updateVehicleStatus = async (req: Request, res: Response): Promise<void> => {
-    const { vehicleId } = req.params;
-    const { status, note } = req.body;
+  updateVehicleStatus = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
     try {
-      await this.adminService.updateVehicleStatus(vehicleId, status, note);
-      res.status(200).json({ message: `Vehicle status updated to ${status}` });
+      const { vehicleId } = req.params;
+      const updateData = this.validateRequest(VehicleStatusDto, {
+        vehicleId,
+        ...req.body,
+      });
+
+      await this._adminService.updateVehicleStatus(
+        updateData.vehicleId,
+        updateData.status,
+        updateData.note
+      );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: `Vehicle status updated to ${updateData.status}`,
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update vehicle status" });
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    }
+  };
+
+  verifyGovId = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const verificationData = this.validateRequest(
+        GovIdVerificationDto,
+        req.body
+      );
+
+      const user = await this._adminService.verifyGovId(
+        verificationData.userId,
+        verificationData.status,
+        verificationData.rejectionNote
+      );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: `Government ID ${verificationData.status}`,
+        user,
+      });
+    } catch (error) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    }
+  };
+
+  createSubscriptionPlan = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const planData = this.validateRequest(
+        CreateSubscriptionPlanDto,
+        req.body
+      );
+
+      const plan = await this._adminService.createSubscriptionPlan(planData);
+
+      res.status(StatusCode.CREATED).json({
+        success: true,
+        message: "Subscription plan created",
+        plan,
+      });
+    } catch (error) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    }
+  };
+
+  updateSubscriptionPlan = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const { planId } = req.params;
+      const planData = this.validateRequest(
+        UpdateSubscriptionPlanDto,
+        req.body
+      );
+
+      const plan = await this._adminService.updateSubscriptionPlan(
+        planId,
+        planData
+      );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: "Subscription plan updated",
+        plan,
+      });
+    } catch (error) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    }
+  };
+
+  updateSubscriptionPlanStatus = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const { planId } = req.params;
+      const { status } = this.validateRequest(
+        SubscriptionPlanStatusDto,
+        req.body
+      );
+
+      await this._adminService.updateSubscriptionPlanStatus(planId, status);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: `Subscription plan status updated to ${status}`,
+      });
+    } catch (error) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    }
+  };
+
+  getDashboardMetrics = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const queryParams = this.validateRequest(
+        DashboardMetricsQueryDto,
+        req.query
+      );
+
+      const metrics = await this._adminService.getDashboardMetrics({
+        startDate: queryParams.startDate
+          ? new Date(queryParams.startDate)
+          : undefined,
+        endDate: queryParams.endDate
+          ? new Date(queryParams.endDate)
+          : undefined,
+      });
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        ...metrics,
+      });
+    } catch (error) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: (error as Error).message,
+      });
+    }
+  };
+
+  deleteSubscriptionPlan = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    const { planId } = req.params;
+
+    if (!planId) {
+      res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+      return;
+    }
+
+    try {
+      await this._adminService.deleteSubscriptionPlan(planId);
+      res
+        .status(StatusCode.OK)
+        .json({ success: true, message: "Subscription plan deleted" });
+    } catch (error) {
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: (error as Error).message });
+    }
+  };
+
+getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const queryParams = this.validateRequest(UserSearchQueryDto, req.query);
+    const ensuredParams = this.ensureRequiredParams(queryParams);
+
+    const result = await this._adminService.getSubscriptionPlans(ensuredParams);
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    res.status(StatusCode.BAD_REQUEST).json({
+      success: false,
+      message: (error as Error).message,
+    });
+  }
+};
+
+  getRideDetails = async (req: Request, res: Response): Promise<void> => {
+    const { rideId } = req.params;
+
+    if (!rideId) {
+      res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+      return;
+    }
+
+    try {
+      const ride = await this._adminService.getRideDetails(rideId);
+      res.status(StatusCode.OK).json(ride);
+    } catch (error) {
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: (error as Error).message });
+    }
+  };
+
+  // UPDATED: Block ride with detailed information
+  blockRide = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const { rideId } = req.params;
+
+    if (!rideId) {
+      res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+      return;
+    }
+
+    try {
+      const blockData = this.validateRequest(BlockRideSchema, req.body);
+      
+      if (!req.admin?.userId) {
+        throw new Error("Admin authentication required");
+      }
+
+      await this._adminService.blockRide(rideId, blockData, req.admin.userId);
+      
+      res
+        .status(StatusCode.OK)
+        .json({ 
+          success: true, 
+          message: "Ride blocked successfully",
+          blockDetails: blockData
+        });
+    } catch (error) {
+      console.error("Error blocking ride:", error);
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: (error as Error).message });
+    }
+  };
+
+  // NEW: Unblock ride
+  unblockRide = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const { rideId } = req.params;
+
+    if (!rideId) {
+      res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+      return;
+    }
+
+    try {
+      await this._adminService.unblockRide(rideId);
+      
+      res
+        .status(StatusCode.OK)
+        .json({ success: true, message: "Ride unblocked successfully" });
+    } catch (error) {
+      console.error("Error unblocking ride:", error);
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: (error as Error).message });
+    }
+  };
+
+  cancelRide = async (req: Request, res: Response): Promise<void> => {
+    const { rideId } = req.params;
+
+    if (!rideId) {
+      res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ success: false, message: ResponseMessages.MISSING_FIELDS });
+      return;
+    }
+
+    try {
+      await this._adminService.updateRideStatus(rideId, "Cancelled");
+      res
+        .status(StatusCode.OK)
+        .json({ success: true, message: "Ride cancelled" });
+    } catch (error) {
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: (error as Error).message });
+    }
+  };
+
+  getDashboardData = async (req: Request, res: Response): Promise<void> => {
+    const { startDate, endDate } = req.query;
+    try {
+      const metrics = await this._adminService.getDashboardMetrics({
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+      });
+      res.status(StatusCode.OK).json(metrics);
+    } catch (error) {
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: (error as Error).message });
+    }
+  };
+
+  checkUserOngoingRides = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "User ID is required",
+        });
+        return;
+      }
+
+      const result = await this._adminService.checkUserOngoingRides(userId);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      console.error("Error checking user ongoing rides:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: (error as Error).message,
+      });
     }
   };
 }

@@ -3,20 +3,77 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "../../di/types";
 import { IAuthController } from "../interface/auth/interface";
 import AuthService from "../../services/implementation/auth.service";
+import { StatusCode } from "../../constants/status-codes.enum";
+import { ResponseMessages } from "../../constants/response-messages.const";
+import logger from "../../config/logger";
 
 @injectable()
 export class AuthController implements IAuthController {
-  private authService: AuthService;
+  private _authService: AuthService;
 
   constructor(@inject(TYPES.IAuthService) authService: AuthService) {
-    this.authService = authService;
+    this._authService = authService;
+  }
+
+  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const { email, password } = req.body;
+    try {
+      logger.info("Login attempt:", { email, passwordLength: password?.length });
+      
+      if (!email || !password) {
+        logger.warn("Login: Missing email or password", { email, hasPassword: !!password });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_PASSWORD_REQUIRED });
+        return;
+      }
+      
+      const { accessToken, refreshToken, user } = await this._authService.login(email, password);
+      logger.info("Login success:", { userId: user.id, email: user.email, role: user.role });
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
+      logger.debug("Login response prepared for user:", { userId: user.id });
+      
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: ResponseMessages.LOGIN_SUCCESS,
+        user,
+        accessToken,
+        refreshToken,
+      });
+    } catch (error: any) {
+      logger.error("Login error:", { message: error.message, email: email || "unknown" });
+      
+      if (error.message === ResponseMessages.ACCOUNT_BLOCKED) {
+        res.status(StatusCode.FORBIDDEN).json({ success: false, message: error.message });
+        return;
+      }
+      
+      res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.INVALID_CREDENTIALS });
+    }
   }
 
   async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const response = await this.authService.signup(req.body);
-      res.status(200).json(response);
+      logger.info("Signup request received");
+      const response = await this._authService.signup(req.body);
+      logger.info("Signup processed successfully");
+      res.status(StatusCode.OK).json(response);
     } catch (error) {
+      logger.error("Signup error:", error);
       next(error);
     }
   }
@@ -25,12 +82,17 @@ export class AuthController implements IAuthController {
     try {
       const { email } = req.body;
       if (!email) {
-        res.status(400).json({ success: false, message: "Email is required" });
+        logger.warn("Resend OTP: Missing email");
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_REQUIRED });
         return;
       }
-      const response = await this.authService.resendOTP(email);
-      res.status(200).json(response);
+      
+      logger.info(`Resend OTP request for: ${email}`);
+      const response = await this._authService.resendOTP(email);
+      logger.info(`OTP resent successfully for: ${email}`);
+      res.status(StatusCode.OK).json(response);
     } catch (error) {
+      logger.error("Resend OTP error:", error);
       next(error);
     }
   }
@@ -39,43 +101,55 @@ export class AuthController implements IAuthController {
     try {
       const { email, otp } = req.body;
       if (!email || !otp) {
-        res.status(400).json({ success: false, message: "Email and OTP are required" });
+        logger.warn("Verify OTP: Missing email or OTP");
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_AND_OTP_REQUIRED });
         return;
       }
-      const response = await this.authService.verifyOTP(email, otp);
-      res.status(200).json(response);
+      
+      logger.info(`OTP verification attempt for: ${email}`);
+      const response = await this._authService.verifyOTP(email, otp);
+      logger.info(`OTP verified successfully for: ${email}`);
+      res.status(StatusCode.OK).json(response);
     } catch (error) {
+      logger.error("Verify OTP error:", error);
       next(error);
     }
   }
 
-  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { email, password } = req.body;
-   console.log("email and password",email, password)
-      if (!email || !password) {
-        res.status(400).json({ success: false, message: "Email and password are required" });
-        return;
-      }
-      const tokens = await this.authService.login(email, password); 
-        
-      res.status(200).json({ success: true, message: "Login successful", ...tokens });
-    } catch (error) {
-      next(error);
+  async refreshToken(req: Request, res: Response): Promise<void> {
+    const refreshToken = req.cookies.refreshToken;
+    
+    if (!refreshToken) {
+      logger.warn("Refresh token: No token provided in cookies");
+      res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: ResponseMessages.REFRESH_TOKEN_REQUIRED });
+      return;
     }
-  }
 
-  async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { refreshToken } = req.body;
-      if (!refreshToken) {
-        res.status(400).json({ success: false, message: "Refresh token required" });
-        return;
-      }
-      const newToken = await this.authService.refreshToken(refreshToken);
-      res.status(200).json({ success: true, ...newToken });
+      logger.debug("Refresh token request received");
+      const { accessToken, refreshToken: newRefreshToken } = await this._authService.refreshToken(refreshToken);
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+      
+      logger.info("Tokens refreshed successfully");
+      res.status(StatusCode.OK).json({ success: true, message: "Token refreshed", accessToken, refreshToken: newRefreshToken });
     } catch (error) {
-      next(error);
+      logger.error("Refresh token error:", error);
+      res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: "Invalid refresh token" });
     }
   }
 
@@ -83,33 +157,101 @@ export class AuthController implements IAuthController {
     try {
       const { token } = req.body;
       if (!token) {
-        res.status(400).json({ success: false, message: "Refresh token required" });
+        logger.warn("Logout: Missing refresh token");
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.REFRESH_TOKEN_REQUIRED });
         return;
       }
-      await this.authService.logout(token);
-      res.status(200).json({ success: true, message: "Logged out successfully" });
+      
+      logger.info("Logout request received");
+      await this._authService.logout(token);
+      res.clearCookie("accessToken", { path: "/" });
+      res.clearCookie("refreshToken", { path: "/" });
+      
+      logger.info("Logout completed successfully");
+      res.status(StatusCode.OK).json({ success: true, message: ResponseMessages.LOGOUT_SUCCESS });
     } catch (error) {
+      logger.error("Logout error:", error);
       next(error);
     }
   }
 
   async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { fullName, email, image } = req.body as { fullName: string; email: string; image: string };
-      if (!fullName || !email || !image) {
-        res.status(400).json({ success: false, message: "Missing required fields" });
+      const { fullName, email, image, idToken } = req.body as { fullName: string; email: string; image: string; idToken: string };
+      
+      if (!fullName || !email || !image || !idToken) {
+        logger.warn("Google auth: Missing required fields", { fullName: !!fullName, email: !!email, image: !!image, idToken: !!idToken });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: "Missing required fields: fullName, email, image, idToken" });
         return;
       }
+      
+      logger.info(`Google auth attempt for: ${email}`);
+      const { user, accessToken, refreshToken } = await this._authService.handleGoogleAuth({ fullName, email, image, idToken });
 
-      const user = await this.authService.handleGoogleAuth({ fullName, email, image });
-      res.status(200).json({
-        success: true,
-        message: "Google login successful",
-        user: user.user,
-        accessToken: user.accessToken,
-        refreshToken: user.refreshToken,
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: "/",
       });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
+      logger.info(`Google auth successful for user: ${user.id}`);
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: ResponseMessages.GOOGLE_LOGIN_SUCCESS,
+        user,
+        accessToken,
+        refreshToken,
+      });
+    } catch (error: any) {
+      logger.error("Google auth error:", error);
+      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        logger.warn("Forgot password: Missing email");
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.EMAIL_REQUIRED });
+        return;
+      }
+      
+      logger.info(`Forgot password request for: ${email}`);
+      const response = await this._authService.forgotPassword(email);
+      logger.info(`Password reset email sent to: ${email}`);
+      res.status(StatusCode.OK).json(response);
     } catch (error) {
+      logger.error("Forgot password error:", error);
+      next(error);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) {
+        logger.warn("Reset password: Missing token or new password");
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: ResponseMessages.TOKEN_AND_NEW_PASSWORD_REQUIRED });
+        return;
+      }
+      
+      logger.info("Password reset attempt");
+      const response = await this._authService.resetPassword(token, newPassword);
+      logger.info("Password reset successful");
+      res.status(StatusCode.OK).json(response);
+    } catch (error) {
+      logger.error("Reset password error:", error);
       next(error);
     }
   }
